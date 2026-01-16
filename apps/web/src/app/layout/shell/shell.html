@@ -1,0 +1,101 @@
+<mat-toolbar class="app-toolbar">
+  <button mat-icon-button class="me-2" aria-label="Menu" (click)="drawer.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <div class="app-brand">
+    <span class="app-name">{{ appName }}</span>
+    <span class="app-version">{{ version }}</span>
+  </div>
+
+  <span class="app-nav-separator"></span>
+
+  <a mat-button routerLink="/songs" routerLinkActive="active-top">
+    <mat-icon class="me-1">music_note</mat-icon>
+    Songs
+  </a>
+
+  <a
+    mat-button
+    routerLink="/setlists"
+    routerLinkActive="active-top"
+    class="d-none d-md-inline-flex"
+  >
+    <mat-icon class="me-1">queue_music</mat-icon>
+    Setlists
+  </a>
+
+  <a
+    mat-button
+    routerLink="/practice"
+    routerLinkActive="active-top"
+    class="d-none d-md-inline-flex"
+  >
+    <mat-icon class="me-1">fitness_center</mat-icon>
+    Practice
+  </a>
+</mat-toolbar>
+
+<mat-sidenav-container class="app-container">
+  <mat-sidenav
+    #drawer
+    [mode]="(isHandset$ | async) ? 'over' : 'side'"
+    [opened]="!(isHandset$ | async)"
+    class="bm-sidenav"
+  >
+    <div class="bm-sidenav-header">
+      <div class="bm-sidenav-brand">
+        <div class="bm-sidenav-logo" aria-hidden="true">BM</div>
+        <div>
+          <div class="fw-semibold">Bandmate</div>
+          <div class="small opacity-75">Prep • Rehearse • Play</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bm-sidenav-section">
+      <div class="bm-sidenav-section-title">Library</div>
+
+      <mat-nav-list class="bm-nav">
+        <a mat-list-item routerLink="/songs" routerLinkActive="active">
+          <mat-icon class="me-2">music_note</mat-icon>
+          Songs
+        </a>
+        <a mat-list-item routerLink="/setlists" routerLinkActive="active">
+          <mat-icon class="me-2">queue_music</mat-icon>
+          Setlists
+        </a>
+      </mat-nav-list>
+    </div>
+
+    <div class="bm-sidenav-section">
+      <div class="bm-sidenav-section-title">Tools</div>
+
+      <mat-nav-list class="bm-nav">
+        <a mat-list-item routerLink="/practice" routerLinkActive="active">
+          <mat-icon class="me-2">fitness_center</mat-icon>
+          Practice
+        </a>
+      </mat-nav-list>
+    </div>
+
+    <div class="bm-sidenav-footer">
+      <div class="small opacity-75">Less chaos. More music.</div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <main class="app-main">
+      <div class="content-wrap">
+        <router-outlet />
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="content-wrap d-flex align-items-center justify-content-between gap-2">
+        <span class="small opacity-75">Bandmate — personal project</span>
+        <span class="small opacity-75">Angular 21 • Signals • Signal Forms</span>
+      </div>
+    </footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>

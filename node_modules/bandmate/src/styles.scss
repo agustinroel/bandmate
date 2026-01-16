@@ -1,0 +1,201 @@
+/* =========================================================
+   Bandmate – Global styles + Angular Material theme
+   Look & feel: rehearsal room / indie / human
+   ========================================================= */
+
+@use '@angular/material' as mat;
+
+/* ---------- 1) Angular Material core ---------- */
+@include mat.core();
+
+/* ---------- 2) Brand tokens (CSS vars) ---------- */
+:root {
+  /* Brand */
+  --bm-primary: #234E52;   /* petrol */
+  --bm-accent:  #C9A227;   /* mustard */
+  --bm-warn:    #8C2F39;   /* wine */
+
+  /* Surfaces */
+  --bm-bg:      #F6F7F6;   /* warm light gray */
+  --bm-surface: #FAFAFA;   /* off-white */
+  --bm-border:  rgba(0, 0, 0, 0.08);
+
+  /* Text */
+  --bm-text:    rgba(0, 0, 0, 0.87);
+  --bm-muted:   rgba(0, 0, 0, 0.60);
+
+  /* Typography */
+  --bm-font: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* ---------- 3) Material Theme (M2 API under m2-*) ----------
+   IMPORTANT: In Angular Material 18+, classic theming uses m2-*
+*/
+$bm-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 800);
+$bm-accent: mat.m2-define-palette(mat.$m2-amber-palette, 600);
+$bm-warn: mat.m2-define-palette(mat.$m2-red-palette, 700);
+
+/* Custom typography config (applies to Material components) */
+$bm-typography: mat.m2-define-typography-config(
+  $font-family: var(--bm-font)
+);
+
+$bm-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $bm-primary,
+    accent: $bm-accent,
+    warn: $bm-warn,
+  ),
+  typography: $bm-typography,
+  density: 0,
+));
+
+@include mat.all-component-themes($bm-theme);
+
+/* ---------- 4) Base ---------- */
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bm-bg);
+  color: var(--bm-text);
+  font-family: var(--bm-font);
+}
+
+/* nicer rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- 5) Shell hooks (safe) ---------- */
+.app-toolbar {
+  background: var(--bm-primary) !important;
+  color: white !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  a, button, mat-icon {
+    color: white !important;
+  }
+}
+
+.app-toolbar a.active-top {
+  font-weight: 650;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.22);
+}
+
+.app-toolbar a.mat-mdc-button-base {
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+
+/* Top nav active state: subtle pill, not an underline */
+.active-top {
+  font-weight: 650;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.22);
+  padding: 4px 10px;
+}
+
+mat-sidenav {
+  background: var(--bm-surface);
+  border-right: 1px solid var(--bm-border);
+}
+
+a.active {
+  background: rgba(201, 162, 39, 0.12) !important;
+  font-weight: 600;
+}
+
+a.active mat-icon {
+  color: var(--bm-accent) !important;
+}
+
+/* ---------- App toolbar spacing ---------- */
+.app-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.app-name {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.app-version {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Invisible spacer between brand and nav */
+.app-nav-separator {
+  display: inline-block;
+  width: 16px; /* ← este es el aire clave */
+}
+
+/* Optional: extra breathing room on desktop */
+@media (min-width: 768px) {
+  .app-nav-separator {
+    width: 24px;
+  }
+}
+
+
+.app-footer {
+  background: var(--bm-surface);
+  border-top: 1px solid var(--bm-border);
+}
+
+/* ---------- 6) Surfaces + spacing (SCOPED) ----------
+   IMPORTANT: Avoid global mat-card / a styles that can affect layout.
+   We scope to main content area.
+*/
+.app-main mat-card {
+  background: var(--bm-surface);
+  border: 1px solid var(--bm-border);
+  border-radius: 16px;
+}
+
+/* Ensure Material form fields behave consistently */
+mat-form-field {
+  width: 100%;
+}
+
+/* Buttons: keep brand feel without breaking Material layout */
+.mat-mdc-raised-button.mat-primary {
+  background: var(--bm-primary) !important;
+}
+
+.mat-mdc-raised-button.mat-warn {
+  background: var(--bm-warn) !important;
+}
+
+/* Links: DO NOT style all <a> globally (it can affect mat-list-item/buttons).
+   Scope to content, and exclude Material buttons.
+*/
+.app-main a:not(.mat-mdc-button-base):not(.mat-mdc-list-item) {
+  color: var(--bm-primary);
+  text-decoration: none;
+}
+
+.app-main a:not(.mat-mdc-button-base):not(.mat-mdc-list-item):hover {
+  color: var(--bm-accent);
+  text-decoration: underline;
+}
+
+/* Bandmate elevation tokens */
+:root {
+  --bm-shadow-0: 0 0 0 rgba(0,0,0,0);
+  --bm-shadow-1: 0 6px 14px rgba(0,0,0,0.06);
+  --bm-shadow-2: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+/* Default cards: very subtle */
+.app-main mat-card {
+  box-shadow: var(--bm-shadow-0);
+}

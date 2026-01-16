@@ -1,0 +1,90 @@
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-container {
+  height: calc(100vh - 64px);
+}
+
+.app-main {
+  min-height: calc(100vh - 64px - 44px);
+  padding: 16px;
+}
+
+.content-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.app-footer {
+  height: 44px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- Bandmate sidenav ---------- */
+.bm-sidenav {
+  width: 280px;
+}
+
+.bm-sidenav-header {
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.bm-sidenav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bm-sidenav-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: rgba(201, 162, 39, 0.18);
+}
+
+.bm-sidenav-section {
+  padding: 14px 10px 0;
+}
+
+.bm-sidenav-section-title {
+  padding: 0 8px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* More breathing room for list items */
+.bm-nav .mat-mdc-list-item {
+  border-radius: 12px;
+  margin: 4px 6px;
+  height: 44px;
+}
+
+/* Active item looks more “app-like” */
+.bm-nav a.active {
+  background: rgba(201, 162, 39, 0.14) !important;
+  font-weight: 650;
+}
+
+.bm-nav a.active mat-icon {
+  color: var(--bm-accent) !important;
+}
+
+.bm-sidenav-footer {
+  margin-top: auto;
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
