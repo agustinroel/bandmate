@@ -240,5 +240,160 @@ mat-form-field {
   color: rgba(0, 0, 0, 0.38) !important;
 }
 
+/* ===========================
+   Songs cards – visual polish
+   =========================== */
+
+/* --- Songs grid (pro) --- */
+.songs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+/* Card */
+.song-card {
+  cursor: pointer;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.song-card:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.99);
+}
+
+/* Top row layout */
+.song-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.song-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.song-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.song-artist {
+  margin-top: 6px;
+  opacity: 0.75;
+  font-size: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.song-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-top: -2px;
+}
+
+/* Meta pills */
+.song-meta {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+/* --- Pills: no deform, no side effects --- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  white-space: nowrap; /* ✅ evita que se parta */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.pill-ic {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+  opacity: 0.7;
+}
+
+/* Neutral */
+.pill-neutral {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Key: más jerarquía, pero sin exagerar */
+.pill-key {
+  font-weight: 600;
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+/* Key no debe empujar el truncado */
+.song-title-row .pill-key {
+  flex: 0 0 auto;
+}
+
+/* Opcional: que los pills no queden gigantes en mobile */
+@media (max-width: 480px) {
+  .pill {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+
+/* Paleta sobria por tonalidad (major/minor varía levemente) */
+.pill-key.key-major { filter: saturate(1.05); }
+.pill-key.key-minor { filter: saturate(1.05) brightness(0.98); }
+
+/* C */
+.pill-key.key-c { background: rgba(245, 200, 66, 0.22); }
+/* C#/Db */
+.pill-key.key-cs { background: rgba(245, 156, 66, 0.22); }
+/* D */
+.pill-key.key-d { background: rgba(245, 120, 120, 0.22); }
+/* D#/Eb */
+.pill-key.key-ds { background: rgba(236, 110, 170, 0.22); }
+/* E */
+.pill-key.key-e { background: rgba(190, 120, 245, 0.22); }
+/* F */
+.pill-key.key-f { background: rgba(120, 150, 245, 0.22); }
+/* F#/Gb */
+.pill-key.key-fs { background: rgba(120, 190, 245, 0.22); }
+/* G */
+.pill-key.key-g { background: rgba(120, 220, 200, 0.22); }
+/* G#/Ab */
+.pill-key.key-gs { background: rgba(140, 230, 140, 0.22); }
+/* A */
+.pill-key.key-a { background: rgba(200, 235, 120, 0.22); }
+/* A#/Bb */
+.pill-key.key-as { background: rgba(235, 210, 120, 0.22); }
+/* B */
+.pill-key.key-b { background: rgba(230, 190, 140, 0.22); }
+
+.pill-key.key-other { background: rgba(0, 0, 0, 0.06); }
+
 
 

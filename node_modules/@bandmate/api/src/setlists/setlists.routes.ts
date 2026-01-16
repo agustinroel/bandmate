@@ -1,62 +1,114 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import type {
-  CreateSetlistDto,
-  UpdateSetlistDto,
   AddSetlistItemDto,
+  CreateSetlistDto,
   ReorderSetlistDto,
+  UpdateSetlistDto,
 } from "@bandmate/shared";
-import { SetlistsRepo } from "./setlists.repo.js";
 
-const repo = new SetlistsRepo();
+import {
+  addSetlistItem,
+  createSetlist,
+  deleteSetlist,
+  getSetlist,
+  listSetlists,
+  removeSetlistItem,
+  reorderSetlist,
+  updateSetlist,
+} from "./setlists.repo.js";
 
-export async function setlistsRoutes(app: FastifyInstance) {
-  app.get("/setlists", async () => repo.list());
+export const setlistsRoutes: FastifyPluginAsync = async (app) => {
+  // List
+  app.get("/setlists", async () => listSetlists());
 
+  // Get
   app.get<{ Params: { id: string } }>("/setlists/:id", async (req, reply) => {
-    const s = repo.get(req.params.id);
-    if (!s) return reply.code(404).send({ message: "Setlist not found" });
-    return s;
+    const setlist = await getSetlist(req.params.id);
+    if (!setlist) return reply.code(404).send({ message: "Setlist not found" });
+    return setlist;
   });
 
+  // Create
   app.post<{ Body: CreateSetlistDto }>("/setlists", async (req, reply) => {
-    if (!req.body?.name?.trim())
+    const dto = req.body;
+
+    if (!dto?.name?.trim()) {
       return reply.code(400).send({ message: "Name is required" });
-    return repo.create(req.body);
+    }
+
+    const created = await createSetlist(dto);
+    return reply.code(201).send(created);
   });
 
+  // Update
   app.patch<{ Params: { id: string }; Body: UpdateSetlistDto }>(
     "/setlists/:id",
     async (req, reply) => {
-      const s = repo.update(req.params.id, req.body ?? {});
-      if (!s) return reply.code(404).send({ message: "Setlist not found" });
-      return s;
+      const dto = req.body ?? {};
+      const updated = await updateSetlist(req.params.id, dto);
+      if (!updated)
+        return reply.code(404).send({ message: "Setlist not found" });
+      return updated;
     }
   );
 
-  app.delete<{ Params: { id: string; songId: string } }>(
-    "/setlists/:id/items/:songId",
+  // Delete
+  app.delete<{ Params: { id: string } }>(
+    "/setlists/:id",
     async (req, reply) => {
-      const s = repo.removeItem(req.params.id, req.params.songId);
-      if (!s) return reply.code(404).send({ message: "Setlist not found" });
-      return s;
+      const ok = await deleteSetlist(req.params.id);
+      if (!ok) return reply.code(404).send({ message: "Setlist not found" });
+      return reply.code(204).send();
     }
   );
 
+  // Add item
   app.post<{ Params: { id: string }; Body: AddSetlistItemDto }>(
     "/setlists/:id/items",
     async (req, reply) => {
-      const s = repo.addItem(req.params.id, req.body);
-      if (!s) return reply.code(404).send({ message: "Setlist not found" });
-      return s;
+      const dto = req.body;
+
+      if (!dto?.songId?.trim()) {
+        return reply.code(400).send({ message: "songId is required" });
+      }
+
+      const res = await addSetlistItem(req.params.id, dto);
+
+      if (res === null)
+        return reply.code(404).send({ message: "Setlist not found" });
+      if ("error" in res && res.error === "duplicate") {
+        return reply.code(409).send({ message: "Song already in setlist" });
+      }
+
+      return res;
     }
   );
 
-  app.post<{ Params: { id: string }; Body: ReorderSetlistDto }>(
-    "/setlists/:id/reorder",
+  // Remove item
+  app.delete<{ Params: { id: string; songId: string } }>(
+    "/setlists/:id/items/:songId",
     async (req, reply) => {
-      const s = repo.reorder(req.params.id, req.body);
-      if (!s) return reply.code(404).send({ message: "Setlist not found" });
-      return s;
+      const updated = await removeSetlistItem(req.params.id, req.params.songId);
+      if (!updated)
+        return reply.code(404).send({ message: "Setlist not found" });
+      return updated;
     }
   );
-}
+
+  // Reorder
+  app.put<{ Params: { id: string }; Body: ReorderSetlistDto }>(
+    "/setlists/:id/reorder",
+    async (req, reply) => {
+      const dto = req.body;
+
+      if (!dto?.songIds || !Array.isArray(dto.songIds)) {
+        return reply.code(400).send({ message: "songIds is required" });
+      }
+
+      const updated = await reorderSetlist(req.params.id, dto);
+      if (!updated)
+        return reply.code(400).send({ message: "Invalid reorder payload" });
+      return updated;
+    }
+  );
+};
