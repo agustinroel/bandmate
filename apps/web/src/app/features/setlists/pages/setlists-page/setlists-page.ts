@@ -13,6 +13,7 @@ import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { NewSetlistDialogComponent } from '../../ui/new-setlist-dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { Router } from '@angular/router';
 
 @Component({
   standalone: true,
@@ -110,6 +111,18 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                     <mat-icon class="sl-pill-ic">music_note</mat-icon>
                     <span class="sl-pill-label">Songs</span>
                     <span class="sl-pill-value">{{ store.selected()!.items.length }}</span>
+                  </div>
+
+                  <div class="sl-head-actions">
+                    <button
+                      mat-raised-button
+                      color="primary"
+                      type="button"
+                      (click)="startPractice()"
+                    >
+                      <mat-icon class="me-1">play_arrow</mat-icon>
+                      Start practice
+                    </button>
                   </div>
                 </div>
               </div>
@@ -314,6 +327,12 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         gap: 10px;
       }
 
+      .sl-head-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 6px;
+      }
+
       .sl-pill {
         display: inline-flex;
         align-items: center;
@@ -433,8 +452,10 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
 export class SetlistsPageComponent {
   readonly store = inject(SetlistsStore);
   readonly songs = inject(SongsStore);
-  private snack = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+  readonly snack = inject(MatSnackBar);
+  readonly dialog = inject(MatDialog);
+
+  readonly router = inject(Router);
 
   readonly songQuery = signal('');
   readonly lastMovedId = signal<string | null>(null);
@@ -581,5 +602,11 @@ export class SetlistsPageComponent {
           this.snack.open(err?.message ?? 'Could not delete setlist', 'OK', { duration: 3000 }),
       });
     });
+  }
+
+  startPractice() {
+    const sel = this.store.selected();
+    if (!sel) return;
+    this.router.navigate(['/practice', sel.id]);
   }
 }

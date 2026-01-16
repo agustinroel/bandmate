@@ -58,12 +58,12 @@
 
       <mat-nav-list class="bm-nav">
         <a mat-list-item routerLink="/songs" routerLinkActive="active">
-          <mat-icon class="me-2">music_note</mat-icon>
-          Songs
+          <mat-icon matListItemIcon class="me-2">music_note</mat-icon>
+          <span>Songs</span>
         </a>
-        <a mat-list-item routerLink="/setlists" routerLinkActive="active">
-          <mat-icon class="me-2">queue_music</mat-icon>
-          Setlists
+        <a class="bm-nav-item" mat-list-item routerLink="/setlists" routerLinkActive="active">
+          <mat-icon matListItemIcon class="me-2">queue_music</mat-icon>
+          <span>Setlists</span>
         </a>
       </mat-nav-list>
     </div>
@@ -73,8 +73,8 @@
 
       <mat-nav-list class="bm-nav">
         <a mat-list-item routerLink="/practice" routerLinkActive="active">
-          <mat-icon class="me-2">fitness_center</mat-icon>
-          Practice
+          <mat-icon matListItemIcon class="me-2">fitness_center</mat-icon>
+          <span>Practice</span>
         </a>
       </mat-nav-list>
     </div>

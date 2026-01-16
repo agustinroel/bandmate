@@ -120,6 +120,17 @@ import { SongFormComponent } from '../../songs/features/songs/components/song-fo
           padding: 24px;
         }
       }
+      /* Botón primary deshabilitado (Song editor) */
+      :host ::ng-deep .p-controls .mat-mdc-raised-button.mat-mdc-button-disabled {
+        background-color: rgba(0, 0, 0, 0.08) !important;
+        color: rgba(0, 0, 0, 0.38) !important;
+        box-shadow: none !important;
+        cursor: not-allowed;
+      }
+
+      :host ::ng-deep .p-controls .mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon {
+        color: rgba(0, 0, 0, 0.38) !important;
+      }
     `,
   ],
 })

@@ -9,7 +9,42 @@ import { environment } from '../../../../environments/environment';
 
 const base = environment.apiBaseUrl;
 
-async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
+function isAbsoluteUrl(url: string) {
+  return /^https?:\/\//i.test(url);
+}
+
+function normalizePath(url: string) {
+  // convierte "api/x" -> "/api/x"
+  return url.startsWith('/') ? url : `/${url}`;
+}
+
+/**
+ * En browser: deja URLs relativas tal cual (proxy /api).
+ * En SSR/Node: necesita URL absoluta. En dev apuntamos a API local:
+ *   "/api/setlists" -> "http://localhost:3000/setlists"
+ *   "/songs" -> "http://localhost:3000/songs"
+ *
+ * Si querés cambiar el host/puerto del API en SSR:
+ * setear env var API_BASE_URL en el server (ej: http://localhost:3000)
+ */
+function toSsrAbsoluteUrl(url: string) {
+  if (isAbsoluteUrl(url)) return url;
+
+  const isServer = typeof window === 'undefined';
+  if (!isServer) return url;
+
+  const base = (process.env['API_BASE_URL'] as string) || 'http://localhost:3000';
+
+  const path = normalizePath(url);
+
+  // Si en el front usás proxy "/api", en SSR queremos pegar directo al API sin proxy.
+  // Entonces removemos el prefijo "/api"
+  const directPath = path.startsWith('/api/') ? path.slice(4) : path;
+
+  return `${base}${directPath}`;
+}
+
+export async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers ?? {});
 
   const hasBody =
@@ -22,7 +57,9 @@ async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(url, { ...init, headers });
+  const finalUrl = toSsrAbsoluteUrl(url);
+
+  const res = await fetch(finalUrl, { ...init, headers });
 
   if (!res.ok) {
     const ct = res.headers.get('content-type') ?? '';

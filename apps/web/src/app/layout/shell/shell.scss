@@ -67,6 +67,7 @@
 
 /* More breathing room for list items */
 .bm-nav .mat-mdc-list-item {
+
   border-radius: 12px;
   margin: 4px 6px;
   height: 44px;
@@ -86,5 +87,32 @@
   margin-top: auto;
   padding: 14px 16px 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.bm-nav-item{
+  display: flex;
+}
+
+/* Sidebar nav alignment */
+.mat-mdc-list-item {
+  align-items: center;
+}
+
+.mat-mdc-list-item .mat-mdc-list-item-icon,
+.mat-mdc-list-item mat-icon {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Asegura alineación vertical texto + icono */
+.mat-mdc-list-item .mdc-list-item__content {
+  display: flex;
+  align-items: center;
+}
+
+.mat-mdc-list-item mat-icon {
+  line-height: 1;
 }
 

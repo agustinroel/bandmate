@@ -4,6 +4,7 @@
    ========================================================= */
 
 @use '@angular/material' as mat;
+@use "bootstrap/scss/bootstrap";
 
 /* ---------- 1) Angular Material core ---------- */
 @include mat.core();
@@ -199,3 +200,45 @@ mat-form-field {
 .app-main mat-card {
   box-shadow: var(--bm-shadow-0);
 }
+
+/* =========================================================
+   Material buttons – clearer disabled state (global)
+   ========================================================= */
+
+/* Raised (mat-raised-button) */
+.mat-mdc-raised-button.mat-mdc-button-disabled {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+.mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon {
+  color: rgba(0, 0, 0, 0.38) !important;
+}
+
+/* Flat (mat-flat-button) */
+.mat-mdc-unelevated-button.mat-mdc-button-disabled {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+.mat-mdc-unelevated-button.mat-mdc-button-disabled .mat-icon {
+  color: rgba(0, 0, 0, 0.38) !important;
+}
+
+/* Outlined / stroked (mat-stroked-button) */
+.mat-mdc-outlined-button.mat-mdc-button-disabled {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  cursor: not-allowed;
+}
+
+.mat-mdc-outlined-button.mat-mdc-button-disabled .mat-icon {
+  color: rgba(0, 0, 0, 0.38) !important;
+}
+
+
+

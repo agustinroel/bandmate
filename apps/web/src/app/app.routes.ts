@@ -22,6 +22,14 @@ export const routes: Routes = [
       },
       {
         path: 'practice',
+        canMatch: [() => import('./features/practice/practice.guard').then((m) => m.practiceGuard)],
+        loadComponent: () =>
+          import('./features/practice/pages/practice-page/practice-page').then(
+            (m) => m.PracticePageComponent
+          ),
+      },
+      {
+        path: 'practice/:setlistId',
         loadComponent: () =>
           import('./features/practice/pages/practice-page/practice-page').then(
             (m) => m.PracticePageComponent
