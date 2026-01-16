@@ -5,6 +5,9 @@ import type {
   Setlist,
   UpdateSetlistDto,
 } from '@bandmate/shared';
+import { environment } from '../../../../environments/environment';
+
+const base = environment.apiBaseUrl;
 
 async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers ?? {});
@@ -41,44 +44,38 @@ async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
 
 export class SetlistsApi {
   list() {
-    return http<Setlist[]>('/api/setlists');
+    return http<Setlist[]>(`${base}/setlists`);
   }
 
   get(id: string) {
-    return http<Setlist>(`/api/setlists/${id}`);
+    return http<Setlist>(`${base}/setlists/${id}`);
   }
 
   create(dto: CreateSetlistDto) {
-    return http<Setlist>('/api/setlists', {
-      method: 'POST',
-      body: JSON.stringify(dto),
-    });
+    return http<Setlist>(`${base}/setlists`, { method: 'POST', body: JSON.stringify(dto) });
   }
 
   update(id: string, dto: UpdateSetlistDto) {
-    return http<Setlist>(`/api/setlists/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(dto),
-    });
+    return http<Setlist>(`${base}/setlists/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
   }
 
   remove(id: string) {
-    return http<void>(`/api/setlists/${id}`, { method: 'DELETE' });
+    return http<void>(`${base}/setlists/${id}`, { method: 'DELETE' });
   }
 
   addItem(id: string, dto: AddSetlistItemDto) {
-    return http<Setlist>(`/api/setlists/${id}/items`, {
+    return http<Setlist>(`${base}/setlists/${id}/items`, {
       method: 'POST',
       body: JSON.stringify(dto),
     });
   }
 
   removeItem(id: string, songId: string) {
-    return http<Setlist>(`/api/setlists/${id}/items/${songId}`, { method: 'DELETE' });
+    return http<Setlist>(`${base}/setlists/${id}/items/${songId}`, { method: 'DELETE' });
   }
 
   reorder(id: string, dto: ReorderSetlistDto) {
-    return http<Setlist>(`/api/setlists/${id}/reorder`, {
+    return http<Setlist>(`${base}/setlists/${id}/reorder`, {
       method: 'POST',
       body: JSON.stringify(dto),
     });

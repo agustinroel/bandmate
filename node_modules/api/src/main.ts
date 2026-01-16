@@ -3,10 +3,12 @@ import cors from "@fastify/cors";
 import type { CreateSongDto, Song, UpdateSongDto } from "@bandmate/shared";
 import { randomUUID } from "node:crypto";
 import { setlistsRoutes } from "./setlists/setlists.routes.js";
+import "dotenv/config";
 
+const corsOrigin = process.env.CORS_ORIGIN ?? "true";
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: true });
+await app.register(cors, { origin: corsOrigin === "true" ? true : corsOrigin });
 
 // ✅ Importante: NO prefix /api, porque el proxy ya lo recorta
 app.register(setlistsRoutes);

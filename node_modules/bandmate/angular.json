@@ -29,9 +29,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
@@ -54,7 +52,24 @@
               ],
               "outputHashing": "all"
             },
+            "pre": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.pre.ts"
+                }
+              ],
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
             "development": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ],
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
