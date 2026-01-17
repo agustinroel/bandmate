@@ -7,7 +7,9 @@
     "bpm": 66,
     "durationSec": 182,
     "notes": "Dinámica suave. Armonías en estribillo.",
-    "links": ["https://www.youtube.com/watch?v=UelDrZ1aFeY"],
+    "links": [
+      "https://www.youtube.com/watch?v=UelDrZ1aFeY"
+    ],
     "createdAt": "2026-01-01T10:00:00.000Z",
     "updatedAt": "2026-01-01T10:00:00.000Z"
   },
@@ -213,7 +215,7 @@
     "notes": "Letra protagonista.",
     "links": [],
     "createdAt": "2026-01-01T10:17:00.000Z",
-    "updatedAt": "2026-01-01T10:17:00.000Z"
+    "updatedAt": "2026-01-17T13:29:03.988Z"
   },
   {
     "id": "s19",
@@ -231,12 +233,12 @@
     "id": "s20",
     "title": "Don't Cry",
     "artist": "Guns N' Roses",
-    "key": "Am",
+    "key": "A#m",
     "bpm": 72,
     "durationSec": 284,
     "notes": "Balada.",
     "links": [],
     "createdAt": "2026-01-01T10:19:00.000Z",
-    "updatedAt": "2026-01-01T10:19:00.000Z"
+    "updatedAt": "2026-01-17T16:35:20.816Z"
   }
 ]

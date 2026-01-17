@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { catchError, finalize, tap, throwError } from 'rxjs';
-import type { CreateSongDto, Song, UpdateSongDto } from '@bandmate/shared';
+import type { CreateSongDto, Song, SongDetail, SongSection, UpdateSongDto } from '@bandmate/shared';
 import { SongsApiService } from '../data/songs-api.service';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
@@ -13,11 +13,20 @@ export class SongsStore {
   private _songs = signal<Song[]>([]);
   private _error = signal<string | null>(null);
 
+  // NEW: detail state (for Song detail page / editor)
+  private _detailState = signal<LoadState>('idle');
+  private _selected = signal<SongDetail | null>(null);
+  private _selectedError = signal<string | null>(null);
+
   readonly state = this._state.asReadonly();
   readonly songs = this._songs.asReadonly();
   readonly error = this._error.asReadonly();
-
   readonly count = computed(() => this._songs().length);
+
+  // NEW: readonly detail signals
+  readonly detailState = this._detailState.asReadonly();
+  readonly selected = this._selected.asReadonly();
+  readonly selectedError = this._selectedError.asReadonly();
 
   load() {
     this._state.set('loading');
@@ -28,9 +37,8 @@ export class SongsStore {
       .pipe(
         tap((songs) => this._songs.set(songs)),
         finalize(() => {
-          // si hubo error, state lo setea en el error handler
           if (this._state() !== 'error') this._state.set('ready');
-        })
+        }),
       )
       .subscribe({
         error: (err) => {
@@ -40,6 +48,10 @@ export class SongsStore {
       });
   }
 
+  /**
+   * Kept for compatibility (returns Observable from API).
+   * Note: this likely returns Song today, not SongDetail.
+   */
   loadOne(id: string) {
     this._error.set(null);
     return this.api.get(id);
@@ -59,7 +71,17 @@ export class SongsStore {
     return this.api.update(id, dto).pipe(
       tap((updated) => {
         this._songs.set(this._songs().map((s) => (s.id === id ? updated : s)));
-      })
+
+        // If we have selected detail for same song, reflect metadata updates there too
+        const sel = this._selected();
+        if (sel?.id === id) {
+          this._selected.set({
+            ...sel,
+            ...updated,
+            updatedAt: (updated as any)?.updatedAt ?? sel.updatedAt,
+          });
+        }
+      }),
     );
   }
 
@@ -68,10 +90,245 @@ export class SongsStore {
     this._songs.set(prev.filter((s) => s.id !== id));
 
     return this.api.remove(id).pipe(
+      tap(() => {
+        // If deleting the selected song, clear detail selection
+        if (this._selected()?.id === id) {
+          this._selected.set(null);
+          this._detailState.set('idle');
+          this._selectedError.set(null);
+        }
+      }),
       catchError((err) => {
         this._songs.set(prev); // rollback
         return throwError(() => err);
-      })
+      }),
     );
+  }
+
+  // -------------------------
+  // NEW: Detail (SongDetail)
+  // -------------------------
+
+  /**
+   * Loads the selected song detail for a detail page.
+   * Works even if API only returns Song (metadata): we normalize it into SongDetail.
+   */
+  loadDetail(id: string) {
+    this._detailState.set('loading');
+    this._selectedError.set(null);
+
+    // ✅ 1) Try local first (instant UX)
+    const local = loadDetailFromLocal(id);
+    if (local) {
+      // normalize to ensure required fields exist
+      const normalized = this.normalizeToDetail(local);
+      this._selected.set(normalized);
+      this._detailState.set('ready');
+      return;
+    }
+
+    // ✅ 2) Fallback to API
+    this.api
+      .get(id)
+      .pipe(
+        tap((result) => {
+          const detail = this.normalizeToDetail(result);
+          this._selected.set(detail);
+
+          // Save baseline so next open is instant
+          saveDetailToLocal(id, detail);
+        }),
+        finalize(() => {
+          if (this._detailState() !== 'error') this._detailState.set('ready');
+        }),
+      )
+      .subscribe({
+        error: (err) => {
+          this._detailState.set('error');
+          this._selectedError.set(err?.message ?? 'Failed to load song detail');
+        },
+      });
+  }
+
+  clearSelected() {
+    this._selected.set(null);
+    this._detailState.set('idle');
+    this._selectedError.set(null);
+  }
+
+  /**
+   * Local-only update for sections (useful for editor/autosave later).
+   * If you don’t have backend support yet, this still lets UI render/edit.
+   */
+  setSelectedSections(sections: SongSection[]) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    this._selected.set({
+      ...sel,
+      sections,
+      updatedAt: new Date().toISOString(),
+    });
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  addSection(partial?: { type?: any; name?: string }) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const nextOrder =
+      sel.sections.length === 0 ? 1 : Math.max(...sel.sections.map((s) => s.order)) + 1;
+
+    const newSection = {
+      id: cryptoRandomId(),
+      type: partial?.type ?? 'verse',
+      name: partial?.name ?? `Section ${nextOrder}`,
+      order: nextOrder,
+      lines: [{ id: cryptoRandomId(), kind: 'lyrics' as const, source: '' }],
+    };
+
+    this._selected.set({
+      ...sel,
+      sections: [...sel.sections, newSection],
+      updatedAt: new Date().toISOString(),
+    });
+
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  addLine(sectionId: string) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const sections = sel.sections.map((sec) => {
+      if (sec.id !== sectionId) return sec;
+      return {
+        ...sec,
+        lines: [...sec.lines, { id: cryptoRandomId(), kind: 'lyrics' as const, source: '' }],
+      };
+    });
+
+    this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  updateLine(sectionId: string, lineId: string, patch: { source?: string; text?: string }) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const sections = sel.sections.map((sec) => {
+      if (sec.id !== sectionId) return sec;
+
+      const lines = sec.lines.map((ln) => (ln.id === lineId ? { ...ln, ...patch } : ln));
+      return { ...sec, lines };
+    });
+
+    this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  /**
+   * Helper to create a minimal SongDetail draft locally (no API call).
+   * Useful when you click "Create song" and want to jump to editor immediately.
+   */
+  createDraftDetail(dto: CreateSongDto): SongDetail {
+    const now = new Date().toISOString();
+
+    const base: Song = {
+      id: `draft_${cryptoRandomId()}`,
+      title: dto.title,
+      artist: dto.artist,
+      key: dto.key,
+      bpm: dto.bpm,
+      durationSec: dto.durationSec,
+      notes: dto.notes,
+      links: dto.links,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const detail: SongDetail = {
+      ...base,
+      version: 1,
+      sections: dto.sections ?? createEmptySections(),
+    };
+
+    this._selected.set(detail);
+    this._detailState.set('ready');
+    this._selectedError.set(null);
+
+    return detail;
+  }
+
+  /**
+   * If API returns SongDetail, use it; if it returns Song, wrap it.
+   */
+  private normalizeToDetail(input: Song | SongDetail): SongDetail {
+    const asAny = input as any;
+
+    // If it already has sections/version, assume it's SongDetail
+    if (Array.isArray(asAny?.sections) && asAny?.version === 1) {
+      return input as SongDetail;
+    }
+
+    // Otherwise wrap metadata into a SongDetail skeleton
+    return {
+      ...(input as Song),
+      version: 1,
+      sections: [],
+    };
+  }
+}
+
+// -------------------------
+// Helpers (local)
+// -------------------------
+
+function createEmptySections(): SongSection[] {
+  return [
+    {
+      id: cryptoRandomId(),
+      type: 'verse',
+      name: 'Verse 1',
+      order: 1,
+      lines: [{ id: cryptoRandomId(), kind: 'lyrics', source: '' }],
+    },
+    {
+      id: cryptoRandomId(),
+      type: 'chorus',
+      name: 'Chorus',
+      order: 2,
+      lines: [{ id: cryptoRandomId(), kind: 'lyrics', source: '' }],
+    },
+  ];
+}
+
+function cryptoRandomId(): string {
+  // Works in modern browsers; good enough for MVP.
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `id_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+}
+
+const LS_PREFIX = 'bm_song_detail_';
+
+function loadDetailFromLocal(id: string) {
+  try {
+    const raw = localStorage.getItem(`${LS_PREFIX}${id}`);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveDetailToLocal(id: string, detail: any) {
+  try {
+    localStorage.setItem(`${LS_PREFIX}${id}`, JSON.stringify(detail));
+  } catch {
+    // ignore quota / private mode errors for MVP
   }
 }
