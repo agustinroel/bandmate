@@ -524,4 +524,76 @@
   right: -6px;
 }
 
+.bm-line-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* Estado “base”: oculto en desktop */
+.bm-line-del {
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease, background-color 160ms ease,
+    border-color 160ms ease, box-shadow 160ms ease;
+  //    background: transparent;
+  // border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Aparece cuando hover/focus dentro de la línea */
+.bm-line-row:hover .bm-line-del,
+.bm-line-row:focus-within .bm-line-del {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bm-line-row:hover .bm-line-del mat-icon {
+  opacity: 0.85;
+}
+
+.bm-line-del:hover {
+  transform: translateY(-1px);
+}
+.bm-line-del:active {
+  transform: translateY(0px);
+}
+
+
+/* Mobile/tablet: siempre visible */
+@media (hover: none), (pointer: coarse) {
+  .bm-line-del {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+
+/* Si tu textarea ocupa todo el ancho, asegurate de que pueda crecer */
+.bm-line-row .bm-line-input,
+.bm-line-row textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* El icono en sí: centrado real */
+.bm-line-del mat-icon {
+
+  font-size: 14px;
+
+}
+
+/* Active */
+.bm-line-del:active {
+  transform: translateY(1px);
+}
+
+
+
 

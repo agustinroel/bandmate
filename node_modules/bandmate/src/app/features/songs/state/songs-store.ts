@@ -180,10 +180,21 @@ export class SongsStore {
     const nextOrder =
       sel.sections.length === 0 ? 1 : Math.max(...sel.sections.map((s) => s.order)) + 1;
 
+    const type = partial?.type ?? 'verse';
+
+    const existingSameType = sel.sections.filter((s) => s.type === type).length;
+
+    const defaultName =
+      type === 'chorus'
+        ? 'Chorus'
+        : `${type.charAt(0).toUpperCase() + type.slice(1)} ${existingSameType + 1}`;
+
+    const name = partial?.name?.trim() || defaultName;
+
     const newSection = {
       id: cryptoRandomId(),
-      type: partial?.type ?? 'verse',
-      name: partial?.name ?? `Section ${nextOrder}`,
+      type: type,
+      name: name,
       order: nextOrder,
       lines: [{ id: cryptoRandomId(), kind: 'lyrics' as const, source: '' }],
     };
@@ -194,6 +205,55 @@ export class SongsStore {
       updatedAt: new Date().toISOString(),
     });
 
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  updateSection(sectionId: string, patch: { type?: any; name?: string; repeats?: number }) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const sections = sel.sections.map((sec) => {
+      if (sec.id !== sectionId) return sec;
+      return {
+        ...sec,
+        ...patch,
+        name: patch.name?.trim() || sec.name,
+      };
+    });
+
+    this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  removeSection(sectionId: string) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const sections = sel.sections.filter((s) => s.id !== sectionId);
+
+    // opcional: reordenar "order" para que quede prolijo (1..n)
+    const normalized = sections
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((s, i) => ({ ...s, order: i + 1 }));
+
+    this._selected.set({ ...sel, sections: normalized, updatedAt: new Date().toISOString() });
+    const updated = this._selected();
+    if (updated) saveDetailToLocal(updated.id, updated);
+  }
+
+  removeLine(sectionId: string, lineId: string) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    const sections = sel.sections.map((sec) => {
+      if (sec.id !== sectionId) return sec;
+      return { ...sec, lines: sec.lines.filter((ln) => ln.id !== lineId) };
+    });
+
+    this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
   }
@@ -247,6 +307,7 @@ export class SongsStore {
       durationSec: dto.durationSec,
       notes: dto.notes,
       links: dto.links,
+
       createdAt: now,
       updatedAt: now,
     };

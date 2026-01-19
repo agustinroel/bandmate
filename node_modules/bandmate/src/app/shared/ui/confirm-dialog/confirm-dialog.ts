@@ -7,7 +7,7 @@ export type ConfirmDialogData = {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  danger?: boolean;
+  tone?: 'danger' | 'neutral';
 };
 
 @Component({
@@ -27,7 +27,7 @@ export type ConfirmDialogData = {
 
       <button
         mat-raised-button
-        [color]="data.danger ? 'warn' : 'primary'"
+        [color]="data.tone === 'danger' ? 'warn' : 'primary'"
         [mat-dialog-close]="true"
         cdkFocusInitial
       >

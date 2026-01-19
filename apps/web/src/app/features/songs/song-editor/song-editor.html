@@ -123,16 +123,36 @@
                   <div class="d-flex align-items-center gap-2">
                     <div class="bm-section-meta">{{ sec.type }} · #{{ sec.order }}</div>
 
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      class="bm-add-line"
-                      (click)="addLine(sec.id)"
-                      [disabled]="viewMode() === 'view'"
-                    >
-                      <mat-icon class="bm-btn-ic">add</mat-icon>
-                      Add line
-                    </button>
+                    @if (viewMode() === 'edit') {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="bm-add-line"
+                        (click)="addLine(sec.id)"
+                      >
+                        <mat-icon class="bm-btn-ic">add</mat-icon>
+                        Add line
+                      </button>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="bm-sec-edit"
+                        aria-label="Edit section"
+                        (click)="editSection(sec); $event.stopPropagation()"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="bm-sec-del"
+                        aria-label="Delete section"
+                        (click)="deleteSection(sec.id); $event.stopPropagation()"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
                   </div>
                 </div>
 
@@ -140,13 +160,24 @@
                   @for (line of sec.lines; track line.id) {
                     @if (line.kind === 'lyrics') {
                       @if (viewMode() === 'edit') {
-                        <textarea
-                          class="bm-line-input"
-                          rows="2"
-                          placeholder="Type lyrics and chords like: [Am]Hello [G]world"
-                          [value]="line.source ?? ''"
-                          (input)="onLineInput(sec.id, line.id, $any($event.target).value)"
-                        ></textarea>
+                        <div class="bm-line-row">
+                          <textarea
+                            class="bm-line-input"
+                            rows="2"
+                            placeholder="Type lyrics and chords like: [Am]Hello [G]world"
+                            [value]="line.source ?? ''"
+                            (input)="onLineInput(sec.id, line.id, $any($event.target).value)"
+                          ></textarea>
+                          <button
+                            mat-icon-button
+                            type="button"
+                            class="bm-line-del"
+                            aria-label="Delete line"
+                            (click)="deleteLine(sec.id, line.id); $event.stopPropagation()"
+                          >
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
                       }
 
                       @let built = buildLayout(line.source ?? '');
@@ -201,7 +232,7 @@
                       </div>
                       <div class="bm-chord-section-title">Guitar</div>
                       <div class="bm-shapes">
-                        @let shapes = info.shapes ?? [];
+                        @let shapes = info.shapes;
                         @let total = shapes.length;
                         @let idx = chordShapeIndex();
 

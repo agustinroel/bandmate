@@ -44,7 +44,7 @@ import { NgClass } from '@angular/common';
     </div>
 
     @if (store.state() === 'loading') {
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
     }
 
     <div class="mt-3">
@@ -60,91 +60,93 @@ import { NgClass } from '@angular/common';
         />
 
         @if (query()) {
-        <button mat-icon-button matSuffix (click)="query.set('')" aria-label="Clear">
-          <mat-icon>close</mat-icon>
-        </button>
+          <button mat-icon-button matSuffix (click)="query.set('')" aria-label="Clear">
+            <mat-icon>close</mat-icon>
+          </button>
         }
       </mat-form-field>
     </div>
 
     @if (store.error()) {
-    <div class="alert alert-danger mt-2">
-      {{ store.error() }}
-    </div>
-    } @if (store.state() !== 'loading' && filtered().length === 0) {
-    <div class="text-center py-5">
-      <mat-icon style="font-size: 48px; height: 48px; width: 48px;" class="opacity-50">
-        music_off
-      </mat-icon>
-
-      <div class="mt-2 fw-semibold">No songs found</div>
-
-      <div class="small opacity-75 mb-3">
-        {{
-          store.count() === 0
-            ? 'Add your first song to start building setlists.'
-            : 'Try a different search.'
-        }}
+      <div class="alert alert-danger mt-2">
+        {{ store.error() }}
       </div>
+    }
+    @if (store.state() !== 'loading' && filtered().length === 0) {
+      <div class="text-center py-5">
+        <mat-icon style="font-size: 48px; height: 48px; width: 48px;" class="opacity-50">
+          music_off
+        </mat-icon>
 
-      @if (store.count() === 0) {
-      <button mat-stroked-button color="primary" (click)="goNew()">Add your first song</button>
-      }
-    </div>
+        <div class="mt-2 fw-semibold">No songs found</div>
+
+        <div class="small opacity-75 mb-3">
+          {{
+            store.count() === 0
+              ? 'Add your first song to start building setlists.'
+              : 'Try a different search.'
+          }}
+        </div>
+
+        @if (store.count() === 0) {
+          <button mat-stroked-button color="primary" (click)="goNew()">Add your first song</button>
+        }
+      </div>
     } @else if (filtered().length > 0) {
-    <div class="songs-grid">
-      @for (s of filtered(); track s.id) {
-      <mat-card class="song-card" (click)="goEdit(s.id)">
-        <div class="song-top">
-          <div class="song-main">
-            <div class="song-title-row">
-              <div class="song-title" [title]="s.title">{{ s.title }}</div>
+      <div class="songs-grid">
+        @for (s of filtered(); track s.id) {
+          <mat-card class="song-card" (click)="goEdit(s.id)">
+            <div class="song-top">
+              <div class="song-main">
+                <div class="song-title-row">
+                  <div class="song-title" [title]="s.title">{{ s.title }}</div>
 
-              @if (s.key) {
-              <span class="pill pill-key" [ngClass]="keyClass(s.key)"> Key {{ s.key }} </span>
-              }
+                  @if (s.key) {
+                    <span class="pill pill-key" [ngClass]="keyClass(s.key)"> Key {{ s.key }} </span>
+                  }
+                </div>
+
+                <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+              </div>
+
+              <div class="song-actions">
+                <button
+                  mat-icon-button
+                  (click)="goEdit(s.id); $event.stopPropagation()"
+                  matTooltip="Edit"
+                  aria-label="Edit"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  (click)="askDelete(s.id, s.title); $event.stopPropagation()"
+                  matTooltip="Delete"
+                  aria-label="Delete"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </div>
 
-            <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
-          </div>
-
-          <div class="song-actions">
-            <button
-              mat-icon-button
-              (click)="goEdit(s.id); $event.stopPropagation()"
-              matTooltip="Edit"
-              aria-label="Edit"
-            >
-              <mat-icon>edit</mat-icon>
-            </button>
-
-            <button
-              mat-icon-button
-              (click)="askDelete(s.id, s.title); $event.stopPropagation()"
-              matTooltip="Delete"
-              aria-label="Delete"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </div>
-
-        <div class="song-meta">
-          @if (s.bpm) {
-          <span class="pill pill-neutral">
-            <mat-icon class="pill-ic">speed</mat-icon>
-            <span>{{ s.bpm }} BPM</span>
-          </span>
-          } @if (durationLabel(s.durationSec)) {
-          <span class="pill pill-neutral">
-            <mat-icon class="pill-ic">schedule</mat-icon>
-            <span>{{ durationLabel(s.durationSec) }}</span>
-          </span>
-          }
-        </div>
-      </mat-card>
-      }
-    </div>
+            <div class="song-meta">
+              @if (s.bpm) {
+                <span class="pill pill-neutral">
+                  <mat-icon class="pill-ic">speed</mat-icon>
+                  <span>{{ s.bpm }} BPM</span>
+                </span>
+              }
+              @if (durationLabel(s.durationSec)) {
+                <span class="pill pill-neutral">
+                  <mat-icon class="pill-ic">schedule</mat-icon>
+                  <span>{{ durationLabel(s.durationSec) }}</span>
+                </span>
+              }
+            </div>
+          </mat-card>
+        }
+      </div>
     } `,
   styles: [
     `
@@ -173,6 +175,9 @@ import { NgClass } from '@angular/common';
         display: grid;
         gap: 16px;
         grid-template-columns: 1fr;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
       }
 
       @media (min-width: 768px) {
@@ -190,7 +195,9 @@ import { NgClass } from '@angular/common';
       .bm-song-card {
         cursor: pointer;
         border-radius: 16px;
-        transition: transform 120ms ease, box-shadow 120ms ease;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease;
       }
 
       .bm-song-card:hover {

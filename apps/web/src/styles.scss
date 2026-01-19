@@ -27,6 +27,10 @@
 
   /* Typography */
   --bm-font: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+  --bm-petrol-900: #163c40;
+  --bm-petrol-850: #1a4347;
+  --bm-petrol-800: #1f4b50;
 }
 
 /* ---------- 3) Material Theme (M2 API under m2-*) ----------
@@ -73,7 +77,9 @@ body {
 
 /* ---------- 5) Shell hooks (safe) ---------- */
 .app-toolbar {
-  background: var(--bm-primary) !important;
+ background: radial-gradient(1200px 420px at 20% -40%, rgba(255,255,255,0.08), transparent 60%),
+              radial-gradient(900px 420px at 80% 0%, rgba(201,162,39,0.10), transparent 55%),
+              linear-gradient(180deg, var(--bm-petrol-800), var(--bm-petrol-900)) !important;
   color: white !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 
@@ -152,6 +158,23 @@ a.active mat-icon {
   border-top: 1px solid var(--bm-border);
 }
 
+.app-main {
+  background:
+    radial-gradient(
+      1200px 400px at 50% -200px,
+      rgba(20,55,58,0.06),
+      transparent 60%
+    ),
+    #f6f8f7;
+}
+
+
+
+
+mat-sidenav-content {
+  background: #fafafa; /* o un off-white */
+}
+
 /* ---------- 6) Surfaces + spacing (SCOPED) ----------
    IMPORTANT: Avoid global mat-card / a styles that can affect layout.
    We scope to main content area.
@@ -160,6 +183,7 @@ a.active mat-icon {
   background: var(--bm-surface);
   border: 1px solid var(--bm-border);
   border-radius: 16px;
+  
 }
 
 /* Ensure Material form fields behave consistently */
@@ -327,6 +351,7 @@ mat-form-field {
   white-space: nowrap; /* ✅ evita que se parta */
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(0, 0, 0, 0.04);
+  margin-right: 10px
 }
 
 .pill-ic {

@@ -16,6 +16,12 @@ import { ChordLyricLayout, ChordPlacement, toChordLyricLayout } from '../utils/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { parseChord, chordNotes } from '../../songs/utils/chords'; // ajustá path
 import { getGuitarShapes } from '../../songs/utils/guitar-shapes';
+import { MatDialog } from '@angular/material/dialog';
+import { AddSectionDialogComponent } from '../components/add-section-dialog/add-section.dialog';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../../shared/ui/confirm-dialog/confirm-dialog';
 
 @Component({
   standalone: true,
@@ -39,6 +45,8 @@ export class SongEditorPageComponent {
   readonly snack = inject(MatSnackBar);
 
   readonly store = inject(SongsStore);
+
+  readonly dialog = inject(MatDialog);
 
   readonly saving = signal(false);
   readonly viewMode = signal<'edit' | 'view'>('edit');
@@ -142,7 +150,62 @@ export class SongEditorPageComponent {
   goBack = () => this.router.navigate(['/songs']);
 
   addSection() {
-    this.store.addSection({ type: 'verse', name: 'Verse' });
+    const ref = this.dialog.open(AddSectionDialogComponent, {
+      autoFocus: false,
+      restoreFocus: false,
+      panelClass: 'bm-dialog',
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.store.addSection(result); // { type, name? }
+    });
+  }
+
+  editSection(sec: any) {
+    const ref = this.dialog.open(AddSectionDialogComponent, {
+      autoFocus: false,
+      restoreFocus: false,
+      panelClass: 'bm-dialog',
+      data: {
+        mode: 'edit',
+        initialType: sec.type,
+        initialName: sec.name ?? '',
+      },
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.store.updateSection(sec.id, result);
+    });
+  }
+
+  deleteSection(sectionId: string) {
+    const section = this.store.selected()?.sections.find((s) => s.id === sectionId);
+
+    this.confirm({
+      title: 'Delete section',
+      message: `Delete "${section?.name ?? 'this section'}" and all its lines?`,
+      confirmText: 'Delete section',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    }).subscribe((ok) => {
+      if (!ok) return;
+      this.store.removeSection(sectionId);
+    });
+  }
+
+  deleteLine(sectionId: string, lineId: string) {
+    this.confirm({
+      title: 'Delete line',
+      message: 'This will remove the line content. You can’t undo this yet (MVP).',
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      tone: 'danger',
+    }).subscribe((ok) => {
+      if (!ok) return;
+      this.store.removeLine(sectionId, lineId); // tu método nuevo
+    });
   }
 
   addLine(sectionId: string) {
@@ -196,17 +259,15 @@ export class SongEditorPageComponent {
     this.snack.open(`Transposed song ${step > 0 ? '+' : ''}${step}`, 'OK', { duration: 1200 });
   }
 
-  openChordPopover(chord: string, ev: MouseEvent) {
-    // ... tu lógica actual para setear chord seleccionado + abrir menu
-    if (this._openedChord() !== chord) {
-      this._openedChord.set(chord);
-      this.chordShapeIndex.set(0);
-    }
-  }
-
-  onPopoverClosed() {
-    this._openedChord.set(null);
-    this.chordShapeIndex.set(0);
+  private confirm(data: ConfirmDialogData) {
+    return this.dialog
+      .open(ConfirmDialogComponent, {
+        data,
+        width: '360px',
+        autoFocus: false,
+        restoreFocus: true,
+      })
+      .afterClosed(); // Observable<boolean>
   }
 
   prevShape(total: number) {

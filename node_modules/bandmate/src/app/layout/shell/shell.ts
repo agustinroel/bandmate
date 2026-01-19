@@ -9,7 +9,9 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   standalone: true,
   imports: [
@@ -22,6 +24,9 @@ import { MatButtonModule } from '@angular/material/button';
     MatIconModule,
     MatListModule,
     MatButtonModule,
+    MatMenuModule,
+    MatDividerModule,
+    MatTooltipModule,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -31,9 +36,19 @@ export class ShellComponent {
 
   readonly isHandset$ = this.bo.observe(Breakpoints.Handset).pipe(
     map((r) => r.matches),
-    shareReplay({ bufferSize: 1, refCount: true })
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   appName = 'Bandmate';
   version = 'v0.1';
+
+  onLogin() {
+    console.log('login');
+  }
+  onLogout() {
+    console.log('logout');
+  }
+  onUpgrade() {
+    console.log('upgrade');
+  }
 }

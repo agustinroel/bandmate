@@ -3,37 +3,98 @@
     <mat-icon>menu</mat-icon>
   </button>
 
-  <div class="app-brand">
+  <!-- Brand -->
+  <a class="app-brand" routerLink="/" aria-label="Bandmate home">
+    <img
+      class="app-mark"
+      src="/assets/brand/Bandmate logo gold transparent.png"
+      alt="Bandmate"
+      loading="eager"
+      decoding="async"
+    />
     <span class="app-name">{{ appName }}</span>
     <span class="app-version">{{ version }}</span>
-  </div>
+  </a>
 
   <span class="app-nav-separator"></span>
 
-  <a mat-button routerLink="/songs" routerLinkActive="active-top">
-    <mat-icon class="me-1">music_note</mat-icon>
-    Songs
-  </a>
+  <!-- Top nav -->
+  <nav class="app-top-nav" aria-label="Primary">
+    <a mat-button routerLink="/songs" routerLinkActive="active-top">
+      <mat-icon class="me-1">music_note</mat-icon>
+      Songs
+    </a>
 
-  <a
-    mat-button
-    routerLink="/setlists"
-    routerLinkActive="active-top"
-    class="d-none d-md-inline-flex"
-  >
-    <mat-icon class="me-1">queue_music</mat-icon>
-    Setlists
-  </a>
+    <a
+      mat-button
+      routerLink="/setlists"
+      routerLinkActive="active-top"
+      class="d-none d-md-inline-flex"
+    >
+      <mat-icon class="me-1">queue_music</mat-icon>
+      Setlists
+    </a>
 
-  <a
-    mat-button
-    routerLink="/practice"
-    routerLinkActive="active-top"
-    class="d-none d-md-inline-flex"
+    <a
+      mat-button
+      routerLink="/practice"
+      routerLinkActive="active-top"
+      class="d-none d-md-inline-flex"
+    >
+      <mat-icon class="me-1">fitness_center</mat-icon>
+      Practice
+    </a>
+  </nav>
+
+  <span class="flex-grow-1"></span>
+
+  <!-- Upgrade CTA (placeholder) -->
+  <button
+    mat-stroked-button
+    class="app-upgrade d-none d-md-inline-flex"
+    type="button"
+    (click)="onUpgrade()"
+    matTooltip="Upgrade (placeholder)"
   >
-    <mat-icon class="me-1">fitness_center</mat-icon>
-    Practice
-  </a>
+    <mat-icon class="me-1">workspace_premium</mat-icon>
+    Upgrade
+  </button>
+
+  <!-- User menu (placeholder) -->
+  <button
+    mat-icon-button
+    class="app-user-btn"
+    [matMenuTriggerFor]="userMenu"
+    aria-label="User menu"
+  >
+    <span class="app-avatar" aria-hidden="true">AR</span>
+  </button>
+
+  <mat-menu #userMenu="matMenu" xPosition="before" yPosition="below" class="app-user-menu">
+    <div class="app-user-menu-head">
+      <div class="app-user-name">Agustín Roel</div>
+      <div class="app-user-sub">Local profile (MVP)</div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item type="button" (click)="onLogin()">
+      <mat-icon>login</mat-icon>
+      <span>Login</span>
+    </button>
+
+    <button mat-menu-item type="button" (click)="onLogout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item type="button" routerLink="/settings">
+      <mat-icon>settings</mat-icon>
+      <span>Settings</span>
+    </button>
+  </mat-menu>
 </mat-toolbar>
 
 <mat-sidenav-container class="app-container">
@@ -45,10 +106,13 @@
   >
     <div class="bm-sidenav-header">
       <div class="bm-sidenav-brand">
-        <div class="bm-sidenav-logo" aria-hidden="true">BM</div>
-        <div>
-          <div class="fw-semibold">Bandmate</div>
-          <div class="small opacity-75">Prep • Rehearse • Play</div>
+        <div class="bm-sidenav-logo" aria-hidden="true">
+          <img src="assets/brand/Bandmate logo tale transparent.png" alt="" />
+        </div>
+
+        <div class="min-w-0">
+          <div class="fw-semibold bm-side-title">Bandmate</div>
+          <div class="small opacity-75 bm-side-sub">Prep • Rehearse • Play</div>
         </div>
       </div>
     </div>
@@ -61,7 +125,8 @@
           <mat-icon matListItemIcon class="me-2">music_note</mat-icon>
           <span>Songs</span>
         </a>
-        <a class="bm-nav-item" mat-list-item routerLink="/setlists" routerLinkActive="active">
+
+        <a mat-list-item routerLink="/setlists" routerLinkActive="active">
           <mat-icon matListItemIcon class="me-2">queue_music</mat-icon>
           <span>Setlists</span>
         </a>

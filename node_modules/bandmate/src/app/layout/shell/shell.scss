@@ -1,16 +1,196 @@
+:host {
+  /* alturas reales típicas de Material */
+  --bm-toolbar-h: 64px;
+  --bm-footer-h: 44px;
+}
+
+@media (max-width: 599px) {
+  :host {
+    --bm-toolbar-h: 56px;
+  }
+}
+
+:root{
+  --bm-petrol-900: #163c40;
+  --bm-petrol-850: #1a4347;
+  --bm-petrol-800: #1f4b50;
+}
+
+/* ---------- Toolbar ---------- */
 .app-toolbar {
   position: sticky;
   top: 0;
   z-index: 10;
+  height: var(--bm-toolbar-h);
+
+  /* premium look */
+  backdrop-filter: saturate(1.1) blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Brand */
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.app-mark {
+  width: 30px;   /* antes 26 */
+  height: 30px;  /* antes 26 */
+  display: block;
+  transform: translateY(-0.5px); /* micro ajuste visual */
+}
+
+.app-name {
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  font-size: 1.02rem;
+}
+
+.app-version {
+  margin-left: 6px;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  transform: translateY(0.5px);
+}
+
+.app-nav-separator {
+  width: 16px;
+}
+
+.app-top-nav a.active-top {
+  background: rgba(201, 162, 39, 0.12);
+  border-radius: 999px;
+}
+
+.app-upgrade {
+  position: relative;
+  overflow: hidden;           /* CLAVE: recorta el shine */
+  isolation: isolate;         /* evita mezclas raras con el toolbar */
+  border-radius: 999px;
+
+  padding: 6px 12px;
+  line-height: 1;
+  margin-right: 8px;
+
+  border: 1px solid rgba(213, 179, 98, 0.9);
+  background: linear-gradient(180deg, rgba(255, 232, 160, 0.55), rgba(201, 162, 39, 0.35));
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.app-upgrade::before {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;           /* lo hacemos grande, pero queda recortado */
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 35%,
+    transparent 70%
+  );
+  transform: translateX(-120%) rotate(8deg);
+  opacity: 0.0;
+  pointer-events: none;
+  z-index: -1;                /* queda “debajo” del contenido del botón */
+}
+
+.app-upgrade:hover::before {
+  opacity: 0.9;
+  transform: translateX(120%) rotate(8deg);
+  transition: transform 700ms ease, opacity 250ms ease;
+}
+
+.app-upgrade:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.25), 0 8px 18px rgba(0,0,0,0.28);
+}
+
+/* Si el user tiene reduced motion, evitamos el barrido */
+@media (prefers-reduced-motion: reduce) {
+  .app-upgrade,
+  .app-upgrade::after {
+    transition: none !important;
+  }
+
+  .app-upgrade:hover {
+    transform: none;
+  }
+
+  .app-upgrade:hover::after {
+    opacity: 0.0;
+  }
+}
+
+.app-upgrade mat-icon {
+  margin-right: 6px;
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: rgba(255, 236, 175, 0.95);
+}
+
+
+.app-user-btn {
+  margin-left: 2px;
+}
+
+.app-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* user menu header */
+.app-user-card {
+  pointer-events: none;
+  opacity: 1 !important;
+}
+
+.app-user-name {
+   font-weight: 850;
+  letter-spacing: -0.01em;
+}
+
+.app-user-sub {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* User menu */
+.app-user-menu-head {
+  padding: 12px 16px 10px;
+}
+
+/* Alinea icono + label perfecto en mat-menu-item */
+:host ::ng-deep .mat-mdc-menu-item {
+  gap: 10px;
+}
+
+:host ::ng-deep .mat-mdc-menu-item .mat-icon {
+  margin-right: 6px;
+}
+
+/* ---------- Layout ---------- */
 .app-container {
-  height: calc(100vh - 64px);
+  height: calc(100vh - var(--bm-toolbar-h));
 }
 
 .app-main {
-  min-height: calc(100vh - 64px - 44px);
-  padding: 16px;
+  
+  min-height: calc(100vh - var(--bm-toolbar-h) - var(--bm-footer-h));
+  padding: 22px 16px 16px; /* 👈 clave para que no quede pegado arriba */
 }
 
 .content-wrap {
@@ -19,13 +199,13 @@
 }
 
 .app-footer {
-  height: 44px;
+  height: var(--bm-footer-h);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
 }
 
-/* ---------- Bandmate sidenav ---------- */
+/* ---------- Sidenav ---------- */
 .bm-sidenav {
   width: 280px;
 }
@@ -41,15 +221,36 @@
   gap: 12px;
 }
 
+.bm-sidenav-brand .fw-semibold {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .bm-sidenav-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+
   display: grid;
   place-items: center;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  background: rgba(201, 162, 39, 0.18);
+
+  background: rgba(201, 162, 39, 0.18); // dorado suave
+}
+
+
+.bm-sidenav-logo img {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+
+.bm-side-title {
+  line-height: 1.1;
+}
+
+.bm-side-sub {
+  line-height: 1.1;
 }
 
 .bm-sidenav-section {
@@ -59,21 +260,19 @@
 .bm-sidenav-section-title {
   padding: 0 8px 8px;
   font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.55;
 }
 
-/* More breathing room for list items */
+/* list items */
 .bm-nav .mat-mdc-list-item {
-
   border-radius: 12px;
   margin: 4px 6px;
   height: 44px;
 }
 
-/* Active item looks more “app-like” */
 .bm-nav a.active {
   background: rgba(201, 162, 39, 0.14) !important;
   font-weight: 650;
@@ -89,11 +288,7 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.bm-nav-item{
-  display: flex;
-}
-
-/* Sidebar nav alignment */
+/* alignment */
 .mat-mdc-list-item {
   align-items: center;
 }
@@ -106,7 +301,6 @@
   justify-content: center;
 }
 
-/* Asegura alineación vertical texto + icono */
 .mat-mdc-list-item .mdc-list-item__content {
   display: flex;
   align-items: center;
@@ -115,4 +309,3 @@
 .mat-mdc-list-item mat-icon {
   line-height: 1;
 }
-
