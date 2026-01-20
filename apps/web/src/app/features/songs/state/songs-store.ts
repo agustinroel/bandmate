@@ -7,16 +7,18 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
 @Injectable({ providedIn: 'root' })
 export class SongsStore {
-  private api = inject(SongsApiService);
+  readonly api = inject(SongsApiService);
 
-  private _state = signal<LoadState>('idle');
-  private _songs = signal<Song[]>([]);
-  private _error = signal<string | null>(null);
+  readonly _state = signal<LoadState>('idle');
+  readonly _songs = signal<Song[]>([]);
+  readonly _error = signal<string | null>(null);
 
   // NEW: detail state (for Song detail page / editor)
-  private _detailState = signal<LoadState>('idle');
-  private _selected = signal<SongDetail | null>(null);
-  private _selectedError = signal<string | null>(null);
+  readonly _detailState = signal<LoadState>('idle');
+  readonly _selected = signal<SongDetail | null>(null);
+  readonly _selectedError = signal<string | null>(null);
+
+  readonly _detailDirtyTick = signal(0);
 
   readonly state = this._state.asReadonly();
   readonly songs = this._songs.asReadonly();
@@ -24,6 +26,11 @@ export class SongsStore {
   readonly count = computed(() => this._songs().length);
 
   // NEW: readonly detail signals
+  readonly detailDirtyTick = this._detailDirtyTick.asReadonly();
+
+  private markDetailDirty() {
+    this._detailDirtyTick.update((n) => n + 1);
+  }
   readonly detailState = this._detailState.asReadonly();
   readonly selected = this._selected.asReadonly();
   readonly selectedError = this._selectedError.asReadonly();
@@ -171,6 +178,7 @@ export class SongsStore {
     });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   addSection(partial?: { type?: any; name?: string }) {
@@ -207,6 +215,7 @@ export class SongsStore {
 
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   updateSection(sectionId: string, patch: { type?: any; name?: string; repeats?: number }) {
@@ -225,6 +234,7 @@ export class SongsStore {
     this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   removeSection(sectionId: string) {
@@ -242,6 +252,7 @@ export class SongsStore {
     this._selected.set({ ...sel, sections: normalized, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   removeLine(sectionId: string, lineId: string) {
@@ -256,6 +267,7 @@ export class SongsStore {
     this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   addLine(sectionId: string) {
@@ -273,6 +285,7 @@ export class SongsStore {
     this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   updateLine(sectionId: string, lineId: string, patch: { source?: string; text?: string }) {
@@ -289,6 +302,7 @@ export class SongsStore {
     this._selected.set({ ...sel, sections, updatedAt: new Date().toISOString() });
     const updated = this._selected();
     if (updated) saveDetailToLocal(updated.id, updated);
+    this.markDetailDirty();
   }
 
   /**
@@ -342,6 +356,24 @@ export class SongsStore {
       version: 1,
       sections: [],
     };
+  }
+
+  patchSelectedMeta(patch: Partial<CreateSongDto>) {
+    const sel = this._selected();
+    if (!sel) return;
+
+    // OJO: NO toco updatedAt acá para que no te genere ruido.
+    // Si querés, updatedAt solo cuando realmente guardó backend.
+    this._selected.set({
+      ...sel,
+      title: patch.title ?? sel.title,
+      artist: patch.artist ?? sel.artist,
+      key: (patch.key as any) ?? sel.key,
+      bpm: (patch.bpm as any) ?? sel.bpm,
+      durationSec: (patch.durationSec as any) ?? sel.durationSec,
+      notes: (patch.notes as any) ?? sel.notes,
+      links: (patch.links as any) ?? sel.links,
+    });
   }
 }
 

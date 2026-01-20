@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.component';
 @Component({
   standalone: true,
   imports: [
@@ -27,7 +28,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatMenuModule,
     MatDividerModule,
     MatTooltipModule,
+    ErrorBoundaryComponent,
   ],
+  selector: 'app-shell',
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })

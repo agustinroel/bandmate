@@ -92,10 +92,10 @@
     "key": "Em",
     "bpm": 87,
     "durationSec": 258,
-    "notes": "Ritmo constante con púa.",
+    "notes": "Ritmo constante con púa. Capo en 2.",
     "links": [],
     "createdAt": "2026-01-01T10:07:00.000Z",
-    "updatedAt": "2026-01-01T10:07:00.000Z"
+    "updatedAt": "2026-01-19T16:38:14.027Z"
   },
   {
     "id": "s9",
@@ -233,12 +233,12 @@
     "id": "s20",
     "title": "Don't Cry",
     "artist": "Guns N' Roses",
-    "key": "Am",
+    "key": "A#m",
     "bpm": 72,
     "durationSec": 284,
-    "notes": "Balada.",
+    "notes": "Balada. Temazo de Guns & Roses",
     "links": [],
     "createdAt": "2026-01-01T10:19:00.000Z",
-    "updatedAt": "2026-01-19T10:00:53.527Z"
+    "updatedAt": "2026-01-19T13:48:19.843Z"
   }
 ]

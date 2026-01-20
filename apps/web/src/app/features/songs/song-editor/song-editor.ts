@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, finalize, map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,6 +22,52 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../shared/ui/confirm-dialog/confirm-dialog';
+import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
+
+type SongMetaSnapshot = {
+  title: string;
+  artist: string;
+  key: string | null;
+  bpm: string | number | null;
+  durationSec: string | number | null;
+  notes: string | null;
+  links: any | null; // o tipalo mejor si lo tenés
+};
+
+type SaveUiState = 'idle' | 'saving' | 'saved' | 'error';
+
+function stableStringify(value: any): string {
+  // stringify estable (ordenando keys) para comparar objetos sin falsos positivos
+  const seen = new WeakSet();
+  return JSON.stringify(value, function (key, val) {
+    if (val && typeof val === 'object') {
+      if (seen.has(val)) return;
+      seen.add(val);
+
+      if (Array.isArray(val)) return val;
+
+      return Object.keys(val)
+        .sort()
+        .reduce((acc: any, k) => {
+          acc[k] = (val as any)[k];
+          return acc;
+        }, {});
+    }
+    return val;
+  });
+}
+
+function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
+  return {
+    title: (d.title ?? '').trim(),
+    artist: (d.artist ?? '').trim(),
+    key: (d.key ?? '').toString().trim() || null,
+    bpm: d.bpm ?? null,
+    durationSec: d.durationSec ?? null,
+    notes: (d.notes ?? '').trim() || null,
+    links: d.links ?? null,
+  };
+}
 
 @Component({
   standalone: true,
@@ -40,6 +86,7 @@ import {
   styleUrl: './song-editor.scss',
 })
 export class SongEditorPageComponent {
+  @ViewChild('scrollHost', { read: ElementRef }) scrollHost?: ElementRef<HTMLElement>;
   readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
   readonly snack = inject(MatSnackBar);
@@ -49,15 +96,56 @@ export class SongEditorPageComponent {
   readonly dialog = inject(MatDialog);
 
   readonly saving = signal(false);
-  readonly viewMode = signal<'edit' | 'view'>('edit');
+  readonly viewMode = signal<'edit' | 'view'>('view');
+
+  readonly isView = computed(() => this.viewMode() === 'view');
+  readonly isEditing = computed(() => this.viewMode() === 'edit');
+
+  readonly hoveredChord = signal<string | null>(null);
+
   readonly selectedChord = signal<string | null>(null);
 
   readonly chordShapeIndex = signal(0);
-  readonly _openedChord = signal<string | null>(null);
+
+  private _autosaveTimer: any = null;
+  private _autosaveInFlight = false;
+
+  // último snapshot guardado (enviado al backend con éxito)
+  readonly _lastSavedMeta = signal<string>(''); // guardamos stringify estable
+  // último snapshot visto (para resetear "saved" cuando vuelve a editar)
+  readonly _lastSeenMeta = signal<string>('');
+
+  readonly saveUi = signal<SaveUiState>('idle');
+
+  readonly autoScrollOn = signal(false);
+
+  // px por segundo (tuneable)
+  readonly autoScrollSpeed = signal(28);
+
+  private _rafId: number | null = null;
+  private _lastTs: number | null = null;
+  private _scrollCarry = 0;
+  private _autoScrollCleanup: (() => void) | null = null;
+
+  // ---- Auto-scroll fine tune ----
+  readonly autoScrollSpeedMin = 8;
+  readonly autoScrollSpeedMax = 90;
+  readonly autoScrollSpeedStep = 2;
+
+  // opcional: para “acelerar” el ajuste si el user gira fuerte
+  private _fineTuneCarry = 0;
+
+  private _showSavingTimer: any = null;
+  private _hideSavedTimer: any = null;
+
+  readonly canAutoScroll = computed(() => !this.isEditing() && !!this.currentDetail());
 
   readonly displayKey = computed(
     () => (this.store.selected()?.key ?? '').toString().trim() || null,
   );
+
+  isChordSelected = (ch: string) => computed(() => this.selectedChord() === ch);
+  isChordHovered = (ch: string) => computed(() => this.hoveredChord() === ch);
 
   private _lastModeKey = '';
 
@@ -94,6 +182,16 @@ export class SongEditorPageComponent {
    */
   readonly currentDetail = computed<SongDetail | null>(() => this.store.selected());
 
+  readonly isDetailLoading = useSkeletonUx({
+    isActive: this.isEdit,
+    isLoading: computed(() => {
+      const st = this.store.detailState();
+      return st === 'loading' || st === 'idle';
+    }),
+    showDelayMs: 120,
+    minVisibleMs: 280,
+  });
+
   readonly chordInfo = computed(() => {
     const raw = this.selectedChord();
     if (!raw) return null;
@@ -111,24 +209,155 @@ export class SongEditorPageComponent {
   });
 
   constructor() {
+    // 1) Load / route changes
     effect(() => {
       const id = this.id();
-      console.log('ID:', id);
-
       if (!id) return;
 
+      // reset UI + snapshots on song change
+      this._lastSavedMeta.set('');
+      this._lastSeenMeta.set('');
+      this.saveUi.set('idle');
+
+      // NEW route: no autosave
       if (id === 'new') {
         this.store.clearSelected();
         this.store.createDraftDetail({ title: '', artist: '', sections: [] } as any);
         return;
       }
 
+      // EDIT route: load detail
       this.store.loadDetail(id);
+
+      // cleanup debounce timer on route changes
+      return () => {
+        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+        this._autosaveTimer = null;
+        this._autosaveInFlight = false;
+      };
+    });
+
+    // 2) Init snapshots once detail is ready (prevents autosave without user changes)
+    effect(() => {
+      if (!this.isEdit()) return;
+
+      const st = this.store.detailState();
+      if (st !== 'ready') return;
+
+      const d = this.store.selected();
+      if (!d) return;
+
+      const key = stableStringify(metaSnapshotOf(d));
+
+      // only first time per song load
+      if (!this._lastSavedMeta()) {
+        this._lastSavedMeta.set(key);
+        this._lastSeenMeta.set(key);
+        this.saveUi.set('idle');
+      }
+    });
+
+    // 3) Smart autosave (metadata only) - debounced + no-op if unchanged
+    effect(() => {
+      const id = this.id();
+      if (!id || id === 'new') return;
+      if (!this.isEdit()) return;
+
+      const st = this.store.detailState();
+      if (st === 'loading' || st === 'idle') return;
+
+      const detail = this.store.selected();
+      if (!detail) return;
+
+      const metaKey = stableStringify(metaSnapshotOf(detail));
+
+      // if user edits after a "saved", go back to idle
+      const prevSeen = this._lastSeenMeta();
+      if (prevSeen && prevSeen !== metaKey && this.saveUi() === 'saved') {
+        this.saveUi.set('idle');
+      }
+      this._lastSeenMeta.set(metaKey);
+
+      const lastSaved = this._lastSavedMeta();
+      if (lastSaved && lastSaved === metaKey) return; // unchanged -> no autosave
+
+      // debounce
+      if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+
+      this._autosaveTimer = setTimeout(() => {
+        // re-check at fire time
+        const idNow = this.id();
+        if (!idNow || idNow === 'new') return;
+
+        const stNow = this.store.detailState();
+        if (stNow === 'loading' || stNow === 'idle') return;
+
+        const dNow = this.store.selected();
+        if (!dNow) return;
+
+        const metaNow = stableStringify(metaSnapshotOf(dNow));
+        const lastSavedNow = this._lastSavedMeta();
+        if (lastSavedNow && lastSavedNow === metaNow) return;
+        if (this._autosaveInFlight) return;
+
+        this._autosaveInFlight = true;
+        this.setSavingUi();
+
+        const dto: UpdateSongDto = {
+          title: dNow.title,
+          artist: dNow.artist,
+          key: dNow.key,
+          bpm: dNow.bpm,
+          durationSec: dNow.durationSec,
+          notes: dNow.notes,
+          links: dNow.links,
+        } as any;
+
+        this.store
+          .update(idNow, dto)
+          .pipe(finalize(() => (this._autosaveInFlight = false)))
+          .subscribe({
+            next: () => {
+              this._lastSavedMeta.set(metaNow);
+              this.setSavedUi();
+            },
+            error: () => {
+              this.setErrorUi();
+            },
+          });
+      }, 700);
+
+      return () => {
+        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+        this._autosaveTimer = null;
+      };
+    });
+
+    // 4) Global cleanup (timers)
+    effect((onCleanup) => {
+      onCleanup(() => {
+        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
+        if (this._showSavingTimer) clearTimeout(this._showSavingTimer);
+        if (this._hideSavedTimer) clearTimeout(this._hideSavedTimer);
+      });
+    });
+
+    // si el user cambia a Edit, apagamos auto-scroll
+    effect(() => {
+      if (this.isEditing() && this.autoScrollOn()) {
+        this.stopAutoScroll();
+      }
     });
   }
 
+  setView() {
+    this.viewMode.set('view');
+  }
+  setEdit() {
+    this.viewMode.set('edit');
+  }
   toggleMode() {
-    this.viewMode.set(this.viewMode() === 'edit' ? 'view' : 'edit');
+    this.viewMode.update((m) => (m === 'edit' ? 'view' : 'edit'));
   }
 
   save = (dto: CreateSongDto) => {
@@ -283,6 +512,214 @@ export class SongEditorPageComponent {
   shapeAt<T>(arr: T[], index: number): T {
     const i = Math.max(0, Math.min(index, arr.length - 1));
     return arr[i];
+  }
+
+  onMetaDraftChange = (patch: Partial<CreateSongDto>) => {
+    // aplicalo localmente al selected sin tocar sections/updatedAt si no querés
+    const sel = this.store.selected();
+    if (!sel) return;
+
+    this.store.patchSelectedMeta(patch); // te dejo el método abajo
+  };
+
+  private setSavingUi() {
+    // evita flicker: si guarda muy rápido, no mostramos "Saving"
+    if (this._showSavingTimer) clearTimeout(this._showSavingTimer);
+    this._showSavingTimer = setTimeout(() => this.saveUi.set('saving'), 150);
+  }
+
+  private setSavedUi() {
+    if (this._showSavingTimer) clearTimeout(this._showSavingTimer);
+    this.saveUi.set('saved');
+
+    if (this._hideSavedTimer) clearTimeout(this._hideSavedTimer);
+    this._hideSavedTimer = setTimeout(() => this.saveUi.set('idle'), 1400);
+  }
+
+  private setErrorUi() {
+    if (this._showSavingTimer) clearTimeout(this._showSavingTimer);
+    if (this._hideSavedTimer) clearTimeout(this._hideSavedTimer);
+    this.saveUi.set('error');
+
+    // se va solo (o lo dejás hasta próxima edición)
+    this._hideSavedTimer = setTimeout(() => this.saveUi.set('idle'), 2200);
+  }
+
+  durationLabel(value: number | string | null | undefined): string {
+    if (value === null || value === undefined || value === '') return '';
+    const totalSeconds = typeof value === 'string' ? Number(value) : value;
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return '';
+
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  toggleAutoScroll() {
+    if (this.autoScrollOn()) this.stopAutoScroll();
+    else this.startAutoScroll();
+  }
+
+  setAutoScrollSpeed(pxPerSec: number) {
+    const next = Math.max(this.autoScrollSpeedMin, Math.min(this.autoScrollSpeedMax, pxPerSec));
+    this.autoScrollSpeed.set(next);
+  }
+
+  adjustAutoScrollSpeed(delta: number) {
+    this.setAutoScrollSpeed(this.autoScrollSpeed() + delta);
+  }
+
+  startAutoScroll() {
+    if (!this.canAutoScroll()) return;
+
+    // Respeta reduced motion
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    if (this.autoScrollOn()) return;
+    this.autoScrollOn.set(true);
+
+    // Si el usuario scrollea/toca, pausamos
+    this._autoScrollCleanup?.();
+    this._autoScrollCleanup = this._bindAutoScrollUserInterruption(() => this.stopAutoScroll());
+
+    this._lastTs = null;
+
+    const step = (ts: number) => {
+      if (!this.autoScrollOn()) return;
+
+      if (this._lastTs === null) this._lastTs = ts;
+      const dtMs = ts - this._lastTs;
+      this._lastTs = ts;
+
+      // dt clamp (si tab estuvo en background)
+      const dt = Math.min(dtMs, 64) / 1000;
+
+      const speed = this.autoScrollSpeed(); // px/s
+      const dyFloat = speed * dt;
+
+      // acumulamos scroll fraccional
+      this._scrollCarry += dyFloat;
+
+      // scrolleamos cuando acumulamos >= 1px
+      const dy = Math.trunc(this._scrollCarry);
+      if (dy !== 0) this._scrollCarry -= dy;
+
+      const host = this.scrollHost?.nativeElement;
+      if (!host) {
+        this._rafId = requestAnimationFrame(step);
+        return;
+      }
+
+      const before = host.scrollTop;
+
+      // si dy es 0, igual seguimos loop hasta acumular
+      if (dy !== 0) host.scrollTop = before + dy;
+
+      const after = host.scrollTop;
+      const atBottom = Math.ceil(after + host.clientHeight) >= host.scrollHeight;
+
+      // si no pudo scrollear (porque no hay overflow), o llegó al final, paramos
+      if (atBottom || (dy !== 0 && after === before)) {
+        this.stopAutoScroll();
+        return;
+      }
+
+      this._rafId = requestAnimationFrame(step);
+    };
+
+    this._rafId = requestAnimationFrame(step);
+  }
+
+  stopAutoScroll() {
+    this._scrollCarry = 0;
+    if (!this.autoScrollOn()) return;
+
+    this.autoScrollOn.set(false);
+
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    this._lastTs = null;
+
+    this._autoScrollCleanup?.();
+    this._autoScrollCleanup = null;
+  }
+
+  /** pausa auto-scroll ante actividad del usuario */
+  /** pausa auto-scroll ante actividad del usuario (pero permite fine-tune con Shift+Wheel) */
+  private _bindAutoScrollUserInterruption(onInterrupt: () => void) {
+    const hostEl = this.scrollHost?.nativeElement;
+
+    const onWheel = (ev: WheelEvent) => {
+      if (!this.autoScrollOn()) return;
+
+      // ✅ Fine tune: Shift + wheel => ajusta velocidad, NO pausa
+      if (ev.shiftKey) {
+        ev.preventDefault(); // para que no scrollee “manual” mientras ajustás
+        ev.stopPropagation();
+
+        // wheel up suele ser deltaY negativo
+        const dir = ev.deltaY > 0 ? -1 : 1;
+
+        // acumulador por si trackpad manda micro deltas
+        this._fineTuneCarry += Math.abs(ev.deltaY);
+
+        // cada “umbral” aplica un step (tuneable)
+        const threshold = 40; // más bajo = más sensible
+        let steps = 0;
+        while (this._fineTuneCarry >= threshold) {
+          this._fineTuneCarry -= threshold;
+          steps++;
+        }
+
+        const amount = (steps || 1) * this.autoScrollSpeedStep * dir;
+        this.adjustAutoScrollSpeed(amount);
+        return;
+      }
+
+      // wheel normal => el usuario quiere controlar => pausamos
+      onInterrupt();
+    };
+
+    const onTouch = () => {
+      if (this.autoScrollOn()) onInterrupt();
+    };
+
+    const onKey = (ev: KeyboardEvent) => {
+      if (!this.autoScrollOn()) return;
+
+      // ✅ Fine tune con teclado (opcional pero re cómodo)
+      if (ev.key === '+' || ev.key === '=') {
+        // =
+        ev.preventDefault();
+        this.adjustAutoScrollSpeed(this.autoScrollSpeedStep);
+        return;
+      }
+      if (ev.key === '-' || ev.key === '_') {
+        ev.preventDefault();
+        this.adjustAutoScrollSpeed(-this.autoScrollSpeedStep);
+        return;
+      }
+
+      // cualquier otra tecla => pausamos
+      onInterrupt();
+    };
+
+    // IMPORTANTE: wheel no puede ser passive si vamos a preventDefault()
+    const wheelOpts: AddEventListenerOptions = { passive: false };
+
+    const target: EventTarget = hostEl ?? window;
+
+    target.addEventListener('wheel', onWheel as any, wheelOpts);
+    target.addEventListener('touchstart', onTouch as any, { passive: true });
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      target.removeEventListener('wheel', onWheel as any, wheelOpts as any);
+      target.removeEventListener('touchstart', onTouch as any);
+      window.removeEventListener('keydown', onKey);
+    };
   }
 }
 

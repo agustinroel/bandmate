@@ -31,6 +31,8 @@
   --bm-petrol-900: #163c40;
   --bm-petrol-850: #1a4347;
   --bm-petrol-800: #1f4b50;
+
+   --bm-app-header-h: 64px; /* desktop */
 }
 
 /* ---------- 3) Material Theme (M2 API under m2-*) ----------
@@ -149,6 +151,10 @@ a.active mat-icon {
 @media (min-width: 768px) {
   .app-nav-separator {
     width: 24px;
+  }
+
+  :root {
+    --bm-app-header-h: 56px; /* mobile */
   }
 }
 
@@ -326,6 +332,10 @@ mat-form-field {
   text-overflow: ellipsis;
 }
 
+.song-updated{
+  font-size: 10px;
+}
+
 .song-actions {
   display: inline-flex;
   align-items: center;
@@ -420,6 +430,25 @@ mat-form-field {
 .pill-key.key-b { background: rgba(230, 190, 140, 0.22); }
 
 .pill-key.key-other { background: rgba(0, 0, 0, 0.06); }
+
+.bm-toast {
+  border-radius: 14px !important;
+  font-weight: 600;
+}
+
+.bm-toast--success {
+  //asd
+ }
+.bm-toast--info { 
+  //asd
+}
+.bm-toast--warn { 
+  //asd
+}
+.bm-toast--error { 
+  //asd
+}
+
 
 
 
