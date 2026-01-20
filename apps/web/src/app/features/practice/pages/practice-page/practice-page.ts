@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, DestroyRef } from '@angular/core';
+import { Component, computed, effect, inject, DestroyRef, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,10 +11,11 @@ import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   standalone: true,
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule],
   template: `
     <header class="d-flex align-items-start gap-3 mb-3">
       <div class="bm-mark" aria-hidden="true">
@@ -25,35 +26,37 @@ import { animate, style, transition, trigger } from '@angular/animations';
         <h2 class="m-0">Practice</h2>
 
         @if (p.setlist()) {
-        <div class="small opacity-75 mt-1">
-          {{ p.setlist()!.name }} • <span class="fw-semibold">{{ p.progressLabel() }}</span>
-        </div>
-
-        <div class="p-top-meta small mt-1">
-          <span class="p-pill">
-            <mat-icon class="p-pill-ic">schedule</mat-icon>
-            Total: <span class="fw-semibold">{{ p.totalLabel() }}</span>
-          </span>
-
-          <span class="p-pill">
-            <mat-icon class="p-pill-ic">trending_up</mat-icon>
-            Elapsed: <span class="fw-semibold">{{ p.elapsedLabel() }}</span>
-          </span>
-
-          <span class="p-pill">
-            <mat-icon class="p-pill-ic">hourglass_bottom</mat-icon>
-            Remaining: <span class="fw-semibold">{{ p.remainingLabel() }}</span>
-          </span>
-
-          <div class="small opacity-75 mt-2">
-            Hotkeys: <span class="fw-semibold">Space</span>/<span class="fw-semibold">→</span> next,
-            <span class="fw-semibold">←</span> prev, <span class="fw-semibold">Esc</span> exit
+          <div class="small opacity-75 mt-1">
+            {{ p.setlist()!.name }} • <span class="fw-semibold">{{ p.progressLabel() }}</span>
           </div>
-        </div>
+
+          <div class="p-top-meta small mt-1">
+            <span class="p-pill">
+              <mat-icon class="p-pill-ic">schedule</mat-icon>
+              Total: <span class="fw-semibold">{{ p.totalLabel() }}</span>
+            </span>
+
+            <span class="p-pill">
+              <mat-icon class="p-pill-ic">trending_up</mat-icon>
+              Elapsed: <span class="fw-semibold">{{ p.elapsedLabel() }}</span>
+            </span>
+
+            <span class="p-pill">
+              <mat-icon class="p-pill-ic">hourglass_bottom</mat-icon>
+              Remaining: <span class="fw-semibold">{{ p.remainingLabel() }}</span>
+            </span>
+
+            <div class="small opacity-75 mt-2">
+              Hotkeys:
+              <span class="fw-semibold">Space</span>/<span class="fw-semibold">→</span> next,
+              <span class="fw-semibold">←</span> prev, <span class="fw-semibold">R</span> restart
+              (at end), <span class="fw-semibold">Esc</span> exit
+            </div>
+          </div>
         } @else if (hasId()) {
-        <div class="small opacity-75 mt-1">Loading setlist…</div>
+          <div class="small opacity-75 mt-1">Loading setlist…</div>
         } @else {
-        <div class="small opacity-75 mt-1">Select a setlist to start.</div>
+          <div class="small opacity-75 mt-1">Select a setlist to start.</div>
         }
       </div>
 
@@ -64,114 +67,137 @@ import { animate, style, transition, trigger } from '@angular/animations';
     </header>
 
     @if (!hasId()) {
-    <mat-card class="p-card">
-      <div class="p-empty">
-        <mat-icon class="p-empty-ic">queue_music</mat-icon>
-        <div class="fw-semibold mt-2">Choose a setlist to practice</div>
-        <div class="small opacity-75 mt-1">Go to Setlists and press “Start practice”.</div>
-        <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
-          Go to setlists
-        </button>
-      </div>
-    </mat-card>
+      <mat-card class="p-card">
+        <div class="p-empty">
+          <mat-icon class="p-empty-ic">queue_music</mat-icon>
+          <div class="fw-semibold mt-2">Choose a setlist to practice</div>
+          <div class="small opacity-75 mt-1">Go to Setlists and press “Start practice”.</div>
+          <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
+            Go to setlists
+          </button>
+        </div>
+      </mat-card>
     } @else if (notFound()) {
-    <mat-card class="p-card">
-      <div class="p-empty">
-        <mat-icon class="p-empty-ic">search_off</mat-icon>
-        <div class="fw-semibold mt-2">Setlist not found</div>
-        <div class="small opacity-75 mt-1">It may have been deleted or the link is wrong.</div>
-        <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
-          Go to setlists
-        </button>
-      </div>
-    </mat-card>
+      <mat-card class="p-card">
+        <div class="p-empty">
+          <mat-icon class="p-empty-ic">search_off</mat-icon>
+          <div class="fw-semibold mt-2">Setlist not found</div>
+          <div class="small opacity-75 mt-1">It may have been deleted or the link is wrong.</div>
+          <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
+            Go to setlists
+          </button>
+        </div>
+      </mat-card>
     } @else if (!p.setlist()) {
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
     } @else if (p.count() === 0) {
-    <mat-card class="p-card">
-      <div class="p-empty">
-        <mat-icon class="p-empty-ic">playlist_add</mat-icon>
-        <div class="fw-semibold mt-2">This setlist is empty</div>
-        <div class="small opacity-75 mt-1">Add songs first, then start practice.</div>
-        <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
-          Go to setlists
-        </button>
-      </div>
-    </mat-card>
+      <mat-card class="p-card">
+        <div class="p-empty">
+          <mat-icon class="p-empty-ic">playlist_add</mat-icon>
+          <div class="fw-semibold mt-2">This setlist is empty</div>
+          <div class="small opacity-75 mt-1">Add songs first, then start practice.</div>
+          <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
+            Go to setlists
+          </button>
+        </div>
+      </mat-card>
     } @else {
-    <div class="p-grid">
-      <!-- NOW -->
-      <mat-card class="p-card p-now">
-        <div class="p-kicker">NOW PLAYING</div>
+      <div class="p-grid">
+        <!-- NOW -->
+        <mat-card class="p-card p-now">
+          <div class="p-kicker">NOW PLAYING</div>
 
-        <div class="p-swap" [@slideSwap]="p.index()">
-          @if (p.currentSong()) {
-          <div class="p-title">{{ p.currentSong()!.title }}</div>
-          <div class="p-sub opacity-75">{{ p.currentSong()!.artist }}</div>
+          <div class="p-swap" [@slideSwap]="p.index()">
+            @if (p.currentSong()) {
+              <div class="p-title">{{ p.currentSong()!.title }}</div>
+              <div class="p-sub opacity-75">{{ p.currentSong()!.artist }}</div>
 
-          <div class="p-meta mt-3">
-            @if (p.currentSong()!.key) {
-            <span class="p-chip">Key: {{ p.currentSong()!.key }}</span>
-            } @if (p.currentSong()!.bpm) {
-            <span class="p-chip">BPM: {{ p.currentSong()!.bpm }}</span>
-            } @if (durationLabel(p.currentSong()!.durationSec)) {
-            <span class="p-chip">Dur: {{ durationLabel(p.currentSong()!.durationSec) }}</span>
+              <div class="p-meta mt-3">
+                @if (p.currentSong()!.key) {
+                  <span class="p-chip">Key: {{ p.currentSong()!.key }}</span>
+                }
+                @if (p.currentSong()!.bpm) {
+                  <span class="p-chip">BPM: {{ p.currentSong()!.bpm }}</span>
+                }
+                @if (durationLabel(p.currentSong()!.durationSec)) {
+                  <span class="p-chip">Dur: {{ durationLabel(p.currentSong()!.durationSec) }}</span>
+                }
+              </div>
+
+              @if (p.currentSong()!.notes) {
+                <div class="p-notes mt-3">
+                  <div class="small fw-semibold mb-1">Notes</div>
+                  <div class="small opacity-75">{{ p.currentSong()!.notes }}</div>
+                </div>
+              }
             }
           </div>
 
-          @if (p.currentSong()!.notes) {
-          <div class="p-notes mt-3">
-            <div class="small fw-semibold mb-1">Notes</div>
-            <div class="small opacity-75">{{ p.currentSong()!.notes }}</div>
-          </div>
-          } }
-        </div>
+          <div class="p-controls mt-4">
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="p.prev()"
+              [disabled]="!p.prevSongId()"
+            >
+              <mat-icon class="me-1">skip_previous</mat-icon>
+              Prev
+            </button>
 
-        <div class="p-controls mt-4">
-          <button mat-stroked-button type="button" (click)="p.prev()" [disabled]="!p.prevSongId()">
-            <mat-icon class="me-1">skip_previous</mat-icon>
-            Prev
-          </button>
-
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            (click)="p.next()"
-            [disabled]="!p.nextSongId()"
-          >
-            Next
-            <mat-icon class="ms-1">skip_next</mat-icon>
-          </button>
-        </div>
-      </mat-card>
-
-      <!-- NEXT -->
-      <mat-card class="p-card p-next">
-        <div class="p-kicker">UP NEXT</div>
-        <div class="p-swap" [@slideSwap]="p.index()">
-          @if (p.nextSong()) {
-          <div class="p-title-sm">{{ p.nextSong()!.title }}</div>
-          <div class="small opacity-75">{{ p.nextSong()!.artist }}</div>
-
-          <div class="small opacity-75 mt-2">
-            @if (durationLabel(p.nextSong()!.durationSec)) {
-            <span>Duration: {{ durationLabel(p.nextSong()!.durationSec) }}</span>
+            <!-- Nice: show Restart when end -->
+            @if (!p.nextSongId()) {
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="p.jumpTo(0)"
+                matTooltip="Restart the setlist"
+              >
+                <mat-icon class="me-1">replay</mat-icon>
+                Restart
+              </button>
             } @else {
-            <span>Duration: —</span>
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="p.next()"
+                [disabled]="!p.nextSongId()"
+                matTooltip="Next song"
+              >
+                Next
+                <mat-icon class="ms-1">skip_next</mat-icon>
+              </button>
             }
           </div>
-          } @else {
-          <div class="p-done">
-            <mat-icon class="p-done-ic">task_alt</mat-icon>
-            <div class="fw-semibold mt-2">End of setlist</div>
-            <div class="small opacity-75 mt-1">You made it. Want to run it again?</div>
-            <button mat-stroked-button class="mt-3" (click)="p.jumpTo(0)">Restart</button>
+        </mat-card>
+
+        <!-- NEXT -->
+        <mat-card class="p-card p-next">
+          <div class="p-kicker">UP NEXT</div>
+          <div class="p-swap" [@slideSwap]="p.index()">
+            @if (p.nextSong()) {
+              <div class="p-title-sm">{{ p.nextSong()!.title }}</div>
+              <div class="small opacity-75">{{ p.nextSong()!.artist }}</div>
+
+              <div class="small opacity-75 mt-2">
+                @if (durationLabel(p.nextSong()!.durationSec)) {
+                  <span>Duration: {{ durationLabel(p.nextSong()!.durationSec) }}</span>
+                } @else {
+                  <span>Duration: —</span>
+                }
+              </div>
+            } @else {
+              <div class="p-done">
+                <mat-icon class="p-done-ic">task_alt</mat-icon>
+                <div class="fw-semibold mt-2">End of setlist</div>
+                <div class="small opacity-75 mt-1">You made it. Want to run it again?</div>
+                <button mat-stroked-button class="mt-3" (click)="p.jumpTo(0)">Restart</button>
+              </div>
+            }
           </div>
-          }
-        </div>
-      </mat-card>
-    </div>
+        </mat-card>
+      </div>
     }
   `,
   styles: [
@@ -315,13 +341,10 @@ import { animate, style, transition, trigger } from '@angular/animations';
   ],
   animations: [
     trigger('slideSwap', [
-      // Avanzar (Next)
       transition(':increment', [
         style({ opacity: 0, transform: 'translateX(14px)' }),
         animate('180ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
       ]),
-
-      // Retroceder (Prev)
       transition(':decrement', [
         style({ opacity: 0, transform: 'translateX(-14px)' }),
         animate('180ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
@@ -337,14 +360,17 @@ export class PracticePageComponent {
   readonly setlists = inject(SetlistsStore);
   readonly songs = inject(SongsStore);
 
-  destroyRef = inject(DestroyRef);
+  private destroyRef = inject(DestroyRef);
+
   readonly paramMapSig = toSignal(this.route.paramMap, {
     initialValue: this.route.snapshot.paramMap,
   });
 
   readonly id = computed(() => this.paramMapSig().get('setlistId') ?? '');
-
   readonly hasId = computed(() => !!this.id());
+
+  // Must: avoid re-starting practice for the same setlistId due to effect re-runs
+  private startedForId = signal<string | null>(null);
 
   readonly notFound = computed(() => {
     const id = this.id();
@@ -364,9 +390,12 @@ export class PracticePageComponent {
       const setlistId = this.id();
       if (!setlistId) return;
 
-      // Esperar a que exista el setlist en memoria
+      // Wait until setlists are in memory
       const exists = this.setlists.items().some((s) => s.id === setlistId);
       if (!exists) return;
+
+      if (this.startedForId() === setlistId) return;
+      this.startedForId.set(setlistId);
 
       this.p.start(setlistId);
     });
@@ -375,31 +404,28 @@ export class PracticePageComponent {
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filter((e) => !e.repeat),
-        filter((e) => !this.isTypingTarget(e))
+        filter((e) => !this.isTypingTarget(e)),
       )
       .subscribe((e) => {
-        // Escape: salir siempre
         if (e.key === 'Escape') {
           e.preventDefault();
           this.exit();
           return;
         }
 
-        // Prev
-        if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        // Should: remove Backspace as prev to avoid browser-ish behavior surprises
+        if (e.key === 'ArrowLeft') {
           e.preventDefault();
           this.p.prev();
           return;
         }
 
-        // Next
         if (e.key === 'ArrowRight' || e.code === 'Space') {
           e.preventDefault();
           this.p.next();
           return;
         }
 
-        // Restart (solo si estás al final, opcional)
         if ((e.key === 'r' || e.key === 'R') && !this.p.nextSongId() && this.p.count() > 0) {
           e.preventDefault();
           this.p.jumpTo(0);
@@ -409,10 +435,16 @@ export class PracticePageComponent {
 
   exit() {
     const id = this.id();
+    // nice/should: stop practice state when leaving
+    this.p.stop();
+
+    // Should: send focus id back to Setlists
     this.router.navigate(['/setlists'], { queryParams: { focus: id } });
   }
 
   goSetlists() {
+    // nice/should: stop practice state when leaving
+    this.p.stop();
     this.router.navigate(['/setlists']);
   }
 
@@ -431,10 +463,9 @@ export class PracticePageComponent {
 
     const tag = target.tagName?.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-
     if (target.isContentEditable) return true;
 
-    // Si algún overlay/dialog está abierto, mejor no interceptar
+    // If any overlay/dialog is open, don't intercept
     const hasOverlay = document.querySelector('.cdk-overlay-container .cdk-overlay-pane');
     if (hasOverlay) return true;
 

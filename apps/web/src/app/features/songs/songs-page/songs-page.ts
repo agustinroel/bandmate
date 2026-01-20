@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { SongsStore } from '../state/songs-store';
 import { Router } from '@angular/router';
 
@@ -7,13 +7,89 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDividerModule } from '@angular/material/divider';
+
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { NgClass, DatePipe } from '@angular/common';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
+
+/** ---- Types ---- */
+type SongsSort =
+  | 'updatedDesc'
+  | 'updatedAsc'
+  | 'titleAsc'
+  | 'titleDesc'
+  | 'artistAsc'
+  | 'artistDesc';
+
+type SongFilters = {
+  artist: string | null;
+  key: string | null;
+  genre: string | null; // futuro
+};
+
+/** ---- Persist ---- */
+type SongsListPrefs = {
+  v: 1;
+  q: string;
+  filters: SongFilters;
+  sort: SongsSort;
+};
+
+const SONGS_PREFS_KEY = 'bm.songs.list.prefs.v1';
+
+function safeReadPrefs(): SongsListPrefs | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(SONGS_PREFS_KEY);
+    if (!raw) return null;
+
+    const obj = JSON.parse(raw);
+    if (!obj || obj.v !== 1) return null;
+
+    const sort: SongsSort =
+      obj.sort === 'updatedDesc' ||
+      obj.sort === 'updatedAsc' ||
+      obj.sort === 'titleAsc' ||
+      obj.sort === 'titleDesc' ||
+      obj.sort === 'artistAsc' ||
+      obj.sort === 'artistDesc'
+        ? obj.sort
+        : 'updatedDesc';
+
+    const filters: SongFilters = {
+      artist: typeof obj?.filters?.artist === 'string' ? obj.filters.artist : null,
+      key: typeof obj?.filters?.key === 'string' ? obj.filters.key : null,
+      genre: typeof obj?.filters?.genre === 'string' ? obj.filters.genre : null,
+    };
+
+    return {
+      v: 1,
+      q: typeof obj.q === 'string' ? obj.q : '',
+      filters,
+      sort,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function safeWritePrefs(prefs: SongsListPrefs | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!prefs) {
+      localStorage.removeItem(SONGS_PREFS_KEY);
+      return;
+    }
+    localStorage.setItem(SONGS_PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // ignore
+  }
+}
 
 @Component({
   standalone: true,
@@ -23,10 +99,11 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
     MatFormFieldModule,
     MatInputModule,
     MatCardModule,
-    MatProgressBarModule,
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatSelectModule,
+    MatDividerModule,
     NgClass,
     DatePipe,
   ],
@@ -45,6 +122,7 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
       </button>
     </div>
 
+    <!-- Search -->
     <div class="mt-3">
       <mat-form-field appearance="outline" class="w-100">
         <mat-label>Search</mat-label>
@@ -54,7 +132,7 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
           matInput
           [value]="query()"
           (input)="query.set($any($event.target).value)"
-          placeholder="Title or artist"
+          placeholder="Title, artist or key"
         />
 
         @if (query()) {
@@ -63,6 +141,62 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
           </button>
         }
       </mat-form-field>
+    </div>
+
+    <!-- Advanced filters -->
+    <div class="bm-filters">
+      <div class="bm-filters-head">
+        <div class="bm-filters-title">Filters</div>
+
+        @if (hasActiveFilters()) {
+          <button mat-stroked-button type="button" class="bm-clear" (click)="clearFilters()">
+            <mat-icon class="me-1">close</mat-icon>
+            Clear
+          </button>
+        }
+      </div>
+
+      <div class="bm-filters-row">
+        <mat-form-field appearance="outline" class="bm-field">
+          <mat-label>Artist</mat-label>
+          <mat-select [value]="filters().artist" (selectionChange)="setArtist($event.value)">
+            <mat-option [value]="null">All artists</mat-option>
+            @for (a of artistOptions(); track a) {
+              <mat-option [value]="a">{{ a }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="bm-field">
+          <mat-label>Key</mat-label>
+          <mat-select [value]="filters().key" (selectionChange)="setKey($event.value)">
+            <mat-option [value]="null">All keys</mat-option>
+            @for (k of keyOptions(); track k) {
+              <mat-option [value]="k">{{ k }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Sort</mat-label>
+          <mat-select [value]="sort()" (selectionChange)="sort.set($event.value)">
+            <mat-option value="updatedDesc">Recently updated</mat-option>
+            <mat-option value="updatedAsc">Oldest updated</mat-option>
+            <mat-option value="titleAsc">Title A–Z</mat-option>
+            <mat-option value="titleDesc">Title Z–A</mat-option>
+            <mat-option value="artistAsc">Artist A–Z</mat-option>
+            <mat-option value="artistDesc">Artist Z–A</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Futuro: genre -->
+        <mat-form-field appearance="outline" class="bm-field bm-field--disabled">
+          <mat-label>Genre</mat-label>
+          <mat-select [disabled]="true">
+            <mat-option>Coming soon</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
     </div>
 
     @if (isLoading()) {
@@ -113,12 +247,12 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
 
         <div class="mt-2 fw-semibold">No results</div>
 
-        <div class="small opacity-75 mb-3">Try a different search, or clear the filter.</div>
+        <div class="small opacity-75 mb-3">Try a different search, or clear filters.</div>
 
         <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
-          <button mat-stroked-button type="button" (click)="query.set('')">
+          <button mat-stroked-button type="button" (click)="clearAllSearchAndFilters()">
             <mat-icon class="me-1">close</mat-icon>
-            Clear search
+            Clear all
           </button>
 
           <button mat-flat-button color="primary" (click)="goNew()">
@@ -127,9 +261,9 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
           </button>
         </div>
       </div>
-    } @else if (filtered().length > 0) {
+    } @else if (sorted().length > 0) {
       <div class="songs-grid">
-        @for (s of filtered(); track s.id) {
+        @for (s of sorted(); track s.id) {
           <mat-card
             class="song-card"
             tabindex="0"
@@ -143,9 +277,9 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
                   <div class="song-title" [title]="s.title">{{ s.title }}</div>
 
                   @if (s.key) {
-                    <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)"
-                      >Key {{ s.key }}</span
-                    >
+                    <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
+                      Key {{ s.key }}
+                    </span>
                   }
                 </div>
 
@@ -193,11 +327,63 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
   `,
   styles: [
     `
-      /* GRID */
+      /* --- Filters --- */
+      .bm-filters {
+        margin-top: 10px;
+        padding: 12px 12px 4px;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(0, 0, 0, 0.012);
+      }
+
+      .bm-filters-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .bm-filters-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        opacity: 0.55;
+        text-transform: uppercase;
+      }
+
+      .bm-clear {
+        margin-left: auto;
+        border-radius: 14px;
+        padding: 6px 12px;
+      }
+
+      .bm-filters-row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr;
+      }
+
+      @media (min-width: 720px) {
+        .bm-filters-row {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          align-items: start;
+        }
+      }
+
+      .bm-field {
+        width: 100%;
+      }
+
+      .bm-field--disabled {
+        opacity: 0.65;
+      }
+
+      /* --- GRID --- */
       .songs-grid {
         display: grid;
         gap: 14px;
         grid-template-columns: 1fr;
+        margin-top: 14px;
       }
 
       @media (min-width: 720px) {
@@ -213,7 +399,7 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         }
       }
 
-      /* CARD */
+      /* --- CARD --- */
       .song-card {
         cursor: pointer;
         border-radius: 16px;
@@ -248,7 +434,6 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
       }
 
-      /* Delete: escondido por defecto en desktop */
       .song-del {
         opacity: 0;
         transform: translateY(2px);
@@ -261,7 +446,6 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         border-radius: 12px;
       }
 
-      /* aparece en hover/focus dentro de la card */
       .song-card:hover .song-del,
       .song-card:focus-within .song-del {
         opacity: 1;
@@ -269,13 +453,11 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         pointer-events: auto;
       }
 
-      /* micro feedback */
       .song-del:hover {
         background: rgba(0, 0, 0, 0.05);
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
       }
 
-      /* Mobile/tablet: siempre visible */
       @media (hover: none), (pointer: coarse) {
         .song-del {
           opacity: 1;
@@ -284,7 +466,6 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         }
       }
 
-      /* Layout */
       .song-top {
         display: flex;
         align-items: flex-start;
@@ -332,22 +513,6 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         opacity: 0.9;
       }
 
-      .song-actions button {
-        opacity: 0.75;
-        transition:
-          opacity 120ms ease,
-          transform 120ms ease;
-      }
-
-      .song-card:hover .song-actions button {
-        opacity: 1;
-      }
-
-      .song-actions button:active {
-        transform: scale(0.96);
-      }
-
-      /* Pills: “premium”, no deform */
       .song-meta {
         display: flex;
         gap: 8px;
@@ -355,7 +520,6 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         margin-top: 10px;
       }
 
-      /* Pills base (match SongEditor) */
       .bm-pill {
         display: inline-flex;
         align-items: center;
@@ -373,68 +537,19 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         box-sizing: border-box;
       }
 
-      .bm-pill-ic {
-        font-size: 18px;
-        height: 18px;
-        width: 18px;
-        opacity: 0.72;
-      }
-
       .bm-pill--key {
         font-weight: 800;
         border-color: rgba(201, 162, 39, 0.26);
         background: rgba(201, 162, 39, 0.1);
       }
 
-      /* Paleta por tonalidad (sobria) */
-      .key-major {
-        box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.06);
-      }
-      .key-minor {
-        box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.03);
-      }
-
-      .key-c {
-        background: rgba(201, 162, 39, 0.14);
-      }
-      .key-cs {
-        background: rgba(39, 132, 201, 0.12);
-      }
-      .key-d {
-        background: rgba(39, 201, 162, 0.12);
-      }
-      .key-ds {
-        background: rgba(201, 39, 132, 0.12);
-      }
-      .key-e {
-        background: rgba(120, 39, 201, 0.12);
-      }
-      .key-f {
-        background: rgba(201, 120, 39, 0.12);
-      }
-      .key-fs {
-        background: rgba(39, 201, 78, 0.12);
-      }
-      .key-g {
-        background: rgba(39, 78, 201, 0.12);
-      }
-      .key-gs {
-        background: rgba(201, 39, 78, 0.12);
-      }
-      .key-a {
-        background: rgba(78, 201, 39, 0.12);
-      }
-      .key-as {
-        background: rgba(39, 201, 201, 0.12);
-      }
-      .key-b {
-        background: rgba(201, 39, 201, 0.1);
-      }
-      .key-other {
-        background: rgba(0, 0, 0, 0.05);
+      .pill-ic {
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
+        opacity: 0.72;
       }
 
-      /* Updated line */
       .song-updated {
         display: inline-flex;
         align-items: center;
@@ -452,7 +567,7 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         opacity: 0.7;
       }
 
-      /* Skeleton */
+      /* --- Skeleton --- */
       .song-card--skeleton {
         pointer-events: none;
       }
@@ -514,47 +629,51 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
         }
       }
 
-      /* DELETE: hidden by default on desktop */
-      .song-card .song-actions .song-del {
-        opacity: 0;
-        transform: translateY(2px);
-        pointer-events: none;
+      /* key palette (reuse yours) */
+      .key-major {
+        box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.06);
       }
-
-      /* show on hover/focus */
-      .song-card:hover .song-actions .song-del,
-      .song-card:focus-within .song-actions .song-del {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
+      .key-minor {
+        box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.03);
       }
-
-      /* keep tooltip working only when visible */
-      .song-card .song-actions .song-del {
-        transition:
-          opacity 160ms ease,
-          transform 160ms ease,
-          background-color 160ms ease,
-          box-shadow 160ms ease;
-        border-radius: 12px;
+      .key-c {
+        background: rgba(201, 162, 39, 0.14);
       }
-
-      .song-card:hover .song-actions .song-del:hover {
+      .key-cs {
+        background: rgba(39, 132, 201, 0.12);
+      }
+      .key-d {
+        background: rgba(39, 201, 162, 0.12);
+      }
+      .key-ds {
+        background: rgba(201, 39, 132, 0.12);
+      }
+      .key-e {
+        background: rgba(120, 39, 201, 0.12);
+      }
+      .key-f {
+        background: rgba(201, 120, 39, 0.12);
+      }
+      .key-fs {
+        background: rgba(39, 201, 78, 0.12);
+      }
+      .key-g {
+        background: rgba(39, 78, 201, 0.12);
+      }
+      .key-gs {
+        background: rgba(201, 39, 78, 0.12);
+      }
+      .key-a {
+        background: rgba(78, 201, 39, 0.12);
+      }
+      .key-as {
+        background: rgba(39, 201, 201, 0.12);
+      }
+      .key-b {
+        background: rgba(201, 39, 201, 0.1);
+      }
+      .key-other {
         background: rgba(0, 0, 0, 0.05);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-      }
-
-      /* Mobile/tablet: always visible */
-      @media (hover: none), (pointer: coarse) {
-        .song-card .song-actions .song-del {
-          opacity: 1;
-          transform: none;
-          pointer-events: auto;
-        }
-      }
-
-      .song-card:hover .song-actions .song-del {
-        background: rgba(0, 0, 0, 0.035);
       }
     `,
   ],
@@ -565,18 +684,18 @@ export class SongsPageComponent {
   readonly dialog = inject(MatDialog);
   readonly snack = inject(MatSnackBar);
 
+  /** UI state */
   readonly query = signal('');
-
-  readonly filtered = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    if (!q) return this.store.songs();
-    return this.store
-      .songs()
-      .filter((s) => (s.title + ' ' + s.artist + ' ' + (s.key ?? '')).toLowerCase().includes(q));
+  readonly filters = signal<SongFilters>({
+    artist: null,
+    key: null,
+    genre: null,
   });
+  readonly sort = signal<SongsSort>('updatedDesc');
 
+  /** Loading */
   readonly isLoading = useSkeletonUx({
-    isActive: computed(() => true), // siempre activo en esta page
+    isActive: computed(() => true),
     isLoading: computed(() => {
       const st = this.store.state();
       return st === 'loading' || st === 'idle';
@@ -584,20 +703,160 @@ export class SongsPageComponent {
     showDelayMs: 120,
     minVisibleMs: 280,
   });
+
   readonly isError = computed(() => this.store.state() === 'error');
   readonly isReady = computed(() => this.store.state() === 'ready');
-  readonly isEmpty = computed(() => this.isReady() && this.store.count() === 0 && !this.query());
 
+  /** Options */
+  readonly artistOptions = computed(() => {
+    const set = new Set<string>();
+    for (const s of this.store.songs()) {
+      const a = (s.artist ?? '').trim();
+      if (a) set.add(a);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
+
+  readonly keyOptions = computed(() => {
+    const set = new Set<string>();
+    for (const s of this.store.songs()) {
+      const k = (s.key ?? '').toString().trim();
+      if (k) set.add(k);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
+
+  /** Filtering */
+  readonly filtered = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    const f = this.filters();
+
+    let list = this.store.songs();
+
+    if (q) {
+      list = list.filter((s) => `${s.title} ${s.artist} ${s.key ?? ''}`.toLowerCase().includes(q));
+    }
+
+    if (f.artist) {
+      list = list.filter((s) => (s.artist ?? '').trim() === f.artist);
+    }
+
+    if (f.key) {
+      list = list.filter((s) => ((s.key ?? '') + '').trim() === f.key);
+    }
+
+    return list;
+  });
+
+  /** Sorting (single source of truth: sort()) */
+  readonly sorted = computed(() => {
+    const list = this.filtered().slice();
+
+    const cmpStr = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
+
+    list.sort((a, b) => {
+      switch (this.sort()) {
+        case 'updatedDesc':
+          return this.parseTime(b.updatedAt) - this.parseTime(a.updatedAt);
+
+        case 'updatedAsc':
+          return this.parseTime(a.updatedAt) - this.parseTime(b.updatedAt);
+
+        case 'titleAsc':
+          return cmpStr(this.normalizeStr(a.title), this.normalizeStr(b.title));
+
+        case 'titleDesc':
+          return cmpStr(this.normalizeStr(b.title), this.normalizeStr(a.title));
+
+        case 'artistAsc':
+          return cmpStr(this.normalizeStr(a.artist), this.normalizeStr(b.artist));
+
+        case 'artistDesc':
+          return cmpStr(this.normalizeStr(b.artist), this.normalizeStr(a.artist));
+
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  });
+
+  readonly isEmpty = computed(
+    () => this.isReady() && this.store.count() === 0 && !this.query().trim(),
+  );
   readonly isNoResults = computed(
-    () => this.isReady() && this.store.count() > 0 && this.filtered().length === 0,
+    () => this.isReady() && this.store.count() > 0 && this.sorted().length === 0,
   );
 
+  readonly hasActiveFilters = computed(() => {
+    const f = this.filters();
+    return !!this.query().trim() || !!f.artist || !!f.key || this.sort() !== 'updatedDesc';
+  });
+
   constructor() {
+    // 1) Restore prefs (ANTES de empezar a persistir)
+    const saved = safeReadPrefs();
+    if (saved) {
+      // untracked para evitar que dispare effects durante init
+      untracked(() => {
+        this.query.set(saved.q ?? '');
+        this.filters.set(saved.filters ?? { artist: null, key: null, genre: null });
+        this.sort.set(saved.sort ?? 'updatedDesc');
+      });
+    }
+
+    // 2) Load data
     effect(() => {
       if (this.store.state() === 'idle') this.store.load();
     });
+
+    // 3) Limpia whitespace raro en query
+    effect(() => {
+      const q = this.query();
+      if (q && !q.trim()) this.query.set('');
+    });
+
+    // 4) Persist prefs
+    effect(() => {
+      const prefs: SongsListPrefs = {
+        v: 1,
+        q: this.query(),
+        filters: this.filters(),
+        sort: this.sort(),
+      };
+
+      const isDefault =
+        prefs.q.trim() === '' &&
+        !prefs.filters.artist &&
+        !prefs.filters.key &&
+        !prefs.filters.genre &&
+        prefs.sort === 'updatedDesc';
+
+      safeWritePrefs(isDefault ? null : prefs);
+    });
   }
 
+  /** Filter setters */
+  setArtist(value: string | null) {
+    this.filters.update((f) => ({ ...f, artist: value || null }));
+  }
+
+  setKey(value: string | null) {
+    this.filters.update((f) => ({ ...f, key: value || null }));
+  }
+
+  clearFilters() {
+    this.filters.set({ artist: null, key: null, genre: null });
+    this.sort.set('updatedDesc');
+  }
+
+  clearAllSearchAndFilters() {
+    this.query.set('');
+    this.clearFilters();
+  }
+
+  /** Routing */
   goNew() {
     this.router.navigate(['/songs/new']);
   }
@@ -606,6 +865,7 @@ export class SongsPageComponent {
     this.router.navigate(['/songs', id]);
   }
 
+  /** Delete */
   askDelete(id: string, title: string) {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -638,15 +898,8 @@ export class SongsPageComponent {
 
   keyClass(key: string): string {
     const k = (key || '').trim().toUpperCase();
-
-    // detecta menor si termina en "M" pero no "MAJ" (Gm, Am, Dm, etc.)
     const isMinor = /M$/.test(k) && !/MAJ$/.test(k);
-
-    // raíz: primera letra + opcional #/b
     const root = k.match(/^[A-G](#|B)?/)?.[0] ?? k;
-
-    // 12 clases base (sobrias) + variante minor
-    // Nota: uso B para bemol en uppercase; si guardás "Bb" viene como "BB" -> lo normalizamos abajo.
     const normRoot = root.replace('BB', 'B');
 
     const map: Record<string, string> = {
@@ -678,5 +931,17 @@ export class SongsPageComponent {
       ev.preventDefault();
       this.goEdit(id);
     }
+  }
+
+  /** Helpers */
+  private normalizeStr(v: unknown): string {
+    return String(v ?? '')
+      .trim()
+      .toLowerCase();
+  }
+
+  private parseTime(v: unknown): number {
+    const t = Date.parse(String(v ?? ''));
+    return Number.isFinite(t) ? t : 0;
   }
 }

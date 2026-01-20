@@ -81,7 +81,7 @@ export class SetlistsStore {
         this._state.set('error');
         this._error.set(err?.message ?? 'Failed to load setlists');
         return throwError(() => err);
-      })
+      }),
     );
   }
 
@@ -96,19 +96,19 @@ export class SetlistsStore {
         this._items.set([created, ...this._items()]);
         this._selectedId.set(created.id);
         this.storageSet(this.SELECTED_KEY, created.id);
-      })
+      }),
     );
   }
 
   addSong(setlistId: string, songId: string) {
     return from(this.api.addItem(setlistId, { songId })).pipe(
-      tap((updated) => this.replace(updated))
+      tap((updated) => this.replace(updated)),
     );
   }
 
   removeSong(setlistId: string, songId: string) {
     return from(this.api.removeItem(setlistId, songId)).pipe(
-      tap((updated) => this.replace(updated))
+      tap((updated) => this.replace(updated)),
     );
   }
 
@@ -125,17 +125,21 @@ export class SetlistsStore {
           if (next) this.storageSet(this.SELECTED_KEY, next);
           else this.storageRemove(this.SELECTED_KEY);
         }
-      })
+      }),
     );
   }
 
   reorder(setlistId: string, songIds: string[]) {
     return from(this.api.reorder(setlistId, { songIds })).pipe(
-      tap((updated) => this.replace(updated))
+      tap((updated) => this.replace(updated)),
     );
   }
 
   private replace(updated: Setlist) {
     this._items.set(this._items().map((s) => (s.id === updated.id ? updated : s)));
+  }
+
+  updateName(setlistId: string, dto: { name: string }) {
+    return from(this.api.update(setlistId, dto)).pipe(tap((updated) => this.replace(updated)));
   }
 }
