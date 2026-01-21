@@ -47,6 +47,7 @@ export function createDraftSongDetail(base) {
         updatedAt: now,
         version: 1,
         sections: base.sections ?? [],
+        isSeed: false,
     };
 }
 export function createSection(params) {

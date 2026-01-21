@@ -9,10 +9,11 @@ import {
 import { Observable, catchError, throwError } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ErrorStateService } from './error-state.service';
+import { NotificationsService } from '../ui/notifications/notifications.service';
 
 @Injectable()
 export class HttpErrorInterceptor implements HttpInterceptor {
-  private readonly snack = inject(MatSnackBar);
+  private readonly notify = inject(NotificationsService);
   private readonly errors = inject(ErrorStateService);
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -33,7 +34,7 @@ export class HttpErrorInterceptor implements HttpInterceptor {
         // 🟡 Esperables → toast
         if (status >= 400 && status < 500) {
           const msg = err.error?.message || err.message || 'Something went wrong';
-          this.snack.open(msg, 'OK', { duration: 3000 });
+          this.notify.error(msg, 'OK', 3000);
           return throwError(() => err);
         }
 

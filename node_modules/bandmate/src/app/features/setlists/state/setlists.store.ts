@@ -34,11 +34,12 @@ export class SetlistsStore {
     } catch {}
   }
 
-  private api = new SetlistsApi();
-  private _items = signal<Setlist[]>([]);
-  private _state = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  private _error = signal<string | null>(null);
-  private _selectedId = signal<string | null>(null);
+  readonly api = inject(SetlistsApi);
+
+  readonly _items = signal<Setlist[]>([]);
+  readonly _state = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  readonly _error = signal<string | null>(null);
+  readonly _selectedId = signal<string | null>(null);
 
   readonly items = computed(() => this._items());
   readonly state = computed(() => this._state());

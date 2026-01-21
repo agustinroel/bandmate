@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { MatCardModule } from '@angular/material/card';
@@ -20,6 +20,8 @@ import { SongsStore } from '../../../songs/state/songs-store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { NewSetlistDialogComponent } from '../../ui/new-setlist-dialog';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { take } from 'rxjs';
+import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 
 @Component({
   standalone: true,
@@ -39,9 +41,14 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
       <div class="bm-mark" aria-hidden="true"><mat-icon>queue_music</mat-icon></div>
       <div class="flex-grow-1">
         <h2 class="m-0">Setlists</h2>
-        <div class="small opacity-75 mt-1">Build an order you can trust before rehearsal.</div>
+        <div class="small opacity-75 mt-1">Shape the flow of your rehearsal or show.</div>
       </div>
-      <button mat-stroked-button [style]="'margin-top: 20px'" (click)="createSetlist()">
+      <button
+        mat-raised-button
+        color="primary"
+        [style]="'margin-top: 20px'"
+        (click)="createSetlist()"
+      >
         <mat-icon class="me-1">add</mat-icon>
         New setlist
       </button>
@@ -60,12 +67,13 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
           @if (store.state() === 'loading') {
             <div class="small opacity-75 py-2">Loading…</div>
           } @else if (store.items().length === 0) {
-            <div class="small opacity-75 py-2">No setlists yet.</div>
+            <div class="small opacity-75 py-2">No setlists yet — create one to get started.</div>
           } @else {
             <div class="sl-list">
               @for (s of store.items(); track s.id) {
                 <button
                   class="sl-item"
+                  [attr.data-setlist-id]="s.id"
                   [class.active]="store.selectedId() === s.id"
                   (click)="store.select(s.id)"
                   type="button"
@@ -107,7 +115,7 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         <div class="sl-panel-inner">
           @if (!store.selected()) {
             <div class="text-center py-5 opacity-75">
-              Select a setlist on the left or create a new one.
+              Pick a setlist on the left, or create a new one to begin.
             </div>
           } @else {
             <div class="d-flex align-items-start gap-2">
@@ -148,8 +156,8 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                       [disabled]="store.selected()!.items.length === 0"
                       [matTooltip]="
                         store.selected()!.items.length === 0
-                          ? 'Add at least one song to start practice'
-                          : 'Start practice'
+                          ? 'Add at least one song to start practicing'
+                          : 'Start practicing this setlist'
                       "
                       [matTooltipDisabled]="false"
                       (click)="startPractice()"
@@ -199,16 +207,20 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                       <mat-icon class="sl-empty-ic">check_circle</mat-icon>
 
                       @if (store.selected()?.items?.length) {
-                        <div class="fw-semibold mt-2">All songs are already in this setlist</div>
+                        <div class="fw-semibold mt-2">
+                          All your songs are already in this setlist
+                        </div>
                         <div class="small opacity-75 mt-1">
-                          Remove a song from the right to make it available again.
+                          Remove one on the right to add it again.
                         </div>
                       } @else if (songQuery()) {
-                        <div class="fw-semibold mt-2">No matches</div>
-                        <div class="small opacity-75 mt-1">Try a different search.</div>
+                        <div class="fw-semibold mt-2">No matches found</div>
+                        <div class="small opacity-75 mt-1">Try a different title or artist.</div>
                       } @else {
-                        <div class="fw-semibold mt-2">No songs available</div>
-                        <div class="small opacity-75 mt-1">Add songs to your library first.</div>
+                        <div class="fw-semibold mt-2">No songs yet</div>
+                        <div class="small opacity-75 mt-1">
+                          Add songs to your library to build your first setlist.
+                        </div>
                       }
                     </div>
                   } @else {
@@ -230,7 +242,7 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <div class="small fw-semibold">Order</div>
                   <!-- Nice: micro-hint -->
-                  <div class="small opacity-75 d-none d-lg-block">Drag the handle to reorder</div>
+                  <div class="small opacity-75 d-none d-lg-block">Drag to shape the flow</div>
                 </div>
 
                 @if (store.selected()!.items.length === 0) {
@@ -238,7 +250,7 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                     <mat-icon class="sl-empty-ic">playlist_add</mat-icon>
                     <div class="fw-semibold mt-2">Your setlist is empty</div>
                     <div class="small opacity-75 mt-1">
-                      Add songs on the left, then drag to shape the flow.
+                      Add songs on the left and arrange the order when you’re ready.
                     </div>
                   </div>
                 } @else {
@@ -276,15 +288,6 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
   `,
   styles: [
     `
-      .bm-mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: rgba(201, 162, 39, 0.16);
-        display: grid;
-        place-items: center;
-      }
-
       .sl-layout {
         display: grid;
         grid-template-columns: 1fr;
@@ -534,9 +537,12 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
 export class SetlistsPageComponent {
   readonly store = inject(SetlistsStore);
   readonly songs = inject(SongsStore);
-  readonly snack = inject(MatSnackBar);
   readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
+
+  readonly route = inject(ActivatedRoute);
+
+  readonly notify = inject(NotificationsService);
 
   readonly songQuery = signal('');
   readonly lastMovedId = signal<string | null>(null);
@@ -572,11 +578,61 @@ export class SetlistsPageComponent {
       if (this.songs.state() === 'idle') this.songs.load();
       if (this.store.state() === 'idle') this.store.load().subscribe();
     });
+
+    // Focus on a setlist when coming back from Practice: /setlists?focus=<id>
+    this.route.queryParamMap.pipe(take(1)).subscribe((q) => {
+      const focusId = q.get('focus');
+      if (!focusId) return;
+
+      // Ensure setlists are loaded (or wait until they are)
+      const tryFocus = () => {
+        const exists = this.store.items().some((s) => s.id === focusId);
+        if (!exists) return false;
+
+        this.store.select(focusId);
+
+        // Scroll the item into view (best-effort)
+        queueMicrotask(() => {
+          const el = document.querySelector(`[data-setlist-id="${focusId}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        return true;
+      };
+
+      // If already loaded, focus immediately
+      if (this.store.state() === 'ready' && tryFocus()) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { focus: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+        return;
+      }
+
+      // Otherwise, watch until setlists become ready
+      const stop = effect(() => {
+        if (this.store.state() !== 'ready') return;
+
+        if (tryFocus()) {
+          stop.destroy();
+
+          // Clean the URL (optional but recommended)
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { focus: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        }
+      });
+    });
   }
 
   // Nice: normalize error snack
   private toastError(err: any, fallback: string, duration = 3000) {
-    this.snack.open(err?.message ?? fallback, 'OK', { duration });
+    this.notify.error(err?.message ?? fallback, 'OK', duration);
   }
 
   createSetlist() {
@@ -589,7 +645,7 @@ export class SetlistsPageComponent {
       if (!result) return;
 
       this.store.create(result).subscribe({
-        next: () => this.snack.open('Setlist created', 'OK', { duration: 2000 }),
+        next: () => this.notify.success('Setlist created', 'OK', 2000),
         error: (err) => this.toastError(err, 'Could not create setlist'),
       });
     });
@@ -608,7 +664,7 @@ export class SetlistsPageComponent {
       if (!nextName || nextName === currentName) return;
 
       this.store.updateName(id, { name: nextName }).subscribe({
-        next: () => this.snack.open('Setlist renamed', 'OK', { duration: 2000 }),
+        next: () => this.notify.success('Setlist renamed', 'OK', 2000),
         error: (err) => this.toastError(err, 'Could not rename setlist'),
       });
     });
@@ -619,12 +675,12 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     if (sel.items.some((i) => i.songId === songId)) {
-      this.snack.open('That song is already in the setlist', 'OK', { duration: 1500 });
+      this.notify.info('That song is already in the setlist', 'OK', 1500);
       return;
     }
 
     this.store.addSong(sel.id, songId).subscribe({
-      next: () => this.snack.open('Added to setlist', 'OK', { duration: 1200 }),
+      next: () => this.notify.success('Added to setlist', 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not add song', 2500),
     });
   }
@@ -634,7 +690,7 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     this.store.removeSong(sel.id, songId).subscribe({
-      next: () => this.snack.open('Removed', 'OK', { duration: 1200 }),
+      next: () => this.notify.success('Removed', 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not remove'),
     });
   }
@@ -653,7 +709,7 @@ export class SetlistsPageComponent {
     setTimeout(() => this.lastMovedId.set(null), 700);
 
     this.store.reorder(sel.id, ids).subscribe({
-      next: () => this.snack.open('Order updated', 'OK', { duration: 1200 }),
+      next: () => this.notify.success('Order updated', 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not reorder', 2500),
     });
   }
@@ -698,7 +754,7 @@ export class SetlistsPageComponent {
       if (!confirmed) return;
 
       this.store.remove(id).subscribe({
-        next: () => this.snack.open('Setlist deleted', 'OK', { duration: 2000 }),
+        next: () => this.notify.success('Setlist deleted', 'OK', 2000),
         error: (err) => this.toastError(err, 'Could not delete setlist'),
       });
     });

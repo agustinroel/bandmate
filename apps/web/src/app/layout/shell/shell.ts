@@ -13,6 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.component';
+import { TopbarComponent } from '../topbar/topbar';
 @Component({
   standalone: true,
   imports: [
@@ -29,6 +30,7 @@ import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.compo
     MatDividerModule,
     MatTooltipModule,
     ErrorBoundaryComponent,
+    TopbarComponent,
   ],
   selector: 'app-shell',
   templateUrl: './shell.html',

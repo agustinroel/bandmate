@@ -65,6 +65,7 @@ export function createDraftSongDetail(base: {
 
     version: 1,
     sections: base.sections ?? [],
+    isSeed: false,
   };
 }
 

@@ -29,7 +29,7 @@
     </div>
 
     <div class="bm-header-actions d-flex align-items-center gap-2">
-      @if (isEdit() && viewMode() === 'edit') {
+      @if (isEdit() && canEditBody()) {
         <!-- chip autosave sólo en edit -->
         @if (saveUi() !== 'idle') {
           <div
@@ -52,7 +52,7 @@
         }
       }
 
-      @if (isEdit()) {
+      @if (isEdit() && SongPolicy.canEdit(currentDetail())) {
         <button mat-stroked-button type="button" class="bm-edit-top" (click)="toggleMode()">
           <mat-icon class="bm-btn-ic">{{ viewMode() === 'view' ? 'edit' : 'visibility' }}</mat-icon>
           {{ viewMode() === 'view' ? 'Edit' : 'View' }}
@@ -174,7 +174,7 @@
             <div class="min-w-0">
               <div class="bm-body-title">Song body</div>
 
-              @if (viewMode() === 'edit') {
+              @if (canEditBody()) {
                 <div class="bm-body-sub">
                   Sections help you structure the song (Verse, Chorus, Bridge…)
                 </div>
@@ -260,7 +260,7 @@
                 </button>
               </div>
 
-              @if (isEditing()) {
+              @if (canEditBody()) {
                 <button
                   mat-stroked-button
                   class="bm-add-section"
@@ -297,7 +297,7 @@
                     <div class="d-flex align-items-center gap-2">
                       <div class="bm-section-meta">{{ sec.type }} · #{{ sec.order }}</div>
 
-                      @if (viewMode() === 'edit') {
+                      @if (canEditBody()) {
                         <button
                           mat-stroked-button
                           type="button"
@@ -334,7 +334,7 @@
                   <div class="bm-lines">
                     @for (line of sec.lines; track line.id) {
                       @if (line.kind === 'lyrics') {
-                        @if (viewMode() === 'edit') {
+                        @if (canEditBody()) {
                           <div class="bm-line-row">
                             <textarea
                               class="bm-line-input"
@@ -356,7 +356,8 @@
                           </div>
                         }
 
-                        @let built = buildLayout(line.source ?? '');
+                        @let src = transposeInlineChords(line.source ?? '', transpose());
+                        @let built = buildLayout(src);
 
                         <div class="bm-chart-preview" aria-label="Chord chart preview">
                           <div

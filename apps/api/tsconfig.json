@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "resolveJsonModule": true,
-      "verbatimModuleSyntax": true,
+      "verbatimModuleSyntax": false,
   },
   "include": ["src", "../web/src/app/features/setlists/data"]
 }

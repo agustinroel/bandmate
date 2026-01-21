@@ -5,9 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
-import type { CreateSongDto, UpdateSongDto, SongDetail } from '@bandmate/shared';
+import { CreateSongDto, UpdateSongDto, SongDetail, SongPolicy } from '@bandmate/shared';
 import { TitleCasePipe } from '@angular/common';
 import { GuitarChordDiagramComponent } from '../../../shared/ui/guitar-chord-diagram/guitar-chord-diagram';
 import { SongsStore } from '../../songs/state/songs-store';
@@ -23,6 +23,7 @@ import {
   ConfirmDialogData,
 } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
+import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 
 type SongMetaSnapshot = {
   title: string;
@@ -35,6 +36,8 @@ type SongMetaSnapshot = {
 };
 
 type SaveUiState = 'idle' | 'saving' | 'saved' | 'error';
+
+type ViewMode = 'view' | 'edit';
 
 function stableStringify(value: any): string {
   // stringify estable (ordenando keys) para comparar objetos sin falsos positivos
@@ -87,16 +90,38 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
 })
 export class SongEditorPageComponent {
   @ViewChild('scrollHost', { read: ElementRef }) scrollHost?: ElementRef<HTMLElement>;
+
+  SongPolicy = SongPolicy;
   readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
-  readonly snack = inject(MatSnackBar);
 
   readonly store = inject(SongsStore);
 
   readonly dialog = inject(MatDialog);
 
+  readonly notify = inject(NotificationsService);
+
   readonly saving = signal(false);
-  readonly viewMode = signal<'edit' | 'view'>('view');
+
+  readonly transpose = signal(0);
+  readonly viewMode = computed<ViewMode>(() => {
+    // ✅ CREATE: siempre edit
+    if (this.isCreate()) return 'edit';
+    // ✅ EDIT: respeta toggle manual
+    return this.manualViewMode();
+  });
+
+  readonly manualViewMode = signal<ViewMode>('view'); // solo para EDIT
+
+  // ✅ id solo si NO es create
+  readonly songId = computed(() =>
+    this.isCreate() ? null : this.route.snapshot.paramMap.get('id'),
+  );
+
+  // ✅ modo único para template/UX
+  readonly mode = computed(() => (this.isCreate() ? 'create' : 'edit'));
+
+  readonly isCreate = computed(() => this.route.snapshot.routeConfig?.path === 'songs/new');
 
   readonly isView = computed(() => this.viewMode() === 'view');
   readonly isEditing = computed(() => this.viewMode() === 'edit');
@@ -109,6 +134,9 @@ export class SongEditorPageComponent {
 
   private _autosaveTimer: any = null;
   private _autosaveInFlight = false;
+  readonly _lastSavedBody = signal<string>(''); // stringify estable de sections
+  private _autosaveBodyTimer: any = null;
+  private _autosaveBodyInFlight = false;
 
   // último snapshot guardado (enviado al backend con éxito)
   readonly _lastSavedMeta = signal<string>(''); // guardamos stringify estable
@@ -140,9 +168,12 @@ export class SongEditorPageComponent {
 
   readonly canAutoScroll = computed(() => !this.isEditing() && !!this.currentDetail());
 
-  readonly displayKey = computed(
-    () => (this.store.selected()?.key ?? '').toString().trim() || null,
-  );
+  readonly displayKey = computed(() => {
+    const k = (this.currentDetail()?.key ?? '').toString().trim();
+    if (!k) return null;
+    const t = this.transpose();
+    return t ? transposeChordSymbol(k, t) : k;
+  });
 
   isChordSelected = (ch: string) => computed(() => this.selectedChord() === ch);
   isChordHovered = (ch: string) => computed(() => this.hoveredChord() === ch);
@@ -173,7 +204,10 @@ export class SongEditorPageComponent {
     return maybeId;
   });
 
-  readonly isEdit = computed(() => !!this.id() && this.id() !== 'new');
+  readonly isEdit = computed(() => !this.isCreate());
+  canEditBody = computed(
+    () => this.viewMode() === 'edit' && SongPolicy.canEdit(this.currentDetail()),
+  );
 
   /**
    * Single source of truth for what's being edited/viewed.
@@ -249,6 +283,11 @@ export class SongEditorPageComponent {
 
       const key = stableStringify(metaSnapshotOf(d));
 
+      const bodyKey = stableStringify(bodySnapshotOf(d));
+
+      if (!this._lastSavedBody()) {
+        this._lastSavedBody.set(bodyKey);
+      }
       // only first time per song load
       if (!this._lastSavedMeta()) {
         this._lastSavedMeta.set(key);
@@ -257,11 +296,14 @@ export class SongEditorPageComponent {
       }
     });
 
-    // 3) Smart autosave (metadata only) - debounced + no-op if unchanged
+    // 3) Smart autosave - debounced + no-op if unchanged
     effect(() => {
       const id = this.id();
       if (!id || id === 'new') return;
       if (!this.isEdit()) return;
+
+      // Solo si realmente puede editar el body (no seed, etc.)
+      if (!this.canEditBody()) return;
 
       const st = this.store.detailState();
       if (st === 'loading' || st === 'idle') return;
@@ -269,67 +311,47 @@ export class SongEditorPageComponent {
       const detail = this.store.selected();
       if (!detail) return;
 
-      const metaKey = stableStringify(metaSnapshotOf(detail));
+      const bodyKey = stableStringify(bodySnapshotOf(detail));
+      const lastSaved = this._lastSavedBody();
 
-      // if user edits after a "saved", go back to idle
-      const prevSeen = this._lastSeenMeta();
-      if (prevSeen && prevSeen !== metaKey && this.saveUi() === 'saved') {
-        this.saveUi.set('idle');
-      }
-      this._lastSeenMeta.set(metaKey);
+      if (lastSaved && lastSaved === bodyKey) return; // no cambió => no guardar
 
-      const lastSaved = this._lastSavedMeta();
-      if (lastSaved && lastSaved === metaKey) return; // unchanged -> no autosave
+      if (this._autosaveBodyTimer) clearTimeout(this._autosaveBodyTimer);
 
-      // debounce
-      if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
-
-      this._autosaveTimer = setTimeout(() => {
-        // re-check at fire time
+      this._autosaveBodyTimer = setTimeout(() => {
         const idNow = this.id();
         if (!idNow || idNow === 'new') return;
-
-        const stNow = this.store.detailState();
-        if (stNow === 'loading' || stNow === 'idle') return;
 
         const dNow = this.store.selected();
         if (!dNow) return;
 
-        const metaNow = stableStringify(metaSnapshotOf(dNow));
-        const lastSavedNow = this._lastSavedMeta();
-        if (lastSavedNow && lastSavedNow === metaNow) return;
-        if (this._autosaveInFlight) return;
+        const bodyNow = stableStringify(bodySnapshotOf(dNow));
+        const lastNow = this._lastSavedBody();
+        if (lastNow && lastNow === bodyNow) return;
+        if (this._autosaveBodyInFlight) return;
 
-        this._autosaveInFlight = true;
-        this.setSavingUi();
+        this._autosaveBodyInFlight = true;
 
+        // ⚠️ IMPORTANTE: acá mandamos sections
         const dto: UpdateSongDto = {
-          title: dNow.title,
-          artist: dNow.artist,
-          key: dNow.key,
-          bpm: dNow.bpm,
-          durationSec: dNow.durationSec,
-          notes: dNow.notes,
-          links: dNow.links,
+          sections: dNow.sections,
         } as any;
 
         this.store
           .update(idNow, dto)
-          .pipe(finalize(() => (this._autosaveInFlight = false)))
+          .pipe(finalize(() => (this._autosaveBodyInFlight = false)))
           .subscribe({
-            next: () => {
-              this._lastSavedMeta.set(metaNow);
-              this.setSavedUi();
-            },
+            next: () => this._lastSavedBody.set(bodyNow),
             error: () => {
-              this.setErrorUi();
+              // opcional: notify, o dejalo silencioso
+              this.notify.error('Could not save song body', 'OK', 2400);
             },
           });
       }, 700);
 
       return () => {
-        if (this._autosaveTimer) clearTimeout(this._autosaveTimer);
-        this._autosaveTimer = null;
+        if (this._autosaveBodyTimer) clearTimeout(this._autosaveBodyTimer);
+        this._autosaveBodyTimer = null;
       };
     });
 
@@ -350,29 +372,37 @@ export class SongEditorPageComponent {
     });
   }
 
-  setView() {
-    this.viewMode.set('view');
-  }
-  setEdit() {
-    this.viewMode.set('edit');
-  }
   toggleMode() {
-    this.viewMode.update((m) => (m === 'edit' ? 'view' : 'edit'));
+    if (this.isCreate()) return; // no se toggilea en create
+    this.manualViewMode.set(this.manualViewMode() === 'view' ? 'edit' : 'view');
   }
 
   save = (dto: CreateSongDto) => {
     this.saving.set(true);
 
+    const current = this.currentDetail();
+
+    // 🔥 Merge: lo que viene del form + lo que ya tenés en el editor (sections/version)
+    const merged: any = {
+      ...dto,
+      links: dto.links ?? current?.links ?? [],
+      sections: current?.sections ?? dto.sections ?? [],
+      version: (current as any)?.version ?? (dto as any)?.version ?? 1,
+    };
+
     const id = this.id();
+
     const req$ =
-      id && id !== 'new' ? this.store.update(id, dto as UpdateSongDto) : this.store.create(dto);
+      id && id !== 'new'
+        ? this.store.update(id, merged as UpdateSongDto)
+        : this.store.create(merged as CreateSongDto);
 
     req$.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: () => {
-        this.snack.open('Song saved', 'OK', { duration: 2000 });
+        this.notify.success('Song saved', 'OK', 2000);
         this.router.navigate(['/songs']);
       },
-      error: () => this.snack.open('Could not save song', 'OK', { duration: 3000 }),
+      error: () => this.notify.error('Could not save song', 'OK', 3000),
     });
   };
 
@@ -463,29 +493,30 @@ export class SongEditorPageComponent {
   }
 
   transposeSong(step: number) {
-    const sel = this.store.selected();
-    if (!sel) return;
+    const d = this.currentDetail();
+    if (!d) return;
 
-    const sections = sel.sections.map((sec) => ({
-      ...sec,
-      lines: sec.lines.map((ln) => {
-        if (ln.kind !== 'lyrics') return ln;
-        const source = ln.source ?? '';
-        return { ...ln, source: transposeInlineChords(source, step) };
-      }),
-    }));
+    // visual-only
+    this.transpose.update((n) => n + step);
 
-    // Update key too (best-effort)
-    const nextKey = sel.key ? transposeChordSymbol(sel.key, step) : sel.key;
+    this.notify.info(
+      `Transposed ${this.transpose() >= 0 ? '+' : ''}${this.transpose()}`,
+      'OK',
+      1000,
+    );
+  }
 
-    this.store.setSelectedSections(sections);
+  transposeInlineChords(source: string, step: number): string {
+    // replace [Chord] tokens
+    return source.replace(/\[([^\]]+)\]/g, (_m, raw) => {
+      const chord = String(raw ?? '').trim();
+      if (!chord) return '[]';
+      return `[${transposeChordSymbol(chord, step)}]`;
+    });
+  }
 
-    if (sel.id && sel.key !== nextKey) {
-      // keep it local for now; backend later
-      this.store.update(sel.id, { key: nextKey } as any).subscribe?.(); // if your update returns Observable
-    }
-
-    this.snack.open(`Transposed song ${step > 0 ? '+' : ''}${step}`, 'OK', { duration: 1200 });
+  resetTranspose() {
+    this.transpose.set(0);
   }
 
   private confirm(data: ConfirmDialogData) {
@@ -774,11 +805,7 @@ function transposeChordSymbol(symbol: string, step: number): string {
   return `${mainNext}/${bassNext}`;
 }
 
-function transposeInlineChords(source: string, step: number): string {
-  // replace [Chord] tokens
-  return source.replace(/\[([^\]]+)\]/g, (_m, raw) => {
-    const chord = String(raw ?? '').trim();
-    if (!chord) return '[]';
-    return `[${transposeChordSymbol(chord, step)}]`;
-  });
+function bodySnapshotOf(d: SongDetail): any {
+  // Solo lo que querés persistir del body
+  return d.sections ?? [];
 }

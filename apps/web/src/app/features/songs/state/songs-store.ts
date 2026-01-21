@@ -116,25 +116,24 @@ export class SongsStore {
   // NEW: Detail (SongDetail)
   // -------------------------
 
-  /**
-   * Loads the selected song detail for a detail page.
-   * Works even if API only returns Song (metadata): we normalize it into SongDetail.
-   */
   loadDetail(id: string) {
     this._detailState.set('loading');
     this._selectedError.set(null);
 
-    // ✅ 1) Try local first (instant UX)
+    // 1) Pintamos rápido desde local si existe (solo si NO es seed)
     const local = loadDetailFromLocal(id);
     if (local) {
-      // normalize to ensure required fields exist
       const normalized = this.normalizeToDetail(local);
-      this._selected.set(normalized);
-      this._detailState.set('ready');
-      return;
+
+      // si es seed, ignoramos local (como ya hacías)
+      if (!((normalized as any)?.is_seed || (normalized as any)?.isSeed)) {
+        this._selected.set(normalized);
+        // ojo: NO retornamos, igual refrescamos desde API
+        this._detailState.set('ready');
+      }
     }
 
-    // ✅ 2) Fallback to API
+    // 2) Siempre refrescamos desde API (source of truth)
     this.api
       .get(id)
       .pipe(
@@ -142,8 +141,10 @@ export class SongsStore {
           const detail = this.normalizeToDetail(result);
           this._selected.set(detail);
 
-          // Save baseline so next open is instant
-          saveDetailToLocal(id, detail);
+          // cache solo si NO es seed
+          if (!(detail as any)?.is_seed && !(detail as any)?.isSeed) {
+            saveDetailToLocal(id, detail);
+          }
         }),
         finalize(() => {
           if (this._detailState() !== 'error') this._detailState.set('ready');
@@ -324,6 +325,7 @@ export class SongsStore {
 
       createdAt: now,
       updatedAt: now,
+      isSeed: false,
     };
 
     const detail: SongDetail = {

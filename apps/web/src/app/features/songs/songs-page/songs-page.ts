@@ -16,6 +16,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { NgClass, DatePipe } from '@angular/common';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
+import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
+import { SongPolicy } from '@bandmate/shared';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -108,13 +110,14 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
     DatePipe,
   ],
   template: `
-    <div class="d-flex align-items-center gap-2 mb-3">
-      <div>
+    <div class="d-flex align-items-start gap-3 mb-3">
+      <div class="bm-mark" aria-hidden="true">
+        <mat-icon>library_music</mat-icon>
+      </div>
+      <div class="flex-grow-1">
         <h2 class="m-0">Songs</h2>
         <div class="small opacity-75">{{ store.count() }} total</div>
       </div>
-
-      <span class="flex-grow-1"></span>
 
       <button mat-raised-button color="primary" (click)="goNew()">
         <mat-icon class="me-1">add</mat-icon>
@@ -261,68 +264,151 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
           </button>
         </div>
       </div>
-    } @else if (sorted().length > 0) {
-      <div class="songs-grid">
-        @for (s of sorted(); track s.id) {
-          <mat-card
-            class="song-card"
-            tabindex="0"
-            role="button"
-            (keydown)="onCardKeyDown($event, s.id)"
-            (click)="goEdit(s.id)"
-          >
-            <div class="song-top">
-              <div class="song-main">
-                <div class="song-title-row">
-                  <div class="song-title" [title]="s.title">{{ s.title }}</div>
+    } @else if (grouped().hasAny) {
+      <!-- ========================= -->
+      <!-- YOUR SONGS -->
+      <!-- ========================= -->
+      @if (grouped().mine.length > 0) {
+        <div class="bm-section-head">
+          <div class="bm-section-title">Your songs</div>
+          <div class="bm-section-sub small opacity-75">{{ grouped().mine.length }} songs</div>
+        </div>
 
-                  @if (s.key) {
-                    <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
-                      Key {{ s.key }}
+        <div class="songs-grid">
+          @for (s of grouped().mine; track s.id) {
+            <mat-card
+              class="song-card"
+              tabindex="0"
+              role="button"
+              (keydown)="onCardKeyDown($event, s.id)"
+              (click)="goEdit(s.id)"
+            >
+              <div class="song-top">
+                <div class="song-main">
+                  <div class="song-title-row">
+                    <div class="song-title" [title]="s.title">{{ s.title }}</div>
+
+                    @if (s.key) {
+                      <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
+                        Key {{ s.key }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+                </div>
+
+                <div class="song-actions">
+                  @if (SongPolicy.canDelete(s)) {
+                    <button
+                      class="song-del"
+                      mat-icon-button
+                      (click)="askDelete(s.id, s.title); $event.stopPropagation()"
+                      matTooltip="Delete"
+                      aria-label="Delete"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (s.bpm || durationLabel(s.durationSec)) {
+                <div class="song-meta">
+                  @if (s.bpm) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">speed</mat-icon>
+                      <span>{{ s.bpm }} BPM</span>
+                    </span>
+                  }
+
+                  @if (durationLabel(s.durationSec)) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">schedule</mat-icon>
+                      <span>{{ durationLabel(s.durationSec) }}</span>
                     </span>
                   }
                 </div>
+              }
 
-                <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+              <div class="song-updated opacity-75">
+                <mat-icon class="updated-ic">history</mat-icon>
+                Updated: {{ s.updatedAt | date: 'MMM d, y' }}
+              </div>
+            </mat-card>
+          }
+        </div>
+      }
+
+      <!-- Divider -->
+      @if (grouped().mine.length > 0 && grouped().library.length > 0) {
+        <div class="bm-section-sep"></div>
+      }
+
+      <!-- ========================= -->
+      <!-- LIBRARY (SEED SONGS) -->
+      <!-- ========================= -->
+      @if (grouped().library.length > 0) {
+        <div class="bm-section-head">
+          <div class="bm-section-title">Library</div>
+          <div class="bm-section-sub small opacity-75">{{ grouped().library.length }} songs</div>
+        </div>
+
+        <div class="songs-grid">
+          @for (s of grouped().library; track s.id) {
+            <mat-card
+              class="song-card song-card--seed"
+              tabindex="0"
+              role="button"
+              (keydown)="onCardKeyDown($event, s.id)"
+              (click)="goEdit(s.id)"
+            >
+              <div class="song-top">
+                <div class="song-main">
+                  <div class="song-title-row">
+                    <div class="song-title" [title]="s.title">{{ s.title }}</div>
+
+                    <span class="bm-seed-pill">Library</span>
+
+                    @if (s.key) {
+                      <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
+                        Key {{ s.key }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+                </div>
+
+                <!-- 🚫 No delete button for library songs -->
               </div>
 
-              <div class="song-actions">
-                <button
-                  class="song-del"
-                  mat-icon-button
-                  (click)="askDelete(s.id, s.title); $event.stopPropagation()"
-                  matTooltip="Delete"
-                  aria-label="Delete"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            </div>
+              @if (s.bpm || durationLabel(s.durationSec)) {
+                <div class="song-meta">
+                  @if (s.bpm) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">speed</mat-icon>
+                      <span>{{ s.bpm }} BPM</span>
+                    </span>
+                  }
 
-            @if (s.bpm || durationLabel(s.durationSec)) {
-              <div class="song-meta">
-                @if (s.bpm) {
-                  <span class="bm-pill">
-                    <mat-icon class="pill-ic">speed</mat-icon>
-                    <span>{{ s.bpm }} BPM</span>
-                  </span>
-                }
-                @if (durationLabel(s.durationSec)) {
-                  <span class="bm-pill">
-                    <mat-icon class="pill-ic">schedule</mat-icon>
-                    <span>{{ durationLabel(s.durationSec) }}</span>
-                  </span>
-                }
-              </div>
-            }
+                  @if (durationLabel(s.durationSec)) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">schedule</mat-icon>
+                      <span>{{ durationLabel(s.durationSec) }}</span>
+                    </span>
+                  }
+                </div>
+              }
 
-            <div class="song-updated opacity-75">
-              <mat-icon class="updated-ic">history</mat-icon>
-              Updated: {{ s.updatedAt | date: 'MMM d, y' }}
-            </div>
-          </mat-card>
-        }
-      </div>
+              <div class="song-updated opacity-75">
+                <mat-icon class="updated-ic">history</mat-icon>
+                Updated: {{ s.updatedAt | date: 'MMM d, y' }}
+              </div>
+            </mat-card>
+          }
+        </div>
+      }
     }
   `,
   styles: [
@@ -675,6 +761,54 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
       .key-other {
         background: rgba(0, 0, 0, 0.05);
       }
+
+      /* --- Section headers (Your songs / Library) --- */
+      .bm-section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 10px 4px 6px;
+      }
+
+      .bm-section-title {
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        font-size: 0.98rem;
+      }
+
+      .bm-section-sub {
+        font-size: 0.82rem;
+        opacity: 0.65;
+      }
+
+      /* --- Library visual distinction --- */
+      .song-card--seed {
+        background: rgba(0, 0, 0, 0.008);
+        border-style: dashed;
+        border-color: rgba(0, 0, 0, 0.07);
+      }
+
+      .bm-seed-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        opacity: 0.75;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(0, 0, 0, 0.03);
+      }
+
+      .bm-section-sep {
+        height: 1px;
+        margin: 14px 0 4px;
+        background: rgba(0, 0, 0, 0.06);
+      }
     `,
   ],
 })
@@ -682,7 +816,10 @@ export class SongsPageComponent {
   readonly store = inject(SongsStore);
   readonly router = inject(Router);
   readonly dialog = inject(MatDialog);
-  readonly snack = inject(MatSnackBar);
+
+  readonly notify = inject(NotificationsService);
+
+  SongPolicy = SongPolicy;
 
   /** UI state */
   readonly query = signal('');
@@ -706,6 +843,20 @@ export class SongsPageComponent {
 
   readonly isError = computed(() => this.store.state() === 'error');
   readonly isReady = computed(() => this.store.state() === 'ready');
+
+  /** ✅ Grouped result used by the template */
+  readonly grouped = computed(() => {
+    const list = this.filtered();
+
+    const mine = list.filter((s) => !s.isSeed);
+    const library = list.filter((s) => s.isSeed);
+
+    return {
+      mine: this.sortSongs(mine),
+      library: this.sortSongs(library),
+      hasAny: mine.length + library.length > 0,
+    };
+  });
 
   /** Options */
   readonly artistOptions = computed(() => {
@@ -785,9 +936,11 @@ export class SongsPageComponent {
   readonly isEmpty = computed(
     () => this.isReady() && this.store.count() === 0 && !this.query().trim(),
   );
-  readonly isNoResults = computed(
-    () => this.isReady() && this.store.count() > 0 && this.sorted().length === 0,
-  );
+
+  readonly isNoResults = computed(() => {
+    const g = this.grouped();
+    return this.isReady() && this.store.count() > 0 && !g.hasAny;
+  });
 
   readonly hasActiveFilters = computed(() => {
     const f = this.filters();
@@ -881,8 +1034,8 @@ export class SongsPageComponent {
       if (!confirmed) return;
 
       this.store.remove(id).subscribe({
-        next: () => this.snack.open('Song deleted', 'OK', { duration: 2000 }),
-        error: () => this.snack.open('Could not delete song', 'OK', { duration: 3000 }),
+        next: () => this.notify.success('Song deleted', 'OK', 2000),
+        error: () => this.notify.error('Could not delete song', 'OK', 3000),
       });
     });
   }
@@ -943,5 +1096,42 @@ export class SongsPageComponent {
   private parseTime(v: unknown): number {
     const t = Date.parse(String(v ?? ''));
     return Number.isFinite(t) ? t : 0;
+  }
+
+  /** Sorting helper (reusable for both groups) */
+  private sortSongs(list: any[]) {
+    const cmpStr = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
+
+    const normalize = (v: unknown) =>
+      String(v ?? '')
+        .trim()
+        .toLowerCase();
+    const parseTime = (v: unknown) => {
+      const t = Date.parse(String(v ?? ''));
+      return Number.isFinite(t) ? t : 0;
+    };
+
+    const sorted = list.slice();
+
+    sorted.sort((a, b) => {
+      switch (this.sort()) {
+        case 'updatedDesc':
+          return parseTime(b.updatedAt) - parseTime(a.updatedAt);
+        case 'updatedAsc':
+          return parseTime(a.updatedAt) - parseTime(b.updatedAt);
+        case 'titleAsc':
+          return cmpStr(normalize(a.title), normalize(b.title));
+        case 'titleDesc':
+          return cmpStr(normalize(b.title), normalize(a.title));
+        case 'artistAsc':
+          return cmpStr(normalize(a.artist), normalize(b.artist));
+        case 'artistDesc':
+          return cmpStr(normalize(b.artist), normalize(a.artist));
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
   }
 }

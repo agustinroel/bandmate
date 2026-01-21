@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import type { CreateSongDto, Song, UpdateSongDto } from '@bandmate/shared';
+import type { CreateSongDto, Song, SongDetail, UpdateSongDto } from '@bandmate/shared';
 
 @Injectable({ providedIn: 'root' })
 export class SongsApiService {
@@ -11,7 +11,7 @@ export class SongsApiService {
   }
 
   get(id: string) {
-    return this.http.get<Song>(`/api/songs/${id}`);
+    return this.http.get<SongDetail>(`/api/songs/${id}`);
   }
 
   create(dto: CreateSongDto) {

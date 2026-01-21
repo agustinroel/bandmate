@@ -71,6 +71,10 @@ body {
   font-family: var(--bm-font);
 }
 
+body.bm-no-scroll {
+  overflow: hidden;
+}
+
 /* nicer rendering */
 * {
   -webkit-font-smoothing: antialiased;
@@ -436,18 +440,111 @@ mat-form-field {
   font-weight: 600;
 }
 
-.bm-toast--success {
-  //asd
- }
-.bm-toast--info { 
-  //asd
+.bm-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: rgba(201, 162, 39, 0.16);
+        display: grid;
+        place-items: center;
+      }
+
+/* ---------------------------
+   Bandmate Toasts (MatSnackBar)
+   --------------------------- */
+
+/* Base: el panelClass cae en el container */
+.mat-mdc-snack-bar-container.bm-toast {
+  /* no uses background acá: es el wrapper */
+  padding: 0 !important;
+  border-radius: 14px;
 }
-.bm-toast--warn { 
-  //asd
+
+/* La "caja" real del snackbar */
+.mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__surface {
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  min-width: 280px;
+  max-width: min(560px, calc(100vw - 24px));
+
+  /* estilo base */
+  background: rgba(20, 24, 26, 0.92) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
 }
-.bm-toast--error { 
-  //asd
+
+/* Texto */
+.mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
+
+/* Acción (OK) */
+.mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__action {
+  font-weight: 750;
+  opacity: 0.95;
+}
+
+/* ---- Variantes ---- */
+
+/* SUCCESS */
+.mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__surface {
+  background: linear-gradient(
+    135deg,
+    rgba(18, 62, 66, 0.96),
+    rgba(14, 48, 52, 0.96)
+  ) !important;
+
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(201, 162, 39, 0.10),
+    0 0 26px rgba(201, 162, 39, 0.10);
+}
+
+.mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__surface::before {
+  background: rgba(201, 162, 39, 0.95);
+}
+
+/* Acción */
+.mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__action {
+  color: rgba(255, 236, 173, 0.95) !important;
+  opacity: 1;
+}
+
+/* INFO */
+.mat-mdc-snack-bar-container.bm-toast--info .mdc-snackbar__surface {
+  background: rgba(26, 46, 74, 0.95) !important;
+  border-color: rgba(120, 170, 255, 0.28);
+}
+
+.mat-mdc-snack-bar-container.bm-toast--info .mdc-snackbar__action {
+  color: rgba(190, 215, 255, 0.95) !important;
+}
+
+/* WARN */
+.mat-mdc-snack-bar-container.bm-toast--warn .mdc-snackbar__surface {
+  background: rgba(74, 52, 16, 0.95) !important;
+  border-color: rgba(255, 200, 90, 0.30);
+}
+
+.mat-mdc-snack-bar-container.bm-toast--warn .mdc-snackbar__action {
+  color: rgba(255, 230, 170, 0.95) !important;
+}
+
+/* ERROR */
+.mat-mdc-snack-bar-container.bm-toast--error .mdc-snackbar__surface {
+  background: rgba(76, 18, 24, 0.95) !important;
+  border-color: rgba(255, 120, 140, 0.30);
+}
+
+.mat-mdc-snack-bar-container.bm-toast--error .mdc-snackbar__action {
+  color: rgba(255, 205, 215, 0.95) !important;
+}
+
+
 
 
 

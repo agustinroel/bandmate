@@ -49,8 +49,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             <div class="small opacity-75 mt-2">
               Hotkeys:
               <span class="fw-semibold">Space</span>/<span class="fw-semibold">→</span> next,
-              <span class="fw-semibold">←</span> prev, <span class="fw-semibold">R</span> restart
-              (at end), <span class="fw-semibold">Esc</span> exit
+              <span class="fw-semibold">←</span> previous,
+              <span class="fw-semibold">R</span> restart, <span class="fw-semibold">Esc</span> exit
             </div>
           </div>
         } @else if (hasId()) {
@@ -71,7 +71,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         <div class="p-empty">
           <mat-icon class="p-empty-ic">queue_music</mat-icon>
           <div class="fw-semibold mt-2">Choose a setlist to practice</div>
-          <div class="small opacity-75 mt-1">Go to Setlists and press “Start practice”.</div>
+          <div class="small opacity-75 mt-1">
+            Choose a setlist to practice Go to Setlists and press “Start practice” when you’re
+            ready.
+          </div>
           <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
             Go to setlists
           </button>
@@ -82,7 +85,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         <div class="p-empty">
           <mat-icon class="p-empty-ic">search_off</mat-icon>
           <div class="fw-semibold mt-2">Setlist not found</div>
-          <div class="small opacity-75 mt-1">It may have been deleted or the link is wrong.</div>
+          <div class="small opacity-75 mt-1">
+            It may have been deleted, or the link is no longer valid.
+          </div>
           <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
             Go to setlists
           </button>
@@ -95,7 +100,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         <div class="p-empty">
           <mat-icon class="p-empty-ic">playlist_add</mat-icon>
           <div class="fw-semibold mt-2">This setlist is empty</div>
-          <div class="small opacity-75 mt-1">Add songs first, then start practice.</div>
+          <div class="small opacity-75 mt-1">
+            Add a few songs first, then come back to practice.
+          </div>
           <button mat-raised-button color="primary" class="mt-3" (click)="goSetlists()">
             Go to setlists
           </button>
@@ -191,7 +198,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <div class="p-done">
                 <mat-icon class="p-done-ic">task_alt</mat-icon>
                 <div class="fw-semibold mt-2">End of setlist</div>
-                <div class="small opacity-75 mt-1">You made it. Want to run it again?</div>
+                <div class="small opacity-75 mt-1">Nice run. Want to play it again?</div>
                 <button mat-stroked-button class="mt-3" (click)="p.jumpTo(0)">Restart</button>
               </div>
             }

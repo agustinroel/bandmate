@@ -1,38 +1,65 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthStore } from '../../../../../core/auth/auth.store';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule],
   template: `
     <div class="bm-login-wrap">
       <mat-card class="bm-login-card">
         <div class="bm-login-inner">
+          <!-- Brand -->
           <div class="bm-login-brand">
-            <div class="bm-logo" aria-hidden="true">BM</div>
-            <div>
+            <img
+              src="../../../../../../assets/brand/Bandmate logo gold transparent.png"
+              alt="Bandmate"
+              class="bm-brand-logo"
+            />
+
+            <div class="bm-brand-text">
               <div class="bm-title">Bandmate</div>
-              <div class="small opacity-75">Less chaos. More music.</div>
+              <div class="bm-tagline">Prep · Rehearse · Play</div>
             </div>
           </div>
 
-          <div class="bm-login-body">
-            <div class="fw-semibold">Login</div>
-            <div class="small opacity-75 mt-1">
-              Placeholder page. We’ll add Google OAuth / JWT later.
-            </div>
+          <!-- Hero -->
+          <div class="bm-login-hero">
+            <h2>Everything ready before the first note.</h2>
+            <p>
+              Organize songs, shape your setlists and focus on playing — not on what comes next.
+            </p>
+          </div>
 
-            <div class="bm-login-actions">
-              <button mat-raised-button color="primary" type="button" disabled>
-                <mat-icon class="bm-btn-ic">login</mat-icon>
-                Sign in with Google
-              </button>
+          <!-- Actions -->
+          <div class="bm-login-actions">
+            <button mat-raised-button class="bm-google-btn" (click)="signIn()" [disabled]="busy()">
+              <mat-icon>
+                @if (busy()) {
+                  hourglass_top
+                } @else {
+                  login
+                }
+              </mat-icon>
+              @if (busy()) {
+                Taking you to Google…
+              } @else {
+                Start rehearsing with Google
+              }
+            </button>
 
-              <a mat-button routerLink="/home">Continue without login</a>
-            </div>
+            @if (busy()) {
+              <div class="small opacity-75">One sec — we’re tuning things up…</div>
+            }
+
+            <button mat-button class="bm-ghost" (click)="continueGuest()">
+              Take a quick look first
+            </button>
+
+            <div class="bm-login-foot">Built by musicians, for musicians.</div>
           </div>
         </div>
       </mat-card>
@@ -40,66 +67,153 @@ import { MatIconModule } from '@angular/material/icon';
   `,
   styles: [
     `
-      .bm-login-wrap {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.02);
+      :host {
+        display: block;
       }
 
       .bm-login-card {
         width: min(520px, 100%);
-        border-radius: 18px;
+        border-radius: 22px;
         overflow: hidden;
       }
 
       .bm-login-inner {
-        padding: 18px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
       }
 
+      /* Brand */
       .bm-login-brand {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding-bottom: 12px;
+        gap: 14px;
+        padding-bottom: 14px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
       }
 
       .bm-logo {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
         display: grid;
         place-items: center;
-        font-weight: 900;
-        background: rgba(201, 162, 39, 0.18);
+        background: rgba(201, 162, 39, 0.2);
+        color: #6b5a1e;
       }
 
       .bm-title {
         font-weight: 900;
         letter-spacing: -0.02em;
+        font-size: 1.2rem;
       }
 
-      .bm-login-body {
-        padding-top: 14px;
+      .bm-tagline {
+        font-size: 0.8rem;
+        opacity: 0.7;
       }
 
+      /* Hero */
+      .bm-login-hero h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 850;
+        letter-spacing: -0.02em;
+      }
+
+      .bm-login-hero p {
+        margin: 6px 0 0;
+        font-size: 0.95rem;
+        opacity: 0.75;
+        line-height: 1.4;
+      }
+
+      /* Actions */
       .bm-login-actions {
-        margin-top: 14px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
+        gap: 12px;
+        margin-top: 6px;
+      }
+
+      .bm-google-btn {
+        height: 44px;
+        font-weight: 600;
       }
 
       .bm-btn-ic {
-        font-size: 18px;
-        height: 18px;
-        width: 18px;
         margin-right: 6px;
+      }
+
+      .bm-ghost {
+        opacity: 0.75;
+      }
+
+      .bm-login-foot {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        opacity: 0.6;
+        text-align: center;
+      }
+
+      .bm-brand-logo {
+        width: 48px;
+        height: 48px;
+      }
+
+      .bm-brand-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .bm-login-wrap {
+        height: 100dvh; /* clave */
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden; /* también */
+        min-height: 100dvh;
+        overflow: hidden;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(900px 400px at 15% 10%, rgba(201, 162, 39, 0.25), transparent 40%),
+          radial-gradient(700px 300px at 85% 90%, rgba(32, 82, 85, 0.25), transparent 45%), #f7f6f2;
       }
     `,
   ],
 })
-export class LoginPageComponent {}
+export class LoginPageComponent {
+  readonly auth = inject(AuthStore);
+  readonly router = inject(Router);
+
+  readonly busy = signal(false);
+  readonly error = computed<string | null>(() => null);
+
+  constructor() {
+    // Si ya está logueado, afuera.
+    if (this.auth.isAuthed()) {
+      this.router.navigateByUrl('/songs');
+    }
+  }
+
+  async signIn() {
+    if (this.busy()) return;
+    this.busy.set(true);
+
+    try {
+      await this.auth.signInWithGoogle();
+    } catch (e) {
+      console.error(e);
+      this.busy.set(false);
+    }
+  }
+
+  continueGuest() {
+    this.router.navigateByUrl('/songs');
+  }
+}

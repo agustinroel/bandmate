@@ -62,9 +62,10 @@ export type Song = {
   durationSec?: number | string;
   notes?: string;
   links?: string[];
-
+  sections?: SongSection[];
   createdAt: string;
   updatedAt: string;
+  isSeed: boolean;
 };
 
 /**
@@ -74,15 +75,7 @@ export type Song = {
  */
 export type SongDetail = Song & {
   version: 1;
-
-  /**
-   * Structured content. If undefined, treat as "empty song body".
-   */
   sections: SongSection[];
-
-  /**
-   * Optional future-friendly fields.
-   */
   tags?: string[];
   isFavorite?: boolean;
   capo?: number;
