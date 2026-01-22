@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { MatCardModule } from '@angular/material/card';
@@ -7,12 +8,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+} from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { SongsStore } from '../../../songs/state/songs-store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { NewSetlistDialogComponent } from '../../ui/new-setlist-dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { take } from 'rxjs';
+import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 
 @Component({
   standalone: true,
@@ -32,16 +41,21 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
       <div class="bm-mark" aria-hidden="true"><mat-icon>queue_music</mat-icon></div>
       <div class="flex-grow-1">
         <h2 class="m-0">Setlists</h2>
-        <div class="small opacity-75 mt-1">Build an order you can trust before rehearsal.</div>
+        <div class="small opacity-75 mt-1">Shape the flow of your rehearsal or show.</div>
       </div>
-      <button mat-stroked-button [style]="'margin-top: 20px'" (click)="createSetlist()">
+      <button
+        mat-raised-button
+        color="primary"
+        [style]="'margin-top: 20px'"
+        (click)="createSetlist()"
+      >
         <mat-icon class="me-1">add</mat-icon>
         New setlist
       </button>
     </header>
 
     @if (store.error()) {
-    <div class="alert alert-danger">{{ store.error() }}</div>
+      <div class="alert alert-danger">{{ store.error() }}</div>
     }
 
     <div class="sl-layout mt-2">
@@ -51,37 +65,47 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
           <div class="fw-semibold mb-2">Your setlists</div>
 
           @if (store.state() === 'loading') {
-          <div class="small opacity-75 py-2">Loading…</div>
+            <div class="small opacity-75 py-2">Loading…</div>
           } @else if (store.items().length === 0) {
-          <div class="small opacity-75 py-2">No setlists yet.</div>
+            <div class="small opacity-75 py-2">No setlists yet — create one to get started.</div>
           } @else {
-          <div class="sl-list">
-            @for (s of store.items(); track s.id) {
-            <button
-              class="sl-item"
-              [class.active]="store.selectedId() === s.id"
-              (click)="store.select(s.id)"
-              type="button"
-            >
-              <div class="sl-item-row">
-                <div class="sl-item-main">
-                  <div class="fw-semibold text-truncate">{{ s.name }}</div>
-                  <div class="small opacity-75">{{ s.items.length }} song(s)</div>
-                </div>
-
+            <div class="sl-list">
+              @for (s of store.items(); track s.id) {
                 <button
-                  mat-icon-button
+                  class="sl-item"
+                  [attr.data-setlist-id]="s.id"
+                  [class.active]="store.selectedId() === s.id"
+                  (click)="store.select(s.id)"
                   type="button"
-                  matTooltip="Delete setlist"
-                  (click)="askDeleteSetlist(s.id, s.name); $event.stopPropagation()"
                 >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            </button>
+                  <div class="sl-item-row">
+                    <div class="sl-item-main">
+                      <div class="fw-semibold text-truncate">{{ s.name }}</div>
+                      <div class="small opacity-75">{{ s.items.length }} song(s)</div>
+                    </div>
 
-            }
-          </div>
+                    <!-- Should: quick rename from list (optional but nice) -->
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Rename setlist"
+                      (click)="openRenameSetlist(s.id, s.name); $event.stopPropagation()"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Delete setlist"
+                      (click)="askDeleteSetlist(s.id, s.name); $event.stopPropagation()"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </button>
+              }
+            </div>
           }
         </div>
       </mat-card>
@@ -90,14 +114,25 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
       <mat-card class="sl-panel">
         <div class="sl-panel-inner">
           @if (!store.selected()) {
-          <div class="text-center py-5 opacity-75">
-            Select a setlist on the left or create a new one.
-          </div>
+            <div class="text-center py-5 opacity-75">
+              Pick a setlist on the left, or create a new one to begin.
+            </div>
           } @else {
-          <div class="d-flex align-items-start gap-2">
-            <div class="sl-head">
+            <div class="d-flex align-items-start gap-2">
               <div class="sl-head">
-                <div class="sl-head-title">{{ store.selected()!.name }}</div>
+                <div class="sl-head-title-row">
+                  <div class="sl-head-title">{{ store.selected()!.name }}</div>
+
+                  <!-- Should: rename from header -->
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Rename setlist"
+                    (click)="openRenameSetlist(store.selected()!.id, store.selected()!.name)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
 
                 <div class="sl-head-meta">
                   <div class="sl-pill">
@@ -111,95 +146,141 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
                     <span class="sl-pill-label">Songs</span>
                     <span class="sl-pill-value">{{ store.selected()!.items.length }}</span>
                   </div>
+
+                  <div class="sl-head-actions">
+                    <!-- Must: disable start practice when empty + tooltip -->
+                    <button
+                      mat-raised-button
+                      color="primary"
+                      type="button"
+                      [disabled]="store.selected()!.items.length === 0"
+                      [matTooltip]="
+                        store.selected()!.items.length === 0
+                          ? 'Add at least one song to start practicing'
+                          : 'Start practicing this setlist'
+                      "
+                      [matTooltipDisabled]="false"
+                      (click)="startPractice()"
+                    >
+                      <mat-icon class="me-1">play_arrow</mat-icon>
+                      Start practice
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="sl-grid mt-3">
-            <!-- Available songs -->
-            <div>
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="small fw-semibold">Add songs</div>
-                <div class="small opacity-75">{{ filteredSongs().length }} available</div>
-              </div>
-
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Filter</mat-label>
-                <input
-                  matInput
-                  [value]="songQuery()"
-                  (input)="songQuery.set($any($event.target).value)"
-                />
-              </mat-form-field>
-
-              <div class="sl-songs">
-                @if (filteredSongs().length === 0) {
-                <div class="sl-empty sl-empty-sm">
-                  <mat-icon class="sl-empty-ic">check_circle</mat-icon>
-
-                  @if (store.selected()?.items?.length) {
-                  <div class="fw-semibold mt-2">All songs are already in this setlist</div>
-                  <div class="small opacity-75 mt-1">
-                    Remove a song from the right to make it available again.
+            <div class="sl-grid mt-3">
+              <!-- Available songs -->
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="small fw-semibold">Add songs</div>
+                  <div class="small opacity-75">
+                    @if (songs.state() === 'loading') {
+                      Loading…
+                    } @else {
+                      {{ filteredSongs().length }} available
+                    }
                   </div>
-                  } @else if (songQuery()) {
-                  <div class="fw-semibold mt-2">No matches</div>
-                  <div class="small opacity-75 mt-1">Try a different search.</div>
-                  } @else {
-                  <div class="fw-semibold mt-2">No songs available</div>
-                  <div class="small opacity-75 mt-1">Add songs to your library first.</div>
-                  }
                 </div>
-                } @else { @for (s of filteredSongs(); track s.id) {
-                <button class="sl-add" type="button" (click)="addSong(s.id)">
-                  <div class="text-truncate">
-                    <span class="fw-semibold">{{ s.title }}</span>
-                    <span class="opacity-75"> — {{ s.artist }}</span>
-                  </div>
-                  <mat-icon>add</mat-icon>
-                </button>
-                } }
-              </div>
-            </div>
 
-            <!-- Current setlist -->
-            <div>
-              <div class="small fw-semibold mb-2">Order</div>
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Filter</mat-label>
+                  <input
+                    matInput
+                    [value]="songQuery()"
+                    (input)="songQuery.set($any($event.target).value)"
+                    [disabled]="songs.state() === 'loading'"
+                  />
+                </mat-form-field>
 
-              @if (store.selected()!.items.length === 0) {
-              <div class="sl-empty">
-                <mat-icon class="sl-empty-ic">playlist_add</mat-icon>
-                <div class="fw-semibold mt-2">Your setlist is empty</div>
-                <div class="small opacity-75 mt-1">
-                  Add songs on the left, then drag to shape the flow.
-                </div>
-              </div>
-              } @else {
-              <div cdkDropList class="sl-drop" (cdkDropListDropped)="drop($event)">
-                @for (it of store.selected()!.items; track it.songId) {
-                <div class="sl-row" cdkDrag [class.moved]="it.songId === lastMovedId()">
-                  <mat-icon class="sl-grab">drag_indicator</mat-icon>
+                <div class="sl-songs">
+                  <!-- Must: songs loading state -->
+                  @if (songs.state() === 'loading') {
+                    <div class="sl-empty sl-empty-sm">
+                      <mat-icon class="sl-empty-ic">hourglass_top</mat-icon>
+                      <div class="fw-semibold mt-2">Loading songs…</div>
+                      <div class="small opacity-75 mt-1">Just a second.</div>
+                    </div>
+                  } @else if (filteredSongs().length === 0) {
+                    <div class="sl-empty sl-empty-sm">
+                      <mat-icon class="sl-empty-ic">check_circle</mat-icon>
 
-                  <div class="flex-grow-1 min-w-0">
-                    <div class="text-truncate fw-semibold">{{ songTitle(it.songId) }}</div>
-                    <div class="small opacity-75">
-                      {{ songArtist(it.songId) }}
-                      @if (songDuration(it.songId)) {
-                      <span class="ms-2">• {{ songDuration(it.songId) }}</span>
+                      @if (store.selected()?.items?.length) {
+                        <div class="fw-semibold mt-2">
+                          All your songs are already in this setlist
+                        </div>
+                        <div class="small opacity-75 mt-1">
+                          Remove one on the right to add it again.
+                        </div>
+                      } @else if (songQuery()) {
+                        <div class="fw-semibold mt-2">No matches found</div>
+                        <div class="small opacity-75 mt-1">Try a different title or artist.</div>
+                      } @else {
+                        <div class="fw-semibold mt-2">No songs yet</div>
+                        <div class="small opacity-75 mt-1">
+                          Add songs to your library to build your first setlist.
+                        </div>
                       }
                     </div>
-                  </div>
-
-                  <button mat-icon-button type="button" (click)="removeSong(it.songId)">
-                    <mat-icon>close</mat-icon>
-                  </button>
+                  } @else {
+                    @for (s of filteredSongs(); track s.id) {
+                      <button class="sl-add" type="button" (click)="addSong(s.id)">
+                        <div class="text-truncate">
+                          <span class="fw-semibold">{{ s.title }}</span>
+                          <span class="opacity-75"> — {{ s.artist }}</span>
+                        </div>
+                        <mat-icon>add</mat-icon>
+                      </button>
+                    }
+                  }
                 </div>
+              </div>
+
+              <!-- Current setlist -->
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="small fw-semibold">Order</div>
+                  <!-- Nice: micro-hint -->
+                  <div class="small opacity-75 d-none d-lg-block">Drag to shape the flow</div>
+                </div>
+
+                @if (store.selected()!.items.length === 0) {
+                  <div class="sl-empty">
+                    <mat-icon class="sl-empty-ic">playlist_add</mat-icon>
+                    <div class="fw-semibold mt-2">Your setlist is empty</div>
+                    <div class="small opacity-75 mt-1">
+                      Add songs on the left and arrange the order when you’re ready.
+                    </div>
+                  </div>
+                } @else {
+                  <div cdkDropList class="sl-drop" (cdkDropListDropped)="drop($event)">
+                    @for (it of store.selected()!.items; track it.songId) {
+                      <div class="sl-row" cdkDrag [class.moved]="it.songId === lastMovedId()">
+                        <!-- Nice: real drag handle + tooltip -->
+                        <mat-icon class="sl-grab" cdkDragHandle matTooltip="Drag to reorder"
+                          >drag_indicator</mat-icon
+                        >
+
+                        <div class="flex-grow-1 min-w-0">
+                          <div class="text-truncate fw-semibold">{{ songTitle(it.songId) }}</div>
+                          <div class="small opacity-75">
+                            {{ songArtist(it.songId) }}
+                            @if (songDuration(it.songId)) {
+                              <span class="ms-2">• {{ songDuration(it.songId) }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <button mat-icon-button type="button" (click)="removeSong(it.songId)">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
                 }
               </div>
-              }
             </div>
-          </div>
           }
         </div>
       </mat-card>
@@ -207,26 +288,17 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
   `,
   styles: [
     `
-      .bm-mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: rgba(201, 162, 39, 0.16);
-        display: grid;
-        place-items: center;
-      }
-
       .sl-layout {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 18px; /* mobile */
+        gap: 18px;
       }
 
       @media (min-width: 992px) {
         .sl-layout {
           margin-top: 20px;
           grid-template-columns: 340px 1fr;
-          gap: 24px; /* desktop */
+          gap: 24px;
         }
       }
 
@@ -244,15 +316,19 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         display: grid;
         gap: 8px;
       }
+
       .sl-item {
         position: relative;
         text-align: left;
         border: 1px solid rgba(0, 0, 0, 0.08);
         background: rgba(255, 255, 255, 0.6);
         border-radius: 14px;
-        padding: 12px 14px 12px 16px; /* un poco más de aire */
+        padding: 12px 14px 12px 16px;
         cursor: pointer;
-        transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+        transition:
+          background 120ms ease,
+          border-color 120ms ease,
+          transform 120ms ease;
       }
 
       .sl-item:hover {
@@ -265,7 +341,6 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         font-weight: 650;
       }
 
-      /* dot con aire */
       .sl-item.active::before {
         content: '';
         position: absolute;
@@ -279,7 +354,6 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.18);
       }
 
-      /* Para que el texto no quede pegado al dot */
       .sl-item > div {
         padding-left: 14px;
       }
@@ -302,16 +376,34 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
       }
 
+      .sl-head-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
       .sl-head-title {
         font-size: 1.1rem;
         font-weight: 750;
         letter-spacing: -0.01em;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .sl-head-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+      }
+
+      .sl-head-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 6px;
+        margin-left: auto;
       }
 
       .sl-pill {
@@ -346,6 +438,7 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         grid-template-columns: 1fr;
         margin-top: 14px;
       }
+
       @media (min-width: 992px) {
         .sl-grid {
           grid-template-columns: 1fr 1fr;
@@ -359,6 +452,7 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         overflow: auto;
         padding-right: 4px;
       }
+
       .sl-add {
         display: flex;
         align-items: center;
@@ -375,27 +469,37 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         display: grid;
         gap: 8px;
       }
+
       .sl-row {
         display: flex;
         align-items: center;
-        cursor: grab;
         gap: 10px;
         border: 1px solid rgba(0, 0, 0, 0.08);
         background: rgba(255, 255, 255, 0.6);
         border-radius: 14px;
         padding: 10px 10px;
-        transition: box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+        transition:
+          box-shadow 180ms ease,
+          transform 180ms ease,
+          background 180ms ease;
       }
 
       .sl-row.moved {
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
         background: rgba(201, 162, 39, 0.1);
+      }
+
+      /* Nice: make handle clearly draggable */
+      .sl-grab {
+        opacity: 0.6;
+        cursor: grab;
+        user-select: none;
+      }
+      .sl-row:active .sl-grab {
         cursor: grabbing;
       }
-      .sl-grab {
-        opacity: 0.55;
-      }
+
       .cdk-drag-preview {
         box-shadow: 0 14px 30px rgba(0, 0, 0, 0.14);
         border-radius: 14px;
@@ -427,14 +531,27 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
         width: 36px;
         height: 36px;
       }
+
+      .bm-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: rgba(201, 162, 39, 0.16);
+        display: grid;
+        place-items: center;
+      }
     `,
   ],
 })
 export class SetlistsPageComponent {
   readonly store = inject(SetlistsStore);
   readonly songs = inject(SongsStore);
-  private snack = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
+  readonly dialog = inject(MatDialog);
+  readonly router = inject(Router);
+
+  readonly route = inject(ActivatedRoute);
+
+  readonly notify = inject(NotificationsService);
 
   readonly songQuery = signal('');
   readonly lastMovedId = signal<string | null>(null);
@@ -445,11 +562,9 @@ export class SetlistsPageComponent {
 
     const selected = this.store.selected();
     const already = new Set((selected?.items ?? []).map((i) => i.songId));
-
     const base = all.filter((s) => !already.has(s.id));
 
     if (!q) return base;
-
     return base.filter((s) => (s.title + ' ' + s.artist).toLowerCase().includes(q));
   });
 
@@ -472,6 +587,61 @@ export class SetlistsPageComponent {
       if (this.songs.state() === 'idle') this.songs.load();
       if (this.store.state() === 'idle') this.store.load().subscribe();
     });
+
+    // Focus on a setlist when coming back from Practice: /setlists?focus=<id>
+    this.route.queryParamMap.pipe(take(1)).subscribe((q) => {
+      const focusId = q.get('focus');
+      if (!focusId) return;
+
+      // Ensure setlists are loaded (or wait until they are)
+      const tryFocus = () => {
+        const exists = this.store.items().some((s) => s.id === focusId);
+        if (!exists) return false;
+
+        this.store.select(focusId);
+
+        // Scroll the item into view (best-effort)
+        queueMicrotask(() => {
+          const el = document.querySelector(`[data-setlist-id="${focusId}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        return true;
+      };
+
+      // If already loaded, focus immediately
+      if (this.store.state() === 'ready' && tryFocus()) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { focus: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+        return;
+      }
+
+      // Otherwise, watch until setlists become ready
+      const stop = effect(() => {
+        if (this.store.state() !== 'ready') return;
+
+        if (tryFocus()) {
+          stop.destroy();
+
+          // Clean the URL (optional but recommended)
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { focus: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+          });
+        }
+      });
+    });
+  }
+
+  // Nice: normalize error snack
+  private toastError(err: any, fallback: string, duration = 3000) {
+    this.notify.error(err?.message ?? fallback, 'OK', duration);
   }
 
   createSetlist() {
@@ -484,8 +654,27 @@ export class SetlistsPageComponent {
       if (!result) return;
 
       this.store.create(result).subscribe({
-        next: () => this.snack.open('Setlist created', 'OK', { duration: 2000 }),
-        error: () => this.snack.open('Could not create setlist', 'OK', { duration: 3000 }),
+        next: () => this.notify.success('Setlist created', 'OK', 2000),
+        error: (err) => this.toastError(err, 'Could not create setlist'),
+      });
+    });
+  }
+
+  // Should: rename setlist
+  openRenameSetlist(id: string, currentName: string) {
+    const ref = this.dialog.open(RenameSetlistDialogComponent, {
+      width: '520px',
+      maxWidth: '92vw',
+      data: { name: currentName },
+    });
+
+    ref.afterClosed().subscribe((result: { name: string } | null) => {
+      const nextName = result?.name?.trim();
+      if (!nextName || nextName === currentName) return;
+
+      this.store.updateName(id, { name: nextName }).subscribe({
+        next: () => this.notify.success('Setlist renamed', 'OK', 2000),
+        error: (err) => this.toastError(err, 'Could not rename setlist'),
       });
     });
   }
@@ -495,13 +684,13 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     if (sel.items.some((i) => i.songId === songId)) {
-      this.snack.open('That song is already in the setlist', 'OK', { duration: 1500 });
+      this.notify.info('That song is already in the setlist', 'OK', 1500);
       return;
     }
 
     this.store.addSong(sel.id, songId).subscribe({
-      next: () => this.snack.open('Added to setlist', 'OK', { duration: 1200 }),
-      error: () => this.snack.open('Could not add song', 'OK', { duration: 2500 }),
+      next: () => this.notify.success('Added to setlist', 'OK', 1200),
+      error: (err) => this.toastError(err, 'Could not add song', 2500),
     });
   }
 
@@ -510,20 +699,18 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     this.store.removeSong(sel.id, songId).subscribe({
-      next: () => this.snack.open('Removed', 'OK', { duration: 1200 }),
-      error: (err) => this.snack.open(err?.message ?? 'Could not remove', 'OK', { duration: 3000 }),
+      next: () => this.notify.success('Removed', 'OK', 1200),
+      error: (err) => this.toastError(err, 'Could not remove'),
     });
   }
 
   drop(ev: CdkDragDrop<unknown>) {
     const sel = this.store.selected();
     if (!sel) return;
-
     if (ev.previousIndex === ev.currentIndex) return;
 
     const ids = sel.items.map((i) => i.songId);
     const movedId = ids[ev.previousIndex];
-
     moveItemInArray(ids, ev.previousIndex, ev.currentIndex);
 
     // optimistic UI highlight
@@ -531,8 +718,8 @@ export class SetlistsPageComponent {
     setTimeout(() => this.lastMovedId.set(null), 700);
 
     this.store.reorder(sel.id, ids).subscribe({
-      next: () => this.snack.open('Order updated', 'OK', { duration: 1200 }),
-      error: () => this.snack.open('Could not reorder', 'OK', { duration: 2500 }),
+      next: () => this.notify.success('Order updated', 'OK', 1200),
+      error: (err) => this.toastError(err, 'Could not reorder', 2500),
     });
   }
 
@@ -576,10 +763,57 @@ export class SetlistsPageComponent {
       if (!confirmed) return;
 
       this.store.remove(id).subscribe({
-        next: () => this.snack.open('Setlist deleted', 'OK', { duration: 2000 }),
-        error: (err) =>
-          this.snack.open(err?.message ?? 'Could not delete setlist', 'OK', { duration: 3000 }),
+        next: () => this.notify.success('Setlist deleted', 'OK', 2000),
+        error: (err) => this.toastError(err, 'Could not delete setlist'),
       });
     });
   }
+
+  // Must: guard empty setlist (even if user triggers click somehow)
+  startPractice() {
+    const sel = this.store.selected();
+    if (!sel) return;
+    if (sel.items.length === 0) return;
+
+    this.router.navigate(['/practice', sel.id]);
+  }
+}
+
+/**
+ * Minimal dialog for "Rename setlist" (Should)
+ * Keep it colocated for copy-paste convenience.
+ */
+@Component({
+  standalone: true,
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  template: `
+    <h2 mat-dialog-title>Rename setlist</h2>
+
+    <div mat-dialog-content>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Name</mat-label>
+        <input matInput [value]="name()" (input)="name.set($any($event.target).value)" />
+      </mat-form-field>
+      <div class="small opacity-75">Pick something you’ll recognize quickly before rehearsal.</div>
+    </div>
+
+    <div mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="ref.close(null)">Cancel</button>
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        [disabled]="!name().trim()"
+        (click)="ref.close({ name: name().trim() })"
+      >
+        Save
+      </button>
+    </div>
+  `,
+})
+export class RenameSetlistDialogComponent {
+  readonly ref = inject(MatDialogRef<RenameSetlistDialogComponent>);
+  readonly data = inject(MAT_DIALOG_DATA) as { name: string };
+
+  readonly name = signal(this.data?.name ?? '');
 }

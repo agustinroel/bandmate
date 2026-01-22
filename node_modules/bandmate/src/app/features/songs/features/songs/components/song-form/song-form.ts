@@ -51,7 +51,7 @@ const emptySongDraft = (): SongDraft => ({
             <mat-label>Title</mat-label>
             <input matInput [field]="songForm.title" placeholder="e.g. Something" />
             @if (showError(songForm.title)) {
-            <mat-error>{{ firstError(songForm.title().errors()) }}</mat-error>
+              <mat-error>{{ firstError(songForm.title().errors()) }}</mat-error>
             }
           </mat-form-field>
 
@@ -59,7 +59,7 @@ const emptySongDraft = (): SongDraft => ({
             <mat-label>Artist</mat-label>
             <input matInput [field]="songForm.artist" placeholder="e.g. The Beatles" />
             @if (showError(songForm.artist)) {
-            <mat-error>{{ firstError(songForm.artist().errors()) }}</mat-error>
+              <mat-error>{{ firstError(songForm.artist().errors()) }}</mat-error>
             }
           </mat-form-field>
 
@@ -75,7 +75,7 @@ const emptySongDraft = (): SongDraft => ({
             <input matInput type="number" [field]="songForm.bpm" placeholder="e.g. 120" />
             <mat-hint>Optional</mat-hint>
             @if (showError(songForm.bpm)) {
-            <mat-error>{{ firstError(songForm.bpm().errors()) }}</mat-error>
+              <mat-error>{{ firstError(songForm.bpm().errors()) }}</mat-error>
             }
           </mat-form-field>
 
@@ -84,7 +84,7 @@ const emptySongDraft = (): SongDraft => ({
             <input matInput type="number" [field]="songForm.durationSec" placeholder="e.g. 185" />
             <mat-hint>Seconds (optional)</mat-hint>
             @if (showError(songForm.durationSec)) {
-            <mat-error>{{ firstError(songForm.durationSec().errors()) }}</mat-error>
+              <mat-error>{{ firstError(songForm.durationSec().errors()) }}</mat-error>
             }
           </mat-form-field>
         </div>
@@ -200,6 +200,11 @@ export class SongFormComponent {
   @Input() initial?: Partial<CreateSongDto>;
   @Input({ required: true }) onSubmit!: (dto: CreateSongDto) => void;
   @Input({ required: true }) onCancel!: () => void;
+  @Input() onDraftChange?: (patch: Partial<CreateSongDto>) => void;
+
+  private _hydrating = false;
+  private _draftTimer: any = null;
+  private _lastDraftKey = '';
 
   readonly model = signal<SongDraft>(emptySongDraft());
 
@@ -242,14 +247,61 @@ export class SongFormComponent {
       const init = this.initial;
       if (!init) return;
 
+      this._hydrating = true;
+
       this.model.set({
         title: init.title ?? '',
         artist: init.artist ?? '',
         key: init.key ?? '',
-        bpm: init.bpm ?? '',
-        durationSec: init.durationSec ?? '',
+        bpm: (init.bpm ?? '') as any,
+        durationSec: (init.durationSec ?? '') as any,
         notes: init.notes ?? '',
       });
+
+      // soltamos hydrating en el próximo tick (evita que el autosave se dispare por el set inicial)
+      queueMicrotask(() => (this._hydrating = false));
+    });
+
+    // ✅ Emit draft changes (debounced + distinct)
+    effect(() => {
+      // IMPORTANTE: leer model() acá hace que reaccione a cada cambio
+      const v = this.model();
+
+      if (this._hydrating) return;
+      if (!this.onDraftChange) return;
+
+      const numOrUndef = (raw: NumericInput): number | undefined => {
+        if (raw === '') return undefined;
+        if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
+        const t = raw.trim();
+        if (!t) return undefined;
+        const n = Number(t);
+        return Number.isFinite(n) ? n : undefined;
+      };
+
+      const draft: Partial<CreateSongDto> = {
+        title: v.title.trim(),
+        artist: v.artist.trim(),
+        key: v.key.trim() || undefined,
+        bpm: numOrUndef(v.bpm),
+        durationSec: numOrUndef(v.durationSec),
+        notes: v.notes.trim() || undefined,
+        // links: no lo toco acá (si querés, sumalo después)
+      };
+
+      // distinct con key estable
+      const key = JSON.stringify(draft);
+      if (key === this._lastDraftKey) return;
+
+      if (this._draftTimer) clearTimeout(this._draftTimer);
+      this._draftTimer = setTimeout(() => {
+        // re-check por si cambió mientras tanto
+        const k2 = JSON.stringify(draft);
+        if (k2 === this._lastDraftKey) return;
+
+        this._lastDraftKey = k2;
+        this.onDraftChange?.(draft);
+      }, 450);
     });
   }
 

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "sl1",
+    "name": "Acoustic Chillout",
+    "notes": "Set tranquilo para bares chicos.",
+    "items": [
+      {
+        "songId": "s1"
+      },
+      {
+        "songId": "s4"
+      },
+      {
+        "songId": "s6"
+      },
+      {
+        "songId": "s11"
+      },
+      {
+        "songId": "s17"
+      }
+    ],
+    "createdAt": "2026-01-01T11:00:00.000Z",
+    "updatedAt": "2026-01-20T13:41:09.025Z"
+  },
+  {
+    "id": "sl2",
+    "name": "Classic Rock Night",
+    "notes": "Set largo para noche completa.",
+    "items": [
+      {
+        "songId": "s13"
+      },
+      {
+        "songId": "s2"
+      },
+      {
+        "songId": "s12"
+      },
+      {
+        "songId": "s19"
+      },
+      {
+        "songId": "s5"
+      }
+    ],
+    "createdAt": "2026-01-01T11:05:00.000Z",
+    "updatedAt": "2026-01-01T11:05:00.000Z"
+  },
+  {
+    "id": "sl3",
+    "name": "Indie / Brit",
+    "notes": "Para ensayo con banda.",
+    "items": [
+      {
+        "songId": "s8"
+      },
+      {
+        "songId": "s9"
+      },
+      {
+        "songId": "s10"
+      },
+      {
+        "songId": "s14"
+      },
+      {
+        "songId": "s15"
+      }
+    ],
+    "createdAt": "2026-01-01T11:10:00.000Z",
+    "updatedAt": "2026-01-01T11:10:00.000Z"
+  }
+]

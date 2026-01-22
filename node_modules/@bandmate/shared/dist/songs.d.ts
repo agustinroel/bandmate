@@ -1,24 +1,4 @@
-export type SongId = string;
-export type Song = {
-    id: SongId;
-    title: string;
-    artist: string;
-    key?: string;
-    bpm?: number | string;
-    durationSec?: number | string;
-    notes?: string;
-    links?: string[];
-    createdAt: string;
-    updatedAt: string;
-};
-export type CreateSongDto = {
-    title: string;
-    artist: string;
-    key?: string;
-    bpm?: number | string;
-    durationSec?: number | string;
-    notes?: string;
-    links?: string[];
-};
-export type UpdateSongDto = Partial<CreateSongDto>;
+export * from "./lib/songs/song.model.js";
+export * from "./lib/songs/song.dto.js";
+export * from "./lib/songs/song.factories.js";
 //# sourceMappingURL=songs.d.ts.map

@@ -1,16 +1,30 @@
-.app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+:host {
+  --bm-toolbar-h: 64px;
+  --bm-footer-h: 44px;
 }
 
+@media (max-width: 599px) {
+  :host { --bm-toolbar-h: 56px; }
+}
+
+/* El container ocupa toda la pantalla */
 .app-container {
-  height: calc(100vh - 64px);
+  height: 100dvh;
 }
 
+/* IMPORTANTE: hacer el content un flex-col para empujar el footer abajo */
+.app-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bm-bg);
+}
+
+/* Main ocupa el espacio y el footer queda al fondo */
 .app-main {
-  min-height: calc(100vh - 64px - 44px);
-  padding: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 22px 16px 16px;
 }
 
 .content-wrap {
@@ -18,14 +32,29 @@
   margin: 0 auto;
 }
 
+/* Footer “normal”, no sticky */
 .app-footer {
-  height: 44px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  flex: 0 0 auto;
+  height: var(--bm-footer-h);
   display: flex;
   align-items: center;
+  background: var(--bm-surface);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  position: static;
+  z-index: auto;
 }
 
-/* ---------- Bandmate sidenav ---------- */
+/* Mobile: si querés ocultarlo */
+@media (max-width: 640px) {
+  .app-footer {
+    display: none;
+  }
+  .app-main {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ---------- Sidenav ---------- */
 .bm-sidenav {
   width: 280px;
 }
@@ -42,14 +71,18 @@
 }
 
 .bm-sidenav-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  font-weight: 800;
-  letter-spacing: -0.02em;
   background: rgba(201, 162, 39, 0.18);
+}
+
+.bm-sidenav-logo img {
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .bm-sidenav-section {
@@ -59,27 +92,16 @@
 .bm-sidenav-section-title {
   padding: 0 8px 8px;
   font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.55;
 }
 
-/* More breathing room for list items */
 .bm-nav .mat-mdc-list-item {
   border-radius: 12px;
   margin: 4px 6px;
   height: 44px;
-}
-
-/* Active item looks more “app-like” */
-.bm-nav a.active {
-  background: rgba(201, 162, 39, 0.14) !important;
-  font-weight: 650;
-}
-
-.bm-nav a.active mat-icon {
-  color: var(--bm-accent) !important;
 }
 
 .bm-sidenav-footer {
@@ -88,3 +110,42 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+
+/* =========================
+   Material list alignment (scoped)
+   ========================= */
+
+/* Evitamos tocar .mat-mdc-list-item global.
+   Esto se aplica solo adentro del sidenav/nav */
+:host ::ng-deep .bm-nav .mat-mdc-list-item {
+  align-items: center;
+}
+
+:host ::ng-deep .bm-nav .mat-mdc-list-item .mat-mdc-list-item-icon,
+:host ::ng-deep .bm-nav .mat-mdc-list-item mat-icon {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:host ::ng-deep .bm-nav .mat-mdc-list-item .mdc-list-item__content {
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep .bm-nav .mat-mdc-list-item mat-icon {
+  line-height: 1;
+}
+
+/* =========================
+   Menu items (si este scss es del shell y tiene menús)
+   Si ya lo moviste al topbar, podés borrar esto.
+   ========================= */
+:host ::ng-deep .mat-mdc-menu-item {
+  gap: 10px;
+}
+
+:host ::ng-deep .mat-mdc-menu-item .mat-icon {
+  margin-right: 6px;
+}

@@ -1,113 +1,214 @@
-# Bandmate 🎸
+# 🎸 Bandmate
 
-Bandmate is a rehearsal-focused web app for bands and musicians.
+**Bandmate** is an application built by musicians, for musicians.
 
-It helps you prepare setlists, organize song order, and keep track of total duration — **before you even start playing**.
+It was born from a simple but persistent problem: keeping songs, lyrics, chords, practices, and rehearsals organized in a single place — without friction, without scattered notes, and without breaking focus.
+
+Bandmate aims to become an **essential tool in a musician’s daily life**, whether you’re practicing alone at home, rehearsing with your band, or preparing a setlist for a live show.
+
+---
+
+## 🧠 Project Philosophy
+
+Bandmate is not just a song manager.
+
+It is designed to:
+
+- Reduce friction between **idea → practice → performance**
+- Support amateur and semi-professional musicians alike
+- Be fast, clear, and enjoyable to use
+- Prioritize **flow and focus** while playing music
 
 The goal is simple:  
-less time deciding what to play next, more time actually playing.
+When you open Bandmate, **you shouldn’t think about the app — you should think about the music**.
 
 ---
 
-## Why Bandmate?
+## 🎯 Problems Bandmate Solves
 
-In many rehearsals, a surprising amount of time is lost on:
-
-- deciding which song comes next
-- checking if the set will fit the available time
-- reorganizing the order on the fly
-
-Bandmate was designed to solve exactly that.
-
-You prepare your songs and setlists beforehand, and during rehearsal you already know:
-
-- what comes next
-- how long the set will last
-- how the flow is structured
-
-It’s meant to be **practical, calm, and musician-friendly**.
+- Lyrics and chords scattered across WhatsApp, notes, PDFs, or websites
+- Inconsistent versions of songs between band members
+- Messy or improvised setlists
+- Tools that are not designed for real rehearsal workflows
+- Overly complex or generic music apps
 
 ---
 
-## What you can do
+## ✨ What Bandmate Offers Today
 
 ### 🎵 Songs
 
-- Create, edit and delete songs
-- Store basic musical info (key, BPM, duration, notes, links)
+- Create and edit songs with lyrics and chords
+- Key musical metadata:
+  - Key / tonality
+  - Artist
+  - Last updated date
+- Clean, readable song view
+- Automatic persistence (no manual “save” actions)
 
 ### 📋 Setlists
 
-- Create multiple setlists
-- Add and remove songs
-- Reorder songs with drag & drop
-- Prevent duplicate songs inside a setlist
-- See total setlist duration calculated automatically
-- Visual feedback when reordering
+- Create and manage setlists
+- Designed for rehearsals and live shows
+- Reorder and reuse easily
 
-### 🎯 UX details
+### 🎧 Practice
 
-- Selected setlist is persisted between reloads
-- Clear empty states and contextual messages
-- Confirm dialogs for destructive actions
-- Designed to “breathe”: spacing, hierarchy and readability matter
+- Dedicated practice flow
+- Fast access: open → play → close
+- No unnecessary distractions
 
 ---
 
-## Tech stack
+## 🚧 Current Focus
 
-Bandmate is also meant to be a **clean Angular reference project**.
+Bandmate is currently in an **active MVP phase**, focused on building a solid and scalable foundation before expanding further.
+
+Upcoming key milestones:
+
+- Auto-scroll for lyrics/chords (configurable speed)
+- Advanced song filters (artist, key, genre, etc.)
+- Authentication (JWT, guards, interceptors)
+- Dedicated backend
+- Social features:
+  - Create bands
+  - Share songs and setlists
+  - Collaborate with band members
+- Spotify integration (reference-based, not a replacement)
+
+---
+
+## 🧩 Long-Term Vision
+
+Bandmate aims to be:
+
+> “The app you open before picking up your instrument.”
+
+A tool that is:
+
+- Social
+- Collaborative
+- Musically aware
+- Carefully crafted with attention to detail
+
+---
+
+# ⚙️ Technical Overview
+
+## 🏗️ General Architecture
+
+Bandmate is built as a modern **Single Page Application**, with a strong focus on:
+
+- Predictable state management
+- Reactive UI
+- Maintainable code
+- Future scalability
+
+---
+
+## 🧱 Tech Stack
 
 ### Frontend
 
-- Angular 21
-- Standalone components
-- Signals for state management
-- Signal Forms
-- New control flow syntax (`@if`, `@for`)
-- Angular Material + light Bootstrap utilities
-- SSR-safe patterns (browser-only APIs guarded)
+- **Angular** (standalone components)
+- **Signals** for reactive state
+- **Angular Material** as the UI foundation
+- Global SCSS + component-level styles
+- Feature-based architecture
 
-### Backend
+### State Management
 
-- Fastify
-- Simple REST API
-- In-memory persistence (for now)
-- Clean route separation (songs / setlists)
+- Signal-based stores
+- Clear separation between:
+  - State
+  - Side effects
+  - UI
 
-### Monorepo structure
+### Persistence
 
-apps/
-├─ web/ # Angular application
-└─ api/ # Fastify server
-packages/
-└─ shared/ # Shared types (DTOs, models)
+- Automatic local persistence
+- No explicit “save” actions
+- Designed to migrate to backend storage seamlessly
 
 ---
 
-## Getting started
+## 📁 Project Structure (Simplified)
 
-### Requirements
+src/
+├─ app/
+│ ├─ core/ # services, layout, navigation
+│ ├─ shared/ # reusable UI, utilities
+│ ├─ features/
+│ │ ├─ songs/
+│ │ ├─ setlists/
+│ │ ├─ practice/
+│ └─ state/ # global stores
+├─ assets/
+└─ styles/
 
-- Node.js (NVM recommended)
-- npm (workspaces enabled)
+---
 
-### Install dependencies
+## 🧠 Technical Principles
+
+- **Standalone-first**
+- **Signals over RxJS** where appropriate
+- **Reactive, not imperative UI**
+- Small, focused, predictable components
+- Minimal logic in templates
+- Always optimize for:
+  - readability
+  - maintainability
+  - scalability
+
+---
+
+## 🧪 Testing (Planned)
+
+- Unit testing with Jest
+- Priority on:
+  - state logic
+  - helpers
+  - stores
+
+---
+
+## 🔐 Authentication (Planned)
+
+- JWT-based authentication
+- HTTP interceptors
+- Route guards per feature
+- Role-based access (user / band)
+
+---
+
+## 🚀 Useful Scripts
+
+# install dependencies
 
 npm install
 
-Run locally (development)
+# start development server
 
-In one terminal:
+npm start
 
-npm run dev:api
+# production build
 
-In another terminal:
+npm run build
 
-npm run dev:web
+# rebuild shared package
 
-Then open:
+npm run build -w @bandmate/shared
 
-http://localhost:4200
+## 📝 Final Notes
 
-(The web app uses a development proxy to connect to the local API.)
+This README is a living document.
+
+As the project evolves, this file should evolve with it:
+
+New features should be reflected here
+
+The original vision should remain clear
+
+Product and technical decisions should stay aligned
+
+Bandmate is built with intention, patience, and care — just like music.
