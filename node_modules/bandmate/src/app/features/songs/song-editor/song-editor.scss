@@ -20,14 +20,33 @@
   padding-top: 8px;
 }
 
+/* Desktop: mantenemos el card scroll si te gusta */
 .bm-editor-card {
   border-radius: 16px;
   overflow: auto;
-  max-height: calc(100vh - 140px); // ajustá según tu header/controles
+  max-height: calc(100vh - 140px);
+}
+
+/* Mobile: NO scroll interno, que scrollee el body */
+@media (max-width: 640px) {
+  .bm-editor-card {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .bm-card-inner {
+    padding: 14px;
+  }
 }
 
 .bm-card-inner {
   padding: 16px;
+}
+
+@media (max-width: 640px) {
+  .bm-card-inner {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (min-width: 768px) {
@@ -186,6 +205,27 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.02);
   overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .bm-chart-preview {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+
+    /* ocultar scrollbar */
+    scrollbar-width: none;          /* Firefox */
+  }
+  .bm-chart-preview::-webkit-scrollbar {
+    display: none;                  /* Chrome/Safari */
+  }
+
+  /* importante: que el contenido no fuerce overflow por layout raro */
+  .bm-chart-preview .bm-chart-line {
+    width: max-content;
+  }
 }
 
 .bm-chart-line {
@@ -892,4 +932,97 @@
   gap: 8px;
   white-space: nowrap;
 }
+
+@media (max-width: 640px) {
+  .bm-page-header {
+    margin-bottom: 6px;
+  }
+
+  .bm-mark {
+    display: none;
+  }
+
+  .bm-header-actions {
+    padding-top: 0;
+  }
+
+  .bm-page-header h2 {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+
+  .bm-page-header .small {
+    font-size: 0.8rem;
+  }
+
+  /* Save chip flotante */
+  .bm-save-chip {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+  }
+}
+
+@media (max-width: 640px) {
+  .bm-meta-pills {
+    gap: 6px;
+  }
+
+  .bm-pill {
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bm-meta-notes {
+    padding: 10px;
+  }
+}
+
+/* por defecto: desktop */
+.bm-flow { display: none !important; }
+.bm-chart-desktop { display: block !important; }
+
+/* mobile: flow visible, chart oculto */
+@media (max-width: 640px) {
+  .bm-flow { display: flex !important; flex-wrap: wrap; gap: 8px 10px; }
+  .bm-chart-desktop { display: none !important; }
+
+  .bm-flow-token {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+  }
+
+  .bm-flow-chord {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    font-weight: 900;
+    font-size: 12px;
+    line-height: 1;
+     padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: rgba(201, 162, 39, 0.12);
+    color: rgba(0,0,0,0.85);
+  }
+
+  /* para tokens sin chord: reservamos altura pero invisible (no “salta” todo) */
+  .bm-flow-chord--ghost {
+    opacity: 0;
+     height: 24px;
+    pointer-events: none;
+  }
+
+  .bm-flow-text {
+    white-space: pre-wrap;     /* respeta espacios y wrappea */
+    word-break: break-word;    /* evita corte feo en pantallas muy angostas */
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    font-size: 14px;
+    line-height: 1.35;
+    opacity: 0.95;
+  }
+}
+
 

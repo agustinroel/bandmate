@@ -1,10 +1,19 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  Input,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthStore } from '../../core/auth/auth.store';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   standalone: true,
@@ -20,7 +29,14 @@ import { AuthStore } from '../../core/auth/auth.store';
   template: `
     <header class="bm-topbar">
       <div class="bm-left">
-        <button mat-icon-button class="bm-burger" type="button" aria-label="Menu">
+        <button
+          mat-icon-button
+          class="bm-burger"
+          type="button"
+          aria-label="Menu"
+          (click)="toggleMenu()"
+          [class.is-hidden]="!isHandset"
+        >
           <mat-icon>menu</mat-icon>
         </button>
 
@@ -104,7 +120,7 @@ import { AuthStore } from '../../core/auth/auth.store';
       .bm-topbar {
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 20;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -213,16 +229,7 @@ import { AuthStore } from '../../core/auth/auth.store';
         gap: 10px;
       }
 
-      .bm-upgrade {
-        display: none;
-      }
-
-      @media (min-width: 768px) {
-        .bm-upgrade {
-          display: inline-flex;
-        }
-      }
-
+      /* User chip */
       .bm-user {
         display: inline-flex;
         align-items: center;
@@ -275,30 +282,15 @@ import { AuthStore } from '../../core/auth/auth.store';
         height: 18px;
       }
 
-      .bm-menu-head {
-        opacity: 1 !important;
-        cursor: default !important;
-      }
-
-      .bm-menu-title {
-        font-weight: 800;
-      }
-
-      .bm-menu-sub {
-        font-size: 0.8rem;
-        opacity: 0.7;
-      }
-
+      /* Upgrade button (tu shine premium) */
       .app-upgrade {
         position: relative;
-        overflow: hidden; /* CLAVE: recorta el shine */
-        isolation: isolate; /* evita mezclas raras con el toolbar */
+        overflow: hidden;
+        isolation: isolate;
         border-radius: 999px;
-
         padding: 6px 12px;
         line-height: 1;
         margin-right: 8px;
-
         border: 1px solid rgba(213, 179, 98, 0.9);
         background: linear-gradient(180deg, rgba(255, 232, 160, 0.55), rgba(201, 162, 39, 0.35));
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
@@ -307,7 +299,7 @@ import { AuthStore } from '../../core/auth/auth.store';
       .app-upgrade::before {
         content: '';
         position: absolute;
-        inset: -40% -60%; /* lo hacemos grande, pero queda recortado */
+        inset: -40% -60%;
         background: linear-gradient(
           120deg,
           transparent 0%,
@@ -317,7 +309,7 @@ import { AuthStore } from '../../core/auth/auth.store';
         transform: translateX(-120%) rotate(8deg);
         opacity: 0;
         pointer-events: none;
-        z-index: -1; /* queda “debajo” del contenido del botón */
+        z-index: -1;
       }
 
       .app-upgrade:hover::before {
@@ -335,19 +327,10 @@ import { AuthStore } from '../../core/auth/auth.store';
           0 8px 18px rgba(0, 0, 0, 0.28);
       }
 
-      /* Si el user tiene reduced motion, evitamos el barrido */
       @media (prefers-reduced-motion: reduce) {
         .app-upgrade,
-        .app-upgrade::after {
+        .app-upgrade::before {
           transition: none !important;
-        }
-
-        .app-upgrade:hover {
-          transform: none;
-        }
-
-        .app-upgrade:hover::after {
-          opacity: 0;
         }
       }
 
@@ -361,9 +344,18 @@ import { AuthStore } from '../../core/auth/auth.store';
     `,
   ],
 })
-export class TopbarComponent {
+export class TopbarComponent implements AfterViewInit {
+  @Input() drawer?: MatSidenav;
+  @Input() isHandset = false;
+
+  @HostListener('window:resize')
+  onResize() {
+    this.setTopbarHeightVar();
+  }
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
+
+  readonly el = inject(ElementRef<HTMLElement>);
 
   readonly isAuthed = this.auth.isAuthed;
 
@@ -384,6 +376,10 @@ export class TopbarComponent {
     return typeof pic === 'string' && pic ? pic : 'assets/brand/avatar-fallback.png';
   });
 
+  ngAfterViewInit() {
+    this.setTopbarHeightVar();
+  }
+
   goLogin() {
     this.router.navigateByUrl('/login');
   }
@@ -400,5 +396,14 @@ export class TopbarComponent {
 
   onUpgrade() {
     console.log('upgrade');
+  }
+
+  toggleMenu() {
+    if (this.isHandset) this.drawer?.toggle();
+  }
+
+  private setTopbarHeightVar() {
+    const h = this.el.nativeElement.getBoundingClientRect().height;
+    document.documentElement.style.setProperty('--bm-topbar-h', `${Math.ceil(h)}px`);
   }
 }

@@ -1,132 +1,30 @@
 :host {
-  /* alturas reales típicas de Material */
   --bm-toolbar-h: 64px;
   --bm-footer-h: 44px;
 }
 
 @media (max-width: 599px) {
-  :host {
-    --bm-toolbar-h: 56px;
-  }
+  :host { --bm-toolbar-h: 56px; }
 }
 
-:root{
-  --bm-petrol-900: #163c40;
-  --bm-petrol-850: #1a4347;
-  --bm-petrol-800: #1f4b50;
-}
-
-/* ---------- Toolbar ---------- */
-.app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  height: var(--bm-toolbar-h);
-
-  /* premium look */
-  backdrop-filter: saturate(1.1) blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Brand */
-.app-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: inherit;
-  min-width: 0;
-}
-
-.app-mark {
-  width: 30px;   /* antes 26 */
-  height: 30px;  /* antes 26 */
-  display: block;
-  transform: translateY(-0.5px); /* micro ajuste visual */
-}
-
-.app-name {
-  font-weight: 850;
-  letter-spacing: -0.02em;
-  font-size: 1.02rem;
-}
-
-.app-version {
-  margin-left: 6px;
-  font-size: 0.78rem;
-  opacity: 0.75;
-  transform: translateY(0.5px);
-}
-
-.app-nav-separator {
-  width: 16px;
-}
-
-.app-top-nav a.active-top {
-  background: rgba(201, 162, 39, 0.12);
-  border-radius: 999px;
-}
-
-
-
-
-.app-user-btn {
-  margin-left: 2px;
-}
-
-.app-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-weight: 850;
-  letter-spacing: -0.02em;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-/* user menu header */
-.app-user-card {
-  pointer-events: none;
-  opacity: 1 !important;
-}
-
-.app-user-name {
-   font-weight: 850;
-  letter-spacing: -0.01em;
-}
-
-.app-user-sub {
-  margin-top: 3px;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-/* User menu */
-.app-user-menu-head {
-  padding: 12px 16px 10px;
-}
-
-/* Alinea icono + label perfecto en mat-menu-item */
-:host ::ng-deep .mat-mdc-menu-item {
-  gap: 10px;
-}
-
-:host ::ng-deep .mat-mdc-menu-item .mat-icon {
-  margin-right: 6px;
-}
-
-/* ---------- Layout ---------- */
+/* El container ocupa toda la pantalla */
 .app-container {
-  height: calc(100vh - var(--bm-toolbar-h));
+  height: 100dvh;
 }
 
+/* IMPORTANTE: hacer el content un flex-col para empujar el footer abajo */
+.app-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bm-bg);
+}
+
+/* Main ocupa el espacio y el footer queda al fondo */
 .app-main {
-  
-  min-height: calc(100vh - var(--bm-toolbar-h) - var(--bm-footer-h));
-  padding: 22px 16px 16px; /* 👈 clave para que no quede pegado arriba */
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 22px 16px 16px;
 }
 
 .content-wrap {
@@ -134,11 +32,26 @@
   margin: 0 auto;
 }
 
+/* Footer “normal”, no sticky */
 .app-footer {
+  flex: 0 0 auto;
   height: var(--bm-footer-h);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
+  background: var(--bm-surface);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  position: static;
+  z-index: auto;
+}
+
+/* Mobile: si querés ocultarlo */
+@media (max-width: 640px) {
+  .app-footer {
+    display: none;
+  }
+  .app-main {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* ---------- Sidenav ---------- */
@@ -157,36 +70,19 @@
   gap: 12px;
 }
 
-.bm-sidenav-brand .fw-semibold {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
 .bm-sidenav-logo {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-
   display: grid;
   place-items: center;
-
-  background: rgba(201, 162, 39, 0.18); // dorado suave
+  background: rgba(201, 162, 39, 0.18);
 }
-
 
 .bm-sidenav-logo img {
   width: 26px;
   height: 26px;
   display: block;
-}
-
-
-.bm-side-title {
-  line-height: 1.1;
-}
-
-.bm-side-sub {
-  line-height: 1.1;
 }
 
 .bm-sidenav-section {
@@ -202,20 +98,10 @@
   opacity: 0.55;
 }
 
-/* list items */
 .bm-nav .mat-mdc-list-item {
   border-radius: 12px;
   margin: 4px 6px;
   height: 44px;
-}
-
-.bm-nav a.active {
-  background: rgba(201, 162, 39, 0.14) !important;
-  font-weight: 650;
-}
-
-.bm-nav a.active mat-icon {
-  color: var(--bm-accent) !important;
 }
 
 .bm-sidenav-footer {
@@ -224,24 +110,42 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* alignment */
-.mat-mdc-list-item {
+
+/* =========================
+   Material list alignment (scoped)
+   ========================= */
+
+/* Evitamos tocar .mat-mdc-list-item global.
+   Esto se aplica solo adentro del sidenav/nav */
+:host ::ng-deep .bm-nav .mat-mdc-list-item {
   align-items: center;
 }
 
-.mat-mdc-list-item .mat-mdc-list-item-icon,
-.mat-mdc-list-item mat-icon {
+:host ::ng-deep .bm-nav .mat-mdc-list-item .mat-mdc-list-item-icon,
+:host ::ng-deep .bm-nav .mat-mdc-list-item mat-icon {
   margin-right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mat-mdc-list-item .mdc-list-item__content {
+:host ::ng-deep .bm-nav .mat-mdc-list-item .mdc-list-item__content {
   display: flex;
   align-items: center;
 }
 
-.mat-mdc-list-item mat-icon {
+:host ::ng-deep .bm-nav .mat-mdc-list-item mat-icon {
   line-height: 1;
+}
+
+/* =========================
+   Menu items (si este scss es del shell y tiene menús)
+   Si ya lo moviste al topbar, podés borrar esto.
+   ========================= */
+:host ::ng-deep .mat-mdc-menu-item {
+  gap: 10px;
+}
+
+:host ::ng-deep .mat-mdc-menu-item .mat-icon {
+  margin-right: 6px;
 }

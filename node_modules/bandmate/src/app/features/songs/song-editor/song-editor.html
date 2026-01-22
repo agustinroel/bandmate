@@ -357,9 +357,47 @@
                         }
 
                         @let src = transposeInlineChords(line.source ?? '', transpose());
+
+                        <!-- MOBILE: Flow mode (wrap, NO horizontal scroll) -->
+                        <div class="bm-flow" aria-label="Chord flow">
+                          @for (t of flowTokens(src); track $index) {
+                            <span class="bm-flow-token" [class.has-chord]="!!t.chord">
+                              @if (t.chord) {
+                                <button
+                                  type="button"
+                                  class="bm-chord-hit bm-flow-chord"
+                                  [class.is-hovered]="hoveredChord() === t.chord"
+                                  [class.is-selected]="selectedChord() === t.chord"
+                                  [matMenuTriggerFor]="viewMode() === 'view' ? chordMenu : null"
+                                  (mouseenter)="hoveredChord.set(t.chord)"
+                                  (mouseleave)="
+                                    hoveredChord.set(
+                                      hoveredChord() === t.chord ? null : hoveredChord()
+                                    )
+                                  "
+                                  (focus)="hoveredChord.set(t.chord)"
+                                  (blur)="
+                                    hoveredChord.set(
+                                      hoveredChord() === t.chord ? null : hoveredChord()
+                                    )
+                                  "
+                                  (click)="selectedChord.set(t.chord)"
+                                  (menuOpened)="selectedChord.set(t.chord)"
+                                  aria-label="Chord {{ t.chord }}"
+                                >
+                                  {{ t.chord }}
+                                </button>
+                              } @else {
+                                <span class="bm-flow-chord bm-flow-chord--ghost"></span>
+                              }
+                              <span class="bm-flow-text">{{ t.text }}</span>
+                            </span>
+                          }
+                        </div>
+
                         @let built = buildLayout(src);
 
-                        <div class="bm-chart-preview" aria-label="Chord chart preview">
+                        <div class="bm-chart-desktop" aria-label="Chord chart desktop">
                           <div
                             class="bm-chart-line bm-chart-chords bm-chords-clickable"
                             aria-label="Chords"

@@ -531,6 +531,15 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
         width: 36px;
         height: 36px;
       }
+
+      .bm-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: rgba(201, 162, 39, 0.16);
+        display: grid;
+        place-items: center;
+      }
     `,
   ],
 })

@@ -1,6 +1,5 @@
 /* =========================================================
    Bandmate – Global styles + Angular Material theme
-   Look & feel: rehearsal room / indie / human
    ========================================================= */
 
 @use '@angular/material' as mat;
@@ -28,21 +27,26 @@
   /* Typography */
   --bm-font: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
+  /* Petrol shades */
   --bm-petrol-900: #163c40;
   --bm-petrol-850: #1a4347;
   --bm-petrol-800: #1f4b50;
 
-   --bm-app-header-h: 64px; /* desktop */
+  /* Shadows */
+  --bm-shadow-0: 0 0 0 rgba(0,0,0,0);
+  --bm-shadow-1: 0 6px 14px rgba(0,0,0,0.06);
+  --bm-shadow-2: 0 10px 24px rgba(0,0,0,0.08);
+
+  /* Topbar height: lo setea el TopbarComponent con JS.
+     Fallback por si algo falla. */
+  --bm-topbar-h: 60px;
 }
 
-/* ---------- 3) Material Theme (M2 API under m2-*) ----------
-   IMPORTANT: In Angular Material 18+, classic theming uses m2-*
-*/
+/* ---------- 3) Material Theme (M2 API under m2-*) ---------- */
 $bm-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 800);
 $bm-accent: mat.m2-define-palette(mat.$m2-amber-palette, 600);
 $bm-warn: mat.m2-define-palette(mat.$m2-red-palette, 700);
 
-/* Custom typography config (applies to Material components) */
 $bm-typography: mat.m2-define-typography-config(
   $font-family: var(--bm-font)
 );
@@ -71,137 +75,53 @@ body {
   font-family: var(--bm-font);
 }
 
-body.bm-no-scroll {
-  overflow: hidden;
-}
-
 /* nicer rendering */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---------- 5) Shell hooks (safe) ---------- */
-.app-toolbar {
- background: radial-gradient(1200px 420px at 20% -40%, rgba(255,255,255,0.08), transparent 60%),
-              radial-gradient(900px 420px at 80% 0%, rgba(201,162,39,0.10), transparent 55%),
-              linear-gradient(180deg, var(--bm-petrol-800), var(--bm-petrol-900)) !important;
-  color: white !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-
-  a, button, mat-icon {
-    color: white !important;
-  }
+body.bm-no-scroll {
+  overflow: hidden;
 }
 
-.app-toolbar a.active-top {
-  font-weight: 650;
-  border-radius: 999px;
-  background: rgba(201, 162, 39, 0.22);
-}
-
-.app-toolbar a.mat-mdc-button-base {
-  border-radius: 999px;
-  padding: 4px 10px;
-}
-
-
-/* Top nav active state: subtle pill, not an underline */
-.active-top {
-  font-weight: 650;
-  border-radius: 999px;
-  background: rgba(201, 162, 39, 0.22);
-  padding: 4px 10px;
-}
-
+/* ---------- 5) Shell layout (global, sin estilos de páginas) ---------- */
 mat-sidenav {
   background: var(--bm-surface);
   border-right: 1px solid var(--bm-border);
 }
 
-a.active {
-  background: rgba(201, 162, 39, 0.12) !important;
-  font-weight: 600;
+/* Container interno */
+.content-wrap {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 18px 0 18px;
 }
 
-a.active mat-icon {
-  color: var(--bm-accent) !important;
-}
-
-/* ---------- App toolbar spacing ---------- */
-.app-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.app-name {
-  font-weight: 650;
-  letter-spacing: -0.02em;
-}
-
-.app-version {
-  font-size: 0.75rem;
-  opacity: 0.6;
-}
-
-/* Invisible spacer between brand and nav */
-.app-nav-separator {
-  display: inline-block;
-  width: 16px; /* ← este es el aire clave */
-}
-
-/* Optional: extra breathing room on desktop */
-@media (min-width: 768px) {
-  .app-nav-separator {
-    width: 24px;
-  }
-
-  :root {
-    --bm-app-header-h: 56px; /* mobile */
-  }
-}
-
-
+/* Footer */
 .app-footer {
   background: var(--bm-surface);
   border-top: 1px solid var(--bm-border);
 }
 
-.app-main {
-  background:
-    radial-gradient(
-      1200px 400px at 50% -200px,
-      rgba(20,55,58,0.06),
-      transparent 60%
-    ),
-    #f6f8f7;
+/* Mobile: ocultamos footer y damos safe area */
+@media (max-width: 640px) {
+  .app-footer {
+    display: none !important;
+  }
+
+  .content-wrap {
+    width: min(980px, calc(100% - 24px));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-
-
-
-mat-sidenav-content {
-  background: #fafafa; /* o un off-white */
-}
-
-/* ---------- 6) Surfaces + spacing (SCOPED) ----------
-   IMPORTANT: Avoid global mat-card / a styles that can affect layout.
-   We scope to main content area.
-*/
-.app-main mat-card {
-  background: var(--bm-surface);
-  border: 1px solid var(--bm-border);
-  border-radius: 16px;
-  
-}
-
-/* Ensure Material form fields behave consistently */
+/* ---------- 6) Material form fields ---------- */
 mat-form-field {
   width: 100%;
 }
 
-/* Buttons: keep brand feel without breaking Material layout */
+/* ---------- 7) Brand button overrides (global y seguros) ---------- */
 .mat-mdc-raised-button.mat-primary {
   background: var(--bm-primary) !important;
 }
@@ -210,305 +130,72 @@ mat-form-field {
   background: var(--bm-warn) !important;
 }
 
-/* Links: DO NOT style all <a> globally (it can affect mat-list-item/buttons).
-   Scope to content, and exclude Material buttons.
-*/
-.app-main a:not(.mat-mdc-button-base):not(.mat-mdc-list-item) {
-  color: var(--bm-primary);
-  text-decoration: none;
-}
-
-.app-main a:not(.mat-mdc-button-base):not(.mat-mdc-list-item):hover {
-  color: var(--bm-accent);
-  text-decoration: underline;
-}
-
-/* Bandmate elevation tokens */
-:root {
-  --bm-shadow-0: 0 0 0 rgba(0,0,0,0);
-  --bm-shadow-1: 0 6px 14px rgba(0,0,0,0.06);
-  --bm-shadow-2: 0 10px 24px rgba(0,0,0,0.08);
-}
-
-/* Default cards: very subtle */
-.app-main mat-card {
-  box-shadow: var(--bm-shadow-0);
-}
-
-/* =========================================================
-   Material buttons – clearer disabled state (global)
-   ========================================================= */
-
-/* Raised (mat-raised-button) */
+/* ---------- 8) Disabled states (global) ---------- */
 .mat-mdc-raised-button.mat-mdc-button-disabled {
   background-color: rgba(0, 0, 0, 0.08) !important;
   color: rgba(0, 0, 0, 0.38) !important;
   box-shadow: none !important;
   cursor: not-allowed;
 }
-
 .mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
 
-/* Flat (mat-flat-button) */
 .mat-mdc-unelevated-button.mat-mdc-button-disabled {
   background-color: rgba(0, 0, 0, 0.08) !important;
   color: rgba(0, 0, 0, 0.38) !important;
   box-shadow: none !important;
   cursor: not-allowed;
 }
-
 .mat-mdc-unelevated-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
 
-/* Outlined / stroked (mat-stroked-button) */
 .mat-mdc-outlined-button.mat-mdc-button-disabled {
   border-color: rgba(0, 0, 0, 0.12) !important;
   color: rgba(0, 0, 0, 0.38) !important;
   cursor: not-allowed;
 }
-
 .mat-mdc-outlined-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
 
-/* ===========================
-   Songs cards – visual polish
-   =========================== */
-
-/* --- Songs grid (pro) --- */
-.songs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 18px;
-}
-
-/* Card */
-.song-card {
-  cursor: pointer;
-  padding: 16px 16px 14px;
-  border-radius: 18px;
-  transition: transform 120ms ease, filter 120ms ease;
-}
-
-.song-card:hover {
-  transform: translateY(-1px);
-  filter: brightness(0.99);
-}
-
-/* Top row layout */
-.song-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.song-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.song-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.song-title {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: 16px;
-  line-height: 1.2;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.song-artist {
-  margin-top: 6px;
-  opacity: 0.75;
-  font-size: 13px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.song-updated{
-  font-size: 10px;
-}
-
-.song-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  margin-top: -2px;
-}
-
-/* Meta pills */
-.song-meta {
-  margin-top: 14px;
-  gap: 12px;
-}
-
-/* --- Pills: no deform, no side effects --- */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  white-space: nowrap; /* ✅ evita que se parta */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.04);
-  margin-right: 10px
-}
-
-.pill-ic {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
-  line-height: 18px;
-  opacity: 0.7;
-}
-
-/* Neutral */
-.pill-neutral {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-/* Key: más jerarquía, pero sin exagerar */
-.pill-key {
-  font-weight: 600;
-  border-color: rgba(0, 0, 0, 0.14);
-}
-
-/* Key no debe empujar el truncado */
-.song-title-row .pill-key {
-  flex: 0 0 auto;
-}
-
-/* Opcional: que los pills no queden gigantes en mobile */
-@media (max-width: 480px) {
-  .pill {
-    height: 28px;
-    line-height: 28px;
-    padding: 0 10px;
-    font-size: 12px;
-  }
-}
-
-
-
-/* Paleta sobria por tonalidad (major/minor varía levemente) */
-.pill-key.key-major { filter: saturate(1.05); }
-.pill-key.key-minor { filter: saturate(1.05) brightness(0.98); }
-
-/* C */
-.pill-key.key-c { background: rgba(245, 200, 66, 0.22); }
-/* C#/Db */
-.pill-key.key-cs { background: rgba(245, 156, 66, 0.22); }
-/* D */
-.pill-key.key-d { background: rgba(245, 120, 120, 0.22); }
-/* D#/Eb */
-.pill-key.key-ds { background: rgba(236, 110, 170, 0.22); }
-/* E */
-.pill-key.key-e { background: rgba(190, 120, 245, 0.22); }
-/* F */
-.pill-key.key-f { background: rgba(120, 150, 245, 0.22); }
-/* F#/Gb */
-.pill-key.key-fs { background: rgba(120, 190, 245, 0.22); }
-/* G */
-.pill-key.key-g { background: rgba(120, 220, 200, 0.22); }
-/* G#/Ab */
-.pill-key.key-gs { background: rgba(140, 230, 140, 0.22); }
-/* A */
-.pill-key.key-a { background: rgba(200, 235, 120, 0.22); }
-/* A#/Bb */
-.pill-key.key-as { background: rgba(235, 210, 120, 0.22); }
-/* B */
-.pill-key.key-b { background: rgba(230, 190, 140, 0.22); }
-
-.pill-key.key-other { background: rgba(0, 0, 0, 0.06); }
-
-.bm-toast {
-  border-radius: 14px !important;
-  font-weight: 600;
-}
-
-.bm-mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: rgba(201, 162, 39, 0.16);
-        display: grid;
-        place-items: center;
-      }
-
-/* ---------------------------
-   Bandmate Toasts (MatSnackBar)
-   --------------------------- */
-
-/* Base: el panelClass cae en el container */
+/* ---------- 9) Snackbars (global) ---------- */
 .mat-mdc-snack-bar-container.bm-toast {
-  /* no uses background acá: es el wrapper */
   padding: 0 !important;
   border-radius: 14px;
 }
 
-/* La "caja" real del snackbar */
 .mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__surface {
   border-radius: 14px !important;
   padding: 12px 14px !important;
   min-width: 280px;
   max-width: min(560px, calc(100vw - 24px));
-
-  /* estilo base */
   background: rgba(20, 24, 26, 0.92) !important;
   color: rgba(255, 255, 255, 0.92) !important;
-
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
 }
 
-/* Texto */
 .mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__label {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-/* Acción (OK) */
 .mat-mdc-snack-bar-container.bm-toast .mdc-snackbar__action {
   font-weight: 750;
   opacity: 0.95;
 }
 
-/* ---- Variantes ---- */
-
 /* SUCCESS */
 .mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__surface {
-  background: linear-gradient(
-    135deg,
-    rgba(18, 62, 66, 0.96),
-    rgba(14, 48, 52, 0.96)
-  ) !important;
-
+  background: linear-gradient(135deg, rgba(18, 62, 66, 0.96), rgba(14, 48, 52, 0.96)) !important;
   border: 1px solid rgba(201, 162, 39, 0.22);
   box-shadow:
     0 14px 36px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(201, 162, 39, 0.10),
     0 0 26px rgba(201, 162, 39, 0.10);
 }
-
-.mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__surface::before {
-  background: rgba(201, 162, 39, 0.95);
-}
-
-/* Acción */
 .mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__action {
   color: rgba(255, 236, 173, 0.95) !important;
   opacity: 1;
@@ -519,7 +206,6 @@ mat-form-field {
   background: rgba(26, 46, 74, 0.95) !important;
   border-color: rgba(120, 170, 255, 0.28);
 }
-
 .mat-mdc-snack-bar-container.bm-toast--info .mdc-snackbar__action {
   color: rgba(190, 215, 255, 0.95) !important;
 }
@@ -529,7 +215,6 @@ mat-form-field {
   background: rgba(74, 52, 16, 0.95) !important;
   border-color: rgba(255, 200, 90, 0.30);
 }
-
 .mat-mdc-snack-bar-container.bm-toast--warn .mdc-snackbar__action {
   color: rgba(255, 230, 170, 0.95) !important;
 }
@@ -539,13 +224,6 @@ mat-form-field {
   background: rgba(76, 18, 24, 0.95) !important;
   border-color: rgba(255, 120, 140, 0.30);
 }
-
 .mat-mdc-snack-bar-container.bm-toast--error .mdc-snackbar__action {
   color: rgba(255, 205, 215, 0.95) !important;
 }
-
-
-
-
-
-

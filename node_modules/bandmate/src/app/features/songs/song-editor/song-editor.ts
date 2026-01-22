@@ -39,6 +39,8 @@ type SaveUiState = 'idle' | 'saving' | 'saved' | 'error';
 
 type ViewMode = 'view' | 'edit';
 
+type FlowToken = { chord: string | null; text: string };
+
 function stableStringify(value: any): string {
   // stringify estable (ordenando keys) para comparar objetos sin falsos positivos
   const seen = new WeakSet();
@@ -751,6 +753,33 @@ export class SongEditorPageComponent {
       target.removeEventListener('touchstart', onTouch as any);
       window.removeEventListener('keydown', onKey);
     };
+  }
+
+  flowTokens(source: string): FlowToken[] {
+    // source viene con [Chord] ya aplicado (y transpuesto)
+    // Queremos tokens tipo: {chord:"Em", text:"There’s "} {chord:"Dsus2", text:"something "} ...
+    const out: FlowToken[] = [];
+    const re = /\[([^\]]+)\]/g;
+
+    let lastIdx = 0;
+    let currentChord: string | null = null;
+
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(source))) {
+      const before = source.slice(lastIdx, m.index);
+      if (before) out.push({ chord: currentChord, text: before });
+
+      currentChord = String(m[1] ?? '').trim() || null;
+      lastIdx = re.lastIndex;
+    }
+
+    const tail = source.slice(lastIdx);
+    if (tail) out.push({ chord: currentChord, text: tail });
+
+    // si no había acordes, devolvemos un solo token
+    if (out.length === 0) return [{ chord: null, text: source }];
+
+    return out;
   }
 }
 
