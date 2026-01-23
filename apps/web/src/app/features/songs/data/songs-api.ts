@@ -10,6 +10,7 @@ export class SongsApiService {
   private http = inject(HttpClient);
 
   list() {
+    console.log('[SongsApiService] baseUrl =', environment.apiBaseUrl);
     return this.http.get<Song[]>(`${base}/songs`);
   }
 
