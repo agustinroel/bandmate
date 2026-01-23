@@ -1,8 +1,15 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://bandmate-mp4g.onrender.com/:path*"
+      "src": "^/api/(.*)$",
+      "dest": "https://bandmate-mp4g.onrender.com/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^(?!/api/).*$",
+      "dest": "/index.html"
     }
   ]
 }
