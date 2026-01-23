@@ -8,8 +8,29 @@ import { setlistsRoutes } from "./setlists/setlists.routes.js";
 
 const app = Fastify({ logger: true });
 
-const corsOrigin = process.env.CORS_ORIGIN ?? "true";
-await app.register(cors, { origin: corsOrigin === "true" ? true : corsOrigin });
+const allowed = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+await app.register(cors, {
+  origin: (origin, cb) => {
+    // server-to-server / curl / same-origin
+    if (!origin) return cb(null, true);
+
+    // allow all (modo emergencia)
+    if (allowed.includes("*")) return cb(null, true);
+
+    // exact match list
+    if (allowed.includes(origin)) return cb(null, true);
+
+    // allow any vercel preview
+    if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return cb(null, true);
+
+    cb(new Error(`CORS blocked for origin: ${origin}`), false);
+  },
+  credentials: true,
+});
 
 // Auth (adds app.requireAuth + req.user)
 await app.register(registerAuth, { publicRoutes: ["/health", "/debug"] });

@@ -16,6 +16,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "ag-v1",
@@ -101,6 +102,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "als-v1",
@@ -175,6 +177,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "sn-v1",
@@ -267,6 +270,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "tt-v1",
@@ -339,6 +343,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "cl-v1",
@@ -412,6 +417,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "dbr-c",
@@ -493,6 +499,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "sf-v1",
@@ -567,6 +574,7 @@ export const seedSongsMeta: SongDetail[] = [
     createdAt: iso("2026-01-01"),
     updatedAt: now,
     version: 1,
+    isSeed: true,
     sections: [
       {
         id: "gs-v1",
