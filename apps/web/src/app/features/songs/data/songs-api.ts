@@ -9,8 +9,11 @@ const base = environment.apiBaseUrl;
 export class SongsApiService {
   private http = inject(HttpClient);
 
+  constructor() {
+    console.log('[SongsApiService] constructed. baseUrl=', environment.apiBaseUrl);
+  }
+
   list() {
-    console.log('[SongsApiService] baseUrl =', environment.apiBaseUrl);
     return this.http.get<Song[]>(`${base}/songs`);
   }
 
