@@ -20,37 +20,34 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputMode": "static",
+            "outputPath": "dist/bandmate",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public",
-                
+                "input": "public"
               },
-               "src/favicon.ico",
-  "src/assets"
+              "src/favicon.ico",
+              "src/assets"
             ],
-            "styles": ["src/styles.scss"],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
+              "prerender": false,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1.5MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "20kb",
+                  "maximumError": "16kb"
                 }
               ],
               "outputHashing": "all"

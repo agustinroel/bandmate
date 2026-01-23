@@ -30,8 +30,16 @@ export const routes: Routes = [
       },
 
       { path: 'songs', canActivate: [authGuard], component: SongsPageComponent },
-      { path: 'songs/new', canActivate: [authGuard], component: SongEditorPageComponent },
-      { path: 'songs/:id', canActivate: [authGuard], component: SongEditorPageComponent },
+      {
+        path: 'songs/new',
+        canActivate: [authGuard],
+        component: SongEditorPageComponent,
+      },
+      {
+        path: 'songs/:id',
+        canActivate: [authGuard],
+        component: SongEditorPageComponent,
+      },
 
       {
         path: 'setlists',
