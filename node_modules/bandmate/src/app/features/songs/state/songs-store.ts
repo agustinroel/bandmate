@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { catchError, finalize, tap, throwError } from 'rxjs';
 import type { CreateSongDto, Song, SongDetail, SongSection, UpdateSongDto } from '@bandmate/shared';
-import { SongsApiService } from '../data/songs-api';
+import { SongsApiService } from '../data/songs-api.js';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
