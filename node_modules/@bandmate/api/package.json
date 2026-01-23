@@ -3,16 +3,12 @@
   "private": true,
   "type": "module",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
+    "start": "node dist/main.js",
     "seed:songs": "tsx src/seed/seed-songs.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@types/node": "^25.0.7",
     "tsx": "^4.21.0",
