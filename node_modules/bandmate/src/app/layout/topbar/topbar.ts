@@ -29,16 +29,18 @@ import { MatSidenav } from '@angular/material/sidenav';
   template: `
     <header class="bm-topbar">
       <div class="bm-left">
-        <button
-          mat-icon-button
-          class="bm-burger"
-          type="button"
-          aria-label="Menu"
-          (click)="toggleMenu()"
-          [class.is-hidden]="!isHandset"
-        >
-          <mat-icon>menu</mat-icon>
-        </button>
+        @if (isHandset) {
+          <button
+            mat-icon-button
+            class="bm-burger"
+            type="button"
+            aria-label="Menu"
+            (click)="toggleMenu()"
+            [class.is-hidden]="!isHandset"
+          >
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
 
         <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
           <img

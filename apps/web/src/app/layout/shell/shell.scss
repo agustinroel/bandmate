@@ -4,59 +4,85 @@
 }
 
 @media (max-width: 599px) {
-  :host { --bm-toolbar-h: 56px; }
+  :host {
+    --bm-toolbar-h: 56px;
+  }
 }
 
-/* El container ocupa toda la pantalla */
+/* =========================
+   Container / layout base
+   ========================= */
+
 .app-container {
   height: 100dvh;
 }
 
-/* IMPORTANTE: hacer el content un flex-col para empujar el footer abajo */
-.app-content {
+/* OJO: mat-sidenav-content suele ser el scroll container.
+   Nosotros lo “bloqueamos” y hacemos scrollear al main. */
+:host ::ng-deep mat-sidenav-content.app-content {
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  overflow: hidden; /* clave: evita que el footer quede flotando raro */
   background: var(--bm-bg);
 }
 
-/* Main ocupa el espacio y el footer queda al fondo */
+/* Main: ocupa el espacio y scrollea */
 .app-main {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 22px 16px 16px;
+  overflow: auto;
+
+  /* aire consistente */
+  padding: 18px 16px 18px;
 }
 
+/* ancho máximo */
 .content-wrap {
   max-width: 980px;
+  width: 100%;
   margin: 0 auto;
 }
 
-/* Footer “normal”, no sticky */
+/* Footer: normal, al fondo del flex column */
 .app-footer {
   flex: 0 0 auto;
   height: var(--bm-footer-h);
   display: flex;
   align-items: center;
+
   background: var(--bm-surface);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  /* nada de sticky/fixed */
   position: static;
   z-index: auto;
 }
 
-/* Mobile: si querés ocultarlo */
+/* si no querés depender de clases utilitarias */
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Mobile: ocultar footer + padding safe-area */
 @media (max-width: 640px) {
   .app-footer {
     display: none;
   }
+
   .app-main {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
   }
 }
 
 /* ---------- Sidenav ---------- */
 .bm-sidenav {
   width: 280px;
+  display: flex;
+  flex-direction: column;
 }
 
 .bm-sidenav-header {
@@ -110,13 +136,9 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-
 /* =========================
    Material list alignment (scoped)
    ========================= */
-
-/* Evitamos tocar .mat-mdc-list-item global.
-   Esto se aplica solo adentro del sidenav/nav */
 :host ::ng-deep .bm-nav .mat-mdc-list-item {
   align-items: center;
 }
@@ -138,14 +160,29 @@
   line-height: 1;
 }
 
-/* =========================
-   Menu items (si este scss es del shell y tiene menús)
-   Si ya lo moviste al topbar, podés borrar esto.
-   ========================= */
+/* Menu items */
 :host ::ng-deep .mat-mdc-menu-item {
   gap: 10px;
 }
 
 :host ::ng-deep .mat-mdc-menu-item .mat-icon {
   margin-right: 6px;
+}
+
+/* Botón upgrade del sidenav */
+.bm-upgrade-btn {
+  margin-top: 14px;
+  width: 100%;
+  justify-content: center;
+ position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        border-radius: 999px;
+        padding: 6px 12px;
+        line-height: 1;
+        margin-right: 8px;
+        border: 1px solid rgba(213, 179, 98, 0.9);
+        background: linear-gradient(180deg, rgba(255, 232, 160, 0.55), rgba(201, 162, 39, 0.35));
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        
 }

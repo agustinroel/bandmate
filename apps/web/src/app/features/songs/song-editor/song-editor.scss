@@ -1,11 +1,50 @@
+/* =========================================================
+   Bandmate — Song Editor (responsive + mobile polish)
+   Fixes:
+   1) Header alignment (back icon + title + artist)
+   2) Line actions alignment (delete icon centered / consistent)
+   ========================================================= */
+
+/* ---------- Layout tokens ---------- */
+:host {
+  --se-gap-1: 8px;
+  --se-gap-2: 12px;
+  --se-gap-3: 16px;
+
+  --se-radius: 16px;
+  --se-radius-sm: 14px;
+
+  --se-border: rgba(0, 0, 0, 0.08);
+  --se-border-soft: rgba(0, 0, 0, 0.06);
+
+  --se-surface: rgba(255, 255, 255, 0.02);
+  --se-surface-2: rgba(0, 0, 0, 0.02);
+  display: block;
+}
+
+@media (max-width: 640px) {
+  :host {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- Page header ---------- */
 .bm-page-header {
   margin-bottom: 12px;
 }
 
-.bm-back {
-  margin-top: 2px;
+/* Row that contains: back + mark + titles + actions */
+.bm-page-header > .d-flex {
+  align-items: center !important;
 }
 
+/* Back button: keep it visually centered with the first text line */
+.bm-back {
+  margin-top: 0;
+  align-self: flex-start; /* aligns to title block top */
+}
+
+/* Brand mark (desktop only, hidden on mobile below) */
 .bm-mark {
   width: 44px;
   height: 44px;
@@ -16,37 +55,67 @@
   flex: 0 0 auto;
 }
 
-.bm-header-actions {
-  padding-top: 8px;
+/* Title block: avoid weird wrapping */
+.bm-page-header .flex-grow-1 {
+  min-width: 0;
 }
 
-/* Desktop: mantenemos el card scroll si te gusta */
+.bm-page-header h2 {
+  line-height: 1.15;
+}
+
+/* Header actions container */
+.bm-header-actions {
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Make the Edit/View button look consistent */
+.bm-edit-top {
+  border-radius: 14px;
+  padding: 6px 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.bm-btn-ic {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  line-height: 1;
+}
+
+/* ---------- Card (editor container) ---------- */
+/* Desktop: internal scroll inside card */
 .bm-editor-card {
-  border-radius: 16px;
+  border-radius: var(--se-radius);
   overflow: auto;
   max-height: calc(100vh - 140px);
 }
 
-/* Mobile: NO scroll interno, que scrollee el body */
+/* Mobile: NO internal scroll, body scroll */
 @media (max-width: 640px) {
   .bm-editor-card {
     max-height: none;
     overflow: visible;
   }
+}
 
-  .bm-card-inner {
-    padding: 14px;
+/* Mobile: que la card no quede pegada abajo */
+@media (max-width: 640px) {
+  .bm-editor-card {
+    margin-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 }
 
 .bm-card-inner {
   padding: 16px;
-}
-
-@media (max-width: 640px) {
-  .bm-card-inner {
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
-  }
 }
 
 @media (min-width: 768px) {
@@ -55,8 +124,16 @@
   }
 }
 
+@media (max-width: 640px) {
+  .bm-card-inner {
+    padding: 14px;
+    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- Body header (Song body + tools) ---------- */
 .bm-body {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   padding-top: 16px;
 }
 
@@ -80,6 +157,12 @@
   margin-top: 2px;
 }
 
+.bm-body-sub--play {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
+
 .bm-body-actions {
   display: inline-flex;
   align-items: center;
@@ -88,15 +171,11 @@
   margin-left: auto;
 }
 
-.bm-btn-ic {
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
-}
-
+/* Pills / controls */
 .bm-mode-toggle,
 .bm-add-section,
-.bm-add-line {
+.bm-add-line,
+.bm-auto-btn {
   border-radius: 14px;
   padding: 6px 12px;
   line-height: 1;
@@ -106,8 +185,56 @@
   white-space: nowrap;
 }
 
+.bm-key-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 162, 39, 0.28);
+  background: rgba(201, 162, 39, 0.1);
+  font-weight: 800;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.bm-transpose {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.bm-tr-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 !important;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bm-tr-btn .mat-icon {
+  margin: 0 !important;
+  line-height: 1;
+  display: block;
+}
+
+.bm-tr-label {
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Empty state ---------- */
 .bm-empty {
-  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border: 1px dashed rgba(0, 0, 0, 0.14);
   border-radius: 16px;
   padding: 16px;
   display: grid;
@@ -135,21 +262,22 @@
   max-width: 520px;
 }
 
+/* ---------- Sections ---------- */
 .bm-section-list {
   display: grid;
   gap: 12px;
 }
 
 .bm-section-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   padding: 14px 14px 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.01);
 }
 
 .bm-section-top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
@@ -169,16 +297,43 @@
   white-space: nowrap;
 }
 
+/* Make section action icons align nicely */
+.bm-sec-edit,
+.bm-sec-del {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bm-sec-edit .mat-icon,
+.bm-sec-del .mat-icon {
+  margin: 0 !important;
+  line-height: 1;
+}
+
+/* ---------- Lines ---------- */
 .bm-lines {
   margin-top: 10px;
   display: grid;
   gap: 10px;
 }
 
+/* Row layout: textarea + delete button */
+.bm-line-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start; /* keep delete aligned with textarea top */
+  gap: 10px;
+}
+
+/* Textarea */
 .bm-line-input {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(0, 0, 0, 0.02);
   border-radius: 14px;
   padding: 10px 12px;
   color: inherit;
@@ -198,34 +353,87 @@
   opacity: 0.6;
 }
 
+/* Ensure textarea can shrink and not push the delete icon off-screen */
+.bm-line-row .bm-line-input,
+.bm-line-row textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Delete button — FIX: perfectly centered icon, consistent size */
+.bm-line-del {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* place it aligned with textarea padding top */
+  margin-top: 2px;
+
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.bm-line-del .mat-icon {
+  margin: 0 !important;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+  display: block;
+  opacity: 0.85;
+}
+
+/* Show on hover/focus (desktop) */
+.bm-line-row:hover .bm-line-del,
+.bm-line-row:focus-within .bm-line-del {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bm-line-del:hover {
+  transform: translateY(-1px);
+}
+
+.bm-line-del:active {
+  transform: translateY(1px);
+}
+
+/* Mobile/tablet: always visible */
+@media (hover: none), (pointer: coarse) {
+  .bm-line-del {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.03);
+    box-shadow: none;
+  }
+}
+
+/* ---------- Chord chart / preview ---------- */
 .bm-chart-preview {
   margin-top: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.01);
   overflow-x: auto;
-}
-
-@media (max-width: 640px) {
-  .bm-chart-preview {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-    mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-
-    /* ocultar scrollbar */
-    scrollbar-width: none;          /* Firefox */
-  }
-  .bm-chart-preview::-webkit-scrollbar {
-    display: none;                  /* Chrome/Safari */
-  }
-
-  /* importante: que el contenido no fuerce overflow por layout raro */
-  .bm-chart-preview .bm-chart-line {
-    width: max-content;
-  }
 }
 
 .bm-chart-line {
@@ -247,37 +455,37 @@
   opacity: 0.95;
 }
 
-.bm-chords-clickable {
-  display: flex;
-  align-items: baseline;
-}
-
+/* Desktop chart is clickable */
 .bm-chords-clickable {
   display: flex;
   align-items: baseline;
 }
 
 .bm-chord-slot {
-  display: inline-flex; /* mantiene el flujo */
+  display: inline-flex;
   align-items: baseline;
 }
 
+/* Clickable chord */
 .bm-chord-hit {
-  // IMPORTANTE: que no cambie el tamaño entre estados
   display: inline-flex;
   align-items: baseline;
 
   padding: 0 6px;
   border-radius: 10px;
 
-  // para que el outline no cambie layout
   outline: 2px solid transparent;
   outline-offset: 1px;
 
-  transition: background 120ms ease, box-shadow 120ms ease, outline-color 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease,
+    outline-color 120ms ease,
+    transform 120ms ease;
 }
 
-.bm-chord-hit.is-hovered {
+.bm-chord-hit.is-hovered,
+.bm-chord-hit:hover {
   background: rgba(201, 162, 39, 0.14);
   outline-color: rgba(201, 162, 39, 0.32);
   box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.18);
@@ -299,81 +507,14 @@
   transform: translateY(1px);
 }
 
-.bm-chord-hit:hover {
-  background: rgba(201, 162, 39, 0.14);
-  outline-color: rgba(201, 162, 39, 0.32);
-  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.18);
-}
-
 .bm-chord-hit:focus {
   outline-color: rgba(201, 162, 39, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.24), 0 0 0 3px rgba(201, 162, 39, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 162, 39, 0.24),
+    0 0 0 3px rgba(201, 162, 39, 0.14);
 }
 
-.bm-chord-menu-inner {
-  padding: 12px 14px;
-  min-width: 240px;
-}
-
-.bm-chord-menu-title {
-  font-weight: 900;
-  letter-spacing: 0.2px;
-}
-
-.bm-chord-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.bm-key-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(201, 162, 39, 0.28);
-  background: rgba(201, 162, 39, 0.1);
-  font-weight: 800;
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.bm-transpose {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.bm-tr-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  padding: 0 !important;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bm-tr-btn .mat-icon {
-  margin: 0 !important;
-  line-height: 1;
-  display: block;
-}
-
-.bm-tr-label {
-  font-size: 12px;
-  opacity: 0.75;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-}
-
+/* ---------- Chord menu ---------- */
 .bm-chord-menu-inner {
   padding: 12px 14px;
   min-width: 260px;
@@ -382,6 +523,15 @@
 .bm-chord-menu-title {
   font-weight: 900;
   letter-spacing: 0.2px;
+}
+
+.bm-chord-section-title {
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0.6;
+  text-transform: uppercase;
 }
 
 .bm-chord-notes {
@@ -400,85 +550,11 @@
   background: rgba(201, 162, 39, 0.10);
 }
 
+/* Guitar shapes */
 .bm-shapes {
   margin-top: 12px;
   display: grid;
   gap: 10px;
-}
-
-.bm-shape-card {
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 14px;
-  padding: 10px 10px 9px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.bm-shape-title {
-  font-weight: 800;
-  font-size: 12.5px;
-}
-
-.bm-shape-grid {
-  margin-top: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-}
-
-.bm-shape-head {
-  font-size: 12px;
-  opacity: 0.75;
-}
-
-.bm-shape-frets {
-  margin-top: 4px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-}
-
-.bm-fret {
-  text-align: center;
-  padding: 4px 0;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(0, 0, 0, 0.12);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.bm-shape-empty {
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 10px 12px;
-}
-
-.bm-chord-pill {
-  transition: 
-    transform 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
-}
-
-.bm-chord-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.25);
-  background: rgba(201, 162, 39, 0.18);
-}
-
-.bm-chord-section-title {
-  margin-top: 12px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: .3px;
-  opacity: .6;
-  text-transform: uppercase;
-}
-
-.bm-shape-diagram {
-  margin-top: 8px;
-  padding: 10px 10px 8px;
-  border-radius: 14px;
-  background: rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.08);
 }
 
 .bm-shape-empty {
@@ -509,31 +585,6 @@
   opacity: 0.65;
 }
 
-.bm-shape-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.bm-nav-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.bm-nav-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.bm-nav-btn mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
-}
-
 .bm-shape-stage {
   position: relative;
   display: grid;
@@ -542,7 +593,11 @@
 }
 
 .bm-shape-diagram {
-  /* el svg/card ya tiene su tamaño */
+  margin-top: 8px;
+  padding: 10px 10px 8px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .bm-shape-arrow {
@@ -574,204 +629,14 @@
 }
 
 .bm-shape-arrow--left {
-  left: -6px; /* ajustá según tu card */
+  left: -6px;
 }
 
 .bm-shape-arrow--right {
   right: -6px;
 }
 
-.bm-line-row {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-/* Estado “base”: oculto en desktop */
-.bm-line-del {
-  opacity: 0;
-  transform: translateY(2px);
-  pointer-events: none;
-  transition: opacity 160ms ease, transform 160ms ease, background-color 160ms ease,
-    border-color 160ms ease, box-shadow 160ms ease;
-  //    background: transparent;
-  // border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-/* Aparece cuando hover/focus dentro de la línea */
-.bm-line-row:hover .bm-line-del,
-.bm-line-row:focus-within .bm-line-del {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-.bm-line-row:hover .bm-line-del mat-icon {
-  opacity: 0.85;
-}
-
-.bm-line-del:hover {
-  transform: translateY(-1px);
-}
-.bm-line-del:active {
-  transform: translateY(1px);
-}
-
-
-/* Mobile/tablet: siempre visible */
-@media (hover: none), (pointer: coarse) {
-  .bm-line-del {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
-}
-
-
-/* Si tu textarea ocupa todo el ancho, asegurate de que pueda crecer */
-.bm-line-row .bm-line-input,
-.bm-line-row textarea {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* El icono en sí: centrado real */
-.bm-line-del mat-icon {
-
-  font-size: 14px;
-
-}
-
-/* Active */
-.bm-line-del:active {
-  
-}
-
-/* -------------------------
-   Skeleton (Editor loading)
--------------------------- */
-
-.bm-editor-skeleton {
-  display: grid;
-  gap: 16px;
-}
-
-.sk-row--top {
-  display: grid;
-  gap: 10px;
-}
-
-.sk-form {
-  display: grid;
-  gap: 10px;
-}
-
-.sk-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.sk-body {
-  margin-top: 8px;
-  display: grid;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.sk-section {
-  margin-top: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.02);
-  display: grid;
-  gap: 10px;
-}
-
-.sk-block {
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.sk-title {
-  height: 18px;
-  width: 38%;
-}
-
-.sk-sub {
-  height: 14px;
-  width: 58%;
-  opacity: 0.9;
-}
-
-.sk-input {
-  height: 44px;
-  width: 100%;
-  border-radius: 14px;
-}
-
-.sk-input--sm {
-  width: 55%;
-}
-
-.sk-btn {
-  height: 40px;
-  width: 140px;
-  border-radius: 14px;
-}
-
-.sk-body-title {
-  height: 16px;
-  width: 22%;
-}
-
-.sk-body-sub {
-  height: 12px;
-  width: 55%;
-  opacity: 0.9;
-}
-
-.sk-sec-title {
-  height: 14px;
-  width: 30%;
-}
-
-.sk-line {
-  height: 12px;
-  width: 100%;
-  border-radius: 10px;
-  opacity: 0.95;
-}
-
-.sk-line--short {
-  width: 72%;
-}
-
-/* shimmer */
-.sk-block::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.10), transparent);
-  animation: bmShimmer 1.2s ease-in-out infinite;
-}
-
-@keyframes bmShimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
+/* ---------- Save chip ---------- */
 .bm-save-chip {
   display: inline-flex;
   align-items: center;
@@ -781,7 +646,7 @@
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(0, 0, 0, 0.03);
@@ -790,7 +655,11 @@
   transform: translateY(-2px);
   pointer-events: none;
 
-  transition: opacity 160ms ease, transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 
 .bm-save-chip.is-saving,
@@ -846,9 +715,12 @@
 }
 
 @keyframes bmSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* ---------- Meta view ---------- */
 .bm-meta-view {
   display: grid;
   gap: 8px;
@@ -911,83 +783,116 @@
   white-space: pre-wrap;
 }
 
-.bm-body-sub--play {
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  opacity: 0.75;
-}
-
-.bm-auto-scroll {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.bm-auto-btn {
-  border-radius: 14px;
-  padding: 6px 12px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
+/* ---------- Mobile-specific fixes ---------- */
 @media (max-width: 640px) {
   .bm-page-header {
     margin-bottom: 6px;
   }
 
+  /* Remove mark to save space */
   .bm-mark {
     display: none;
   }
 
-  .bm-header-actions {
-    padding-top: 0;
+  /* Make header layout more "stacked" and clean */
+  .bm-page-header > .d-flex {
+    flex-wrap: wrap;
+    gap: 10px !important;
+    align-items: flex-start !important;
   }
 
+  /* Back button sits nicely at the top-left */
+  .bm-back {
+    margin-top: 2px;
+  }
+
+  /* Title sizing */
   .bm-page-header h2 {
     font-size: 1.1rem;
     line-height: 1.2;
   }
 
   .bm-page-header .small {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
   }
 
-  /* Save chip flotante */
+  /* Actions: full width row under title */
+  .bm-header-actions {
+    width: 100%;
+    padding-top: 0;
+    gap: 10px;
+  }
+
+  /* Make the Edit/View button span full width (fixes “corridos”) */
+  .bm-edit-top {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+
+  /* Save chip: sticky and not fighting the header */
   .bm-save-chip {
     position: sticky;
     top: 8px;
     z-index: 5;
   }
-}
 
-@media (max-width: 640px) {
-  .bm-meta-pills {
-    gap: 6px;
+  /* Body actions: avoid cramped multi-row chaos */
+  .bm-body-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
   }
 
-  .bm-pill {
-    padding: 5px 9px;
-    font-size: 12px;
+  /* Section header actions: keep “Add line” full width, icons on the right */
+  .bm-section-top > .d-flex {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px !important;
+  }
+
+  .bm-add-line {
+    flex: 1 1 100%;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+
+  /* Keep edit/delete icons aligned in a neat little row */
+  .bm-sec-edit,
+  .bm-sec-del {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Line delete: never looks “desfasado” */
+  .bm-line-row {
+    align-items: flex-start;
+  }
+
+  .bm-line-del {
+    margin-top: 2px;
   }
 }
 
-@media (max-width: 640px) {
-  .bm-meta-notes {
-    padding: 10px;
-  }
+/* ---------- Flow (mobile chord view) ---------- */
+/* default: desktop */
+.bm-flow {
+  display: none !important;
+}
+.bm-chart-desktop {
+  display: block !important;
 }
 
-/* por defecto: desktop */
-.bm-flow { display: none !important; }
-.bm-chart-desktop { display: block !important; }
-
-/* mobile: flow visible, chart oculto */
+/* mobile: flow visible, chart hidden */
 @media (max-width: 640px) {
-  .bm-flow { display: flex !important; flex-wrap: wrap; gap: 8px 10px; }
-  .bm-chart-desktop { display: none !important; }
+  .bm-flow {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+  .bm-chart-desktop {
+    display: none !important;
+  }
 
   .bm-flow-token {
     display: inline-flex;
@@ -1001,28 +906,25 @@
     font-weight: 900;
     font-size: 12px;
     line-height: 1;
-     padding: 3px 8px;
+    padding: 3px 8px;
     border-radius: 999px;
-    border: 1px solid rgba(0,0,0,0.10);
+    border: 1px solid rgba(0, 0, 0, 0.10);
     background: rgba(201, 162, 39, 0.12);
-    color: rgba(0,0,0,0.85);
+    color: rgba(0, 0, 0, 0.85);
   }
 
-  /* para tokens sin chord: reservamos altura pero invisible (no “salta” todo) */
   .bm-flow-chord--ghost {
     opacity: 0;
-     height: 24px;
+    height: 24px;
     pointer-events: none;
   }
 
   .bm-flow-text {
-    white-space: pre-wrap;     /* respeta espacios y wrappea */
-    word-break: break-word;    /* evita corte feo en pantallas muy angostas */
+    white-space: pre-wrap;
+    word-break: break-word;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
     font-size: 14px;
     line-height: 1.35;
     opacity: 0.95;
   }
 }
-
-

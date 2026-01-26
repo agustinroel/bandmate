@@ -46,11 +46,22 @@
     </div>
 
     <div class="bm-sidenav-footer">
-      <div class="small opacity-75">Less chaos. More music.</div>
+      <div class="d-flex justify-content-center">
+        <div class="small opacity-75">Less chaos. More music.</div>
+      </div>
+
+      @if ((isHandset$ | async) ?? false) {
+        <ng-container>
+          <button mat-stroked-button color="primary" class="w-100 bm-upgrade-btn">
+            <mat-icon class="me-2">workspace_premium</mat-icon>
+            Upgrade
+          </button>
+        </ng-container>
+      }
     </div>
   </mat-sidenav>
 
-  <mat-sidenav-content>
+  <mat-sidenav-content class="app-content">
     <bm-topbar [drawer]="drawer" [isHandset]="(isHandset$ | async) ?? false"></bm-topbar>
     <bm-error-boundary />
     <main class="app-main">
@@ -59,7 +70,7 @@
       </div>
     </main>
     <footer class="app-footer">
-      <div class="content-wrap d-flex align-items-center justify-content-between gap-2">
+      <div class="content-wrap footer-inner">
         <span class="small opacity-75">Bandmate — personal project</span>
         <span class="small opacity-75">Angular 21 • Signals • Signal Forms</span>
       </div>

@@ -227,3 +227,55 @@ mat-form-field {
 .mat-mdc-snack-bar-container.bm-toast--error .mdc-snackbar__action {
   color: rgba(255, 205, 215, 0.95) !important;
 }
+
+/* =========================================================
+   Bandmate – small responsive utilities (safe, opt-in)
+   ========================================================= */
+
+/* Un contenedor de página consistente */
+.bm-page {
+  padding: 18px 0 24px;
+}
+
+@media (max-width: 640px) {
+  .bm-page {
+    padding: 14px 0 18px;
+  }
+}
+
+/* Cards principales: aire abajo en mobile para que no queden “pegadas” */
+.bm-card {
+  border-radius: 18px;
+}
+
+@media (max-width: 640px) {
+  .bm-card {
+    margin-bottom: 16px;
+  }
+}
+
+/* Row de acciones que en mobile se apila */
+.bm-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .bm-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bm-actions-row > * {
+    width: 100%;
+  }
+}
+
+/* Inputs “cómodos” en mobile (sin tocar Material internamente) */
+@media (max-width: 640px) {
+  .bm-touch mat-form-field {
+    margin-bottom: 10px;
+  }
+}
+
