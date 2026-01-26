@@ -74,7 +74,7 @@ import { MatSidenav } from '@angular/material/sidenav';
       </nav>
 
       <div class="bm-right">
-        <button
+        <!-- <button
           mat-stroked-button
           class="app-upgrade d-none d-md-inline-flex"
           type="button"
@@ -83,7 +83,7 @@ import { MatSidenav } from '@angular/material/sidenav';
         >
           <mat-icon class="me-1">workspace_premium</mat-icon>
           Upgrade
-        </button>
+        </button> -->
 
         @if (isAuthed()) {
           <button class="bm-user" type="button" [matMenuTriggerFor]="userMenu" matTooltip="Account">
@@ -296,52 +296,6 @@ import { MatSidenav } from '@angular/material/sidenav';
         border: 1px solid rgba(213, 179, 98, 0.9);
         background: linear-gradient(180deg, rgba(255, 232, 160, 0.55), rgba(201, 162, 39, 0.35));
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-      }
-
-      .app-upgrade::before {
-        content: '';
-        position: absolute;
-        inset: -40% -60%;
-        background: linear-gradient(
-          120deg,
-          transparent 0%,
-          rgba(255, 255, 255, 0.55) 35%,
-          transparent 70%
-        );
-        transform: translateX(-120%) rotate(8deg);
-        opacity: 0;
-        pointer-events: none;
-        z-index: -1;
-      }
-
-      .app-upgrade:hover::before {
-        opacity: 0.9;
-        transform: translateX(120%) rotate(8deg);
-        transition:
-          transform 700ms ease,
-          opacity 250ms ease;
-      }
-
-      .app-upgrade:focus-visible {
-        outline: none;
-        box-shadow:
-          0 0 0 3px rgba(201, 162, 39, 0.25),
-          0 8px 18px rgba(0, 0, 0, 0.28);
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .app-upgrade,
-        .app-upgrade::before {
-          transition: none !important;
-        }
-      }
-
-      .app-upgrade mat-icon {
-        margin-right: 6px;
-        font-size: 18px;
-        height: 18px;
-        width: 18px;
-        color: rgba(255, 236, 175, 0.95);
       }
     `,
   ],

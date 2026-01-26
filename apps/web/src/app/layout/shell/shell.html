@@ -50,14 +50,12 @@
         <div class="small opacity-75">Less chaos. More music.</div>
       </div>
 
-      @if ((isHandset$ | async) ?? false) {
-        <ng-container>
-          <button mat-stroked-button color="primary" class="w-100 bm-upgrade-btn">
-            <mat-icon class="me-2">workspace_premium</mat-icon>
-            Upgrade
-          </button>
-        </ng-container>
-      }
+      <ng-container>
+        <button mat-stroked-button color="primary" class="w-100 bm-upgrade-btn">
+          <mat-icon class="me-2">workspace_premium</mat-icon>
+          Upgrade
+        </button>
+      </ng-container>
     </div>
   </mat-sidenav>
 

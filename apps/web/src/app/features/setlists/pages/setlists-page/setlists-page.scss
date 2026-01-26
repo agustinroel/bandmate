@@ -1,0 +1,382 @@
+.sl-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 992px) {
+  .sl-layout {
+    margin-top: 20px;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+  }
+}
+
+.sl-panel-inner {
+  padding: 18px;
+}
+
+@media (min-width: 992px) {
+  .sl-panel-inner {
+    padding: 22px;
+  }
+}
+
+.sl-list {
+  display: grid;
+  gap: 8px;
+}
+
+.sl-item {
+  position: relative;
+  text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  padding: 12px 14px 12px 16px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+  width: 100%;
+  display: block;
+}
+
+.sl-item:hover {
+  transform: translateY(-1px);
+}
+
+.sl-item.active {
+  background: rgba(201, 162, 39, 0.14);
+  border-color: rgba(201, 162, 39, 0.45);
+  font-weight: 650;
+}
+
+.sl-item.active::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  background: rgba(201, 162, 39, 0.95);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.18);
+}
+
+.sl-item > div {
+  padding-left: 14px;
+}
+
+.sl-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sl-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sl-head {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sl-head-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sl-head-title {
+  font-size: 1.1rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sl-head-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sl-head-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+  margin-left: auto;
+}
+
+.sl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.sl-pill-ic {
+  opacity: 0.6;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.sl-pill-label {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.sl-pill-value {
+  font-weight: 750;
+}
+
+.sl-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  margin-top: 14px;
+}
+
+@media (min-width: 992px) {
+  .sl-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.sl-songs {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.sl-add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.sl-drop {
+  display: grid;
+  gap: 8px;
+}
+
+.sl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  padding: 10px 10px;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.sl-row.moved {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+/* Nice: make handle clearly draggable */
+.sl-grab {
+  opacity: 0.6;
+  cursor: grab;
+  user-select: none;
+}
+.sl-row:active .sl-grab {
+  cursor: grabbing;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.14);
+  border-radius: 14px;
+}
+
+.sl-empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 26px 14px;
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.sl-empty-ic {
+  opacity: 0.55;
+  font-size: 44px;
+  width: 44px;
+  height: 44px;
+}
+
+.sl-empty-sm {
+  padding: 18px 14px;
+}
+
+.sl-empty-sm .sl-empty-ic {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+}
+
+.bm-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(201, 162, 39, 0.16);
+  display: grid;
+  place-items: center;
+}
+
+/* =========================
+   Header responsive
+   ========================= */
+
+.sl-new {
+  white-space: nowrap;
+}
+
+/* Mobile: header wrap + CTA full width */
+@media (max-width: 640px) {
+  header.d-flex {
+    flex-wrap: wrap;
+  }
+
+  .sl-new {
+    width: 100%;
+  }
+}
+
+/* =========================
+   List item: make whole row clickable
+   ========================= */
+
+.sl-item {
+  width: 100%;
+  display: block; /* ahora es div, no button */
+  text-align: left;
+}
+
+.sl-item:focus {
+  outline: none;
+}
+
+.sl-item:focus-visible {
+  outline: 2px solid rgba(201, 162, 39, 0.45);
+  outline-offset: 2px;
+}
+
+/* =========================
+   Selected setlist header (pills + button)
+   ========================= */
+
+@media (max-width: 640px) {
+  .sl-head-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  /* Start practice ocupa toda la fila */
+  .sl-head-actions {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    padding-top: 0;
+    justify-content: stretch;
+  }
+
+  .sl-head-actions button {
+    width: 100%;
+  }
+}
+
+/* =========================
+   Two columns area: on mobile, remove “fixed height scroll”
+   ========================= */
+
+@media (max-width: 640px) {
+  .sl-songs {
+    max-height: none; /* evita mini-scroll interno feo */
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+/* =========================
+   Fix: no horizontal scroll on mobile
+   ========================= */
+
+/* Cortamos overflow horizontal en el host de la página */
+:host {
+  display: block;
+  overflow-x: hidden;
+}
+
+/* Si algún child “se pasa”, evitamos que empuje el layout */
+.sl-layout,
+.sl-panel,
+.sl-panel-inner,
+.sl-grid {
+  min-width: 0;
+}
+
+/* MUY común: filas flex con textos que no encogen */
+.sl-item-row,
+.sl-head-title-row,
+.sl-head-meta,
+.sl-row,
+.sl-add {
+  min-width: 0;
+}
+
+/* Asegurar que el texto largo no fuerce ancho */
+.sl-head-title,
+.sl-item-main,
+.sl-add .text-truncate,
+.sl-row .flex-grow-1 {
+  min-width: 0;
+}
+
+/* Pills/botones: permitir wrap en mobile */
+@media (max-width: 640px) {
+  .sl-head-meta {
+    width: 100%;
+  }
+
+  /* si por alguna razón algún pill queda “nowrap” */
+  .sl-pill {
+    max-width: 100%;
+  }
+
+  /* Start practice: full width ya lo tenías, pero aseguramos que no empuje */
+  .sl-head-actions,
+  .sl-head-actions button {
+    max-width: 100%;
+  }
+}
