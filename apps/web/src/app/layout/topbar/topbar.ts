@@ -28,92 +28,93 @@ import { MatSidenav } from '@angular/material/sidenav';
   selector: 'bm-topbar',
   template: `
     <header class="bm-topbar">
-      <div class="bm-left">
-        @if (isHandset) {
-          <button
-            mat-icon-button
-            class="bm-burger"
-            type="button"
-            aria-label="Menu"
-            (click)="toggleMenu()"
-            [class.is-hidden]="!isHandset"
-          >
-            <mat-icon>menu</mat-icon>
-          </button>
-        }
+      <div class="bm-topbar-inner">
+        <div class="bm-slot bm-slot--left">
+          @if (isHandset) {
+            <div class="bm-left">
+              <button
+                mat-icon-button
+                class="bm-burger"
+                type="button"
+                aria-label="Menu"
+                (click)="toggleMenu()"
+              >
+                <mat-icon>menu</mat-icon>
+              </button>
 
-        <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
-          <img
-            class="bm-brand-logo"
-            src="../../../assets/brand/Bandmate logo gold transparent.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <div class="bm-brand-text">
-            <div class="bm-brand-name">Bandmate</div>
-            <div class="bm-brand-sub">Prep · Rehearse · Play</div>
-          </div>
-        </a>
-      </div>
-
-      <nav class="bm-nav" aria-label="Primary">
-        <a class="bm-nav-link" routerLink="/songs" routerLinkActive="active">
-          <mat-icon class="bm-nav-ic">library_music</mat-icon>
-          Songs
-        </a>
-
-        <a class="bm-nav-link" routerLink="/setlists" routerLinkActive="active">
-          <mat-icon class="bm-nav-ic">queue_music</mat-icon>
-          Setlists
-        </a>
-
-        <a class="bm-nav-link" routerLink="/practice" routerLinkActive="active">
-          <mat-icon class="bm-nav-ic">sports_guitar</mat-icon>
-          Practice
-        </a>
-      </nav>
-
-      <div class="bm-right">
-        <!-- <button
-          mat-stroked-button
-          class="app-upgrade d-none d-md-inline-flex"
-          type="button"
-          (click)="onUpgrade()"
-          matTooltip="Upgrade (placeholder)"
-        >
-          <mat-icon class="me-1">workspace_premium</mat-icon>
-          Upgrade
-        </button> -->
-
-        @if (isAuthed()) {
-          <button class="bm-user" type="button" [matMenuTriggerFor]="userMenu" matTooltip="Account">
-            <img class="bm-avatar" [src]="avatarUrl()" alt="" referrerpolicy="no-referrer" />
-            <span class="bm-user-name">{{ userLabel() }}</span>
-            <mat-icon class="bm-caret">expand_more</mat-icon>
-          </button>
-
-          <mat-menu #userMenu="matMenu" xPosition="before">
-            <div class="bm-menu-head" mat-menu-item disabled>
-              <div class="bm-menu-title">You’re in 🎶</div>
-              <div class="bm-menu-sub">{{ emailLabel() }}</div>
+              <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
+                <img
+                  class="bm-brand-logo"
+                  src="../../../assets/brand/Bandmate logo gold transparent.png"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div class="bm-brand-text">
+                  <div class="bm-brand-name">Bandmate</div>
+                  <div class="bm-brand-sub">Prep · Rehearse · Play</div>
+                </div>
+              </a>
             </div>
+          }
+        </div>
 
-            <button mat-menu-item type="button" (click)="goProfile()">
-              <mat-icon>manage_accounts</mat-icon>
-              Profile
-            </button>
+        <div class="bm-slot bm-slot--center">
+          <nav class="bm-nav" aria-label="Primary">
+            <a class="bm-nav-link" routerLink="/songs" routerLinkActive="active">
+              <mat-icon class="bm-nav-ic">library_music</mat-icon>
+              Songs
+            </a>
 
-            <button mat-menu-item type="button" (click)="signOut()">
-              <mat-icon>logout</mat-icon>
-              Sign out
-            </button>
-          </mat-menu>
-        } @else {
-          <button mat-raised-button color="primary" type="button" (click)="goLogin()">
-            <mat-icon class="me-1">login</mat-icon>
-            Sign in
-          </button>
-        }
+            <a class="bm-nav-link" routerLink="/setlists" routerLinkActive="active">
+              <mat-icon class="bm-nav-ic">queue_music</mat-icon>
+              Setlists
+            </a>
+
+            <a class="bm-nav-link" routerLink="/practice" routerLinkActive="active">
+              <mat-icon class="bm-nav-ic">sports_guitar</mat-icon>
+              Practice
+            </a>
+          </nav>
+        </div>
+
+        <div class="bm-slot bm-slot--right">
+          <div class="bm-right">
+            @if (isAuthed()) {
+              <button
+                class="bm-user"
+                type="button"
+                [matMenuTriggerFor]="userMenu"
+                matTooltip="Account"
+              >
+                <img class="bm-avatar" [src]="avatarUrl()" alt="" referrerpolicy="no-referrer" />
+                <span class="bm-user-name">{{ userLabel() }}</span>
+                <mat-icon class="bm-caret">expand_more</mat-icon>
+              </button>
+
+              <mat-menu #userMenu="matMenu" xPosition="before">
+                <div class="bm-menu-head" mat-menu-item disabled>
+                  <div class="bm-menu-title">You’re in 🎶</div>
+                  <div class="bm-menu-sub">{{ emailLabel() }}</div>
+                </div>
+
+                <button mat-menu-item type="button" (click)="goProfile()">
+                  <mat-icon>manage_accounts</mat-icon>
+                  Profile
+                </button>
+
+                <button mat-menu-item type="button" (click)="signOut()">
+                  <mat-icon>logout</mat-icon>
+                  Sign out
+                </button>
+              </mat-menu>
+            } @else {
+              <button mat-raised-button color="primary" type="button" (click)="goLogin()">
+                <mat-icon class="me-1">login</mat-icon>
+                Sign in
+              </button>
+            }
+          </div>
+        </div>
       </div>
     </header>
   `,
@@ -123,15 +124,46 @@ import { MatSidenav } from '@angular/material/sidenav';
         position: sticky;
         top: 0;
         z-index: 20;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        padding: 10px 14px;
+        padding: 12px 14px;
         background: linear-gradient(180deg, rgba(22, 62, 63, 0.98), rgba(22, 62, 63, 0.92));
         color: rgba(255, 255, 255, 0.92);
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(8px);
+      }
+
+      .bm-topbar-inner {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr; /* ✅ centro REAL */
+        align-items: center;
+        gap: 14px;
+      }
+
+      /* slots */
+      .bm-slot {
+        min-width: 0;
+      }
+      .bm-slot--left {
+        justify-self: start;
+      }
+      .bm-slot--center {
+        justify-self: center; /* ✅ nav queda centrado a página */
+      }
+      .bm-slot--right {
+        justify-self: end;
+      }
+
+      /* nav */
+      .bm-nav {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      @media (min-width: 992px) {
+        .bm-nav {
+          display: flex;
+        }
       }
 
       .bm-left {
@@ -184,8 +216,6 @@ import { MatSidenav } from '@angular/material/sidenav';
         display: none;
         align-items: center;
         gap: 6px;
-        flex: 1;
-        justify-content: center;
       }
 
       @media (min-width: 992px) {

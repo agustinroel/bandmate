@@ -66,7 +66,11 @@
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 }
 
-<mat-card class="bm-editor-card mt-3 mb-3" #scrollHost>
+<mat-card
+  class="bm-editor-card mt-3 mb-3"
+  [class.bm-editor-card--autoscroll]="autoScrollOn()"
+  #scrollHost
+>
   <div class="bm-card-inner">
     @if (isDetailLoading()) {
       <div class="bm-editor-skeleton" aria-label="Loading song editor">
@@ -186,8 +190,6 @@
             <div class="bm-body-actions">
               @if (viewMode() !== 'edit') {
                 <div class="bm-auto-scroll">
-                  <div class="bm-auto-speed small opacity-75">{{ autoScrollSpeed() }} px/s</div>
-
                   <button
                     mat-stroked-button
                     type="button"
@@ -198,12 +200,20 @@
                     <mat-icon class="bm-btn-ic">{{
                       autoScrollOn() ? 'pause' : 'play_arrow'
                     }}</mat-icon>
-                    {{ autoScrollOn() ? 'Auto-scroll' : 'Auto-scroll' }}
+
+                    <span class="bm-auto-label">Auto-scroll</span>
+
+                    @if (autoScrollOn()) {
+                      <span class="bm-auto-speed small opacity-75"
+                        >{{ autoScrollSpeed() }} px/s</span
+                      >
+                    }
                   </button>
 
                   <button
                     mat-icon-button
                     type="button"
+                    class="bm-auto-tune"
                     [matMenuTriggerFor]="autoScrollMenu"
                     aria-label="Auto-scroll speed"
                   >

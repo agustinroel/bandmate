@@ -6,7 +6,19 @@
     class="bm-sidenav"
   >
     <div class="bm-sidenav-header">
-      <div class="bm-sidenav-brand">
+      <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
+        <img
+          class="bm-brand-logo"
+          src="../../../assets/brand/Bandmate logo gold w background.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="bm-brand-text">
+          <div class="bm-brand-name">Bandmate</div>
+          <div class="bm-brand-sub">Prep · Rehearse · Play</div>
+        </div>
+      </a>
+      <!-- <div class="bm-sidenav-brand">
         <div class="bm-sidenav-logo" aria-hidden="true">
           <img src="assets/brand/Bandmate logo tale transparent.png" alt="" />
         </div>
@@ -15,7 +27,7 @@
           <div class="fw-semibold bm-side-title">Bandmate</div>
           <div class="small opacity-75 bm-side-sub">Prep • Rehearse • Play</div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="bm-sidenav-section">
@@ -61,7 +73,7 @@
 
   <mat-sidenav-content class="app-content">
     <bm-topbar [drawer]="drawer" [isHandset]="(isHandset$ | async) ?? false"></bm-topbar>
-    <bm-error-boundary />
+    <bm-error-boundary class="mt-3 mb-3" />
     <main class="app-main">
       <div class="content-wrap">
         <router-outlet />

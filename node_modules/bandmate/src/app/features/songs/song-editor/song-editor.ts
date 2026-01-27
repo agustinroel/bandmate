@@ -588,6 +588,41 @@ export class SongEditorPageComponent {
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
+  /** Returns the element that actually scrolls in current layout.
+   *  - Desktop: the card (scrollHost) has overflow:auto + height constraint
+   *  - Mobile: the card is overflow:visible => page scrolls (window)
+   */
+  private _getScrollTarget(): { kind: 'host'; el: HTMLElement } | { kind: 'window' } {
+    const host = this.scrollHost?.nativeElement;
+    if (host && host.scrollHeight > host.clientHeight + 1) {
+      return { kind: 'host', el: host };
+    }
+    return { kind: 'window' };
+  }
+
+  private _scrollBy(dy: number) {
+    const target = this._getScrollTarget();
+
+    if (target.kind === 'host') {
+      target.el.scrollTop += dy;
+    } else {
+      // mobile: page scroll
+      window.scrollTo({ top: window.scrollY + dy, behavior: 'auto' });
+    }
+  }
+
+  private _isAtBottom(): boolean {
+    const target = this._getScrollTarget();
+
+    if (target.kind === 'host') {
+      const el = target.el;
+      return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+    }
+
+    const doc = document.scrollingElement || document.documentElement;
+    return Math.ceil(window.scrollY + window.innerHeight) >= doc.scrollHeight;
+  }
+
   toggleAutoScroll() {
     if (this.autoScrollOn()) this.stopAutoScroll();
     else this.startAutoScroll();
@@ -610,6 +645,10 @@ export class SongEditorPageComponent {
 
     if (this.autoScrollOn()) return;
     this.autoScrollOn.set(true);
+
+    queueMicrotask(() => {
+      this.scrollHost?.nativeElement?.focus?.();
+    });
 
     // Si el usuario scrollea/toca, pausamos
     this._autoScrollCleanup?.();
@@ -637,24 +676,31 @@ export class SongEditorPageComponent {
       const dy = Math.trunc(this._scrollCarry);
       if (dy !== 0) this._scrollCarry -= dy;
 
-      const host = this.scrollHost?.nativeElement;
-      if (!host) {
-        this._rafId = requestAnimationFrame(step);
-        return;
-      }
+      // si dy es 0, seguimos acumulando
+      if (dy !== 0) {
+        const beforeWin = window.scrollY;
+        const beforeHost = this.scrollHost?.nativeElement?.scrollTop ?? 0;
 
-      const before = host.scrollTop;
+        this._scrollBy(dy);
 
-      // si dy es 0, igual seguimos loop hasta acumular
-      if (dy !== 0) host.scrollTop = before + dy;
+        const afterWin = window.scrollY;
+        const afterHost = this.scrollHost?.nativeElement?.scrollTop ?? 0;
 
-      const after = host.scrollTop;
-      const atBottom = Math.ceil(after + host.clientHeight) >= host.scrollHeight;
+        // si no pudo scrollear (no overflow / llegó al final)
+        const noMove =
+          (this._getScrollTarget().kind === 'window' && afterWin === beforeWin) ||
+          (this._getScrollTarget().kind === 'host' && afterHost === beforeHost);
 
-      // si no pudo scrollear (porque no hay overflow), o llegó al final, paramos
-      if (atBottom || (dy !== 0 && after === before)) {
-        this.stopAutoScroll();
-        return;
+        if (noMove || this._isAtBottom()) {
+          this.stopAutoScroll();
+          return;
+        }
+      } else {
+        // aunque no movamos, si ya estamos al final, frenamos
+        if (this._isAtBottom()) {
+          this.stopAutoScroll();
+          return;
+        }
       }
 
       this._rafId = requestAnimationFrame(step);
@@ -682,8 +728,6 @@ export class SongEditorPageComponent {
   /** pausa auto-scroll ante actividad del usuario */
   /** pausa auto-scroll ante actividad del usuario (pero permite fine-tune con Shift+Wheel) */
   private _bindAutoScrollUserInterruption(onInterrupt: () => void) {
-    const hostEl = this.scrollHost?.nativeElement;
-
     const onWheel = (ev: WheelEvent) => {
       if (!this.autoScrollOn()) return;
 
@@ -742,7 +786,10 @@ export class SongEditorPageComponent {
     // IMPORTANTE: wheel no puede ser passive si vamos a preventDefault()
     const wheelOpts: AddEventListenerOptions = { passive: false };
 
-    const target: EventTarget = hostEl ?? window;
+    const target: EventTarget =
+      this._getScrollTarget().kind === 'host'
+        ? (this.scrollHost!.nativeElement as EventTarget)
+        : window;
 
     target.addEventListener('wheel', onWheel as any, wheelOpts);
     target.addEventListener('touchstart', onTouch as any, { passive: true });

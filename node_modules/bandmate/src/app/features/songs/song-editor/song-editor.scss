@@ -107,6 +107,15 @@
   }
 }
 
+@media (max-width: 640px) {
+  /* Mientras auto-scroll está activo, volvemos a tener scroll interno */
+  .bm-editor-card.bm-editor-card--autoscroll {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 140px);
+  }
+}
+
 /* Mobile: que la card no quede pegada abajo */
 @media (max-width: 640px) {
   .bm-editor-card {
@@ -171,6 +180,60 @@
   margin-left: auto;
 }
 
+@media (max-width: 640px) {
+  .bm-body-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+    align-items: start;
+  }
+
+  /* cada grupo se estira */
+  .bm-auto-scroll,
+  .bm-transpose {
+    width: 100%;
+  }
+
+  /* auto-scroll: que se ordene lindo */
+  .bm-auto-scroll {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  /* speed label más “chip” */
+  .bm-auto-speed {
+    order: 3;
+    margin-left: auto;
+    white-space: nowrap;
+    font-weight: 700;
+    opacity: 0.75;
+  }
+
+  /* botón principal ocupa el centro */
+  .bm-auto-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* el icon button (tune) fijo a la derecha */
+  .bm-auto-scroll > button[mat-icon-button] {
+    flex: 0 0 auto;
+  }
+
+  /* Key pill arriba de transpose o al lado, como prefieras */
+  .bm-key-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bm-transpose {
+    justify-content: space-between;
+  }
+}
+
 /* Pills / controls */
 .bm-mode-toggle,
 .bm-add-section,
@@ -204,8 +267,7 @@
   gap: 10px;
   padding: 6px 10px;
   border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
+
 }
 
 .bm-tr-btn {
@@ -928,3 +990,79 @@
     opacity: 0.95;
   }
 }
+
+/* =========================
+   Song body toolbar alignment
+   ========================= */
+
+.bm-body-head {
+  align-items: center; /* antes estaba flex-start; esto ya corrige mucho */
+}
+
+/* Acciones: misma altura y alineación */
+.bm-body-actions {
+  align-items: center;
+}
+
+/* Auto-scroll cluster */
+.bm-auto-scroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+/* El “28 px/s” como pill alineado */
+.bm-auto-speed {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Uniformar altura de botones dentro del toolbar */
+.bm-auto-btn,
+.bm-add-section,
+.bm-add-line,
+.bm-mode-toggle {
+  min-height: 40px;
+}
+
+/* Icon buttons “cuadrados” y centrados */
+:host ::ng-deep .bm-body-actions .mat-mdc-icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+}
+
+/* Key pill y transpose alineados a 40px también */
+.bm-key-pill {
+  height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bm-transpose {
+  height: 40px;
+  padding: 0 10px;
+  align-items: center;
+}
+
+/* Mobile: permitir wrap prolijo sin “desfasaje” */
+@media (max-width: 640px) {
+  .bm-body-actions {
+    gap: 10px;
+    justify-content: flex-start;
+  }
+
+  .bm-auto-scroll {
+    flex-wrap: wrap; /* en mobile sí */
+  }
+}
+

@@ -258,3 +258,41 @@
     transition: none !important;
   }
 }
+
+.bm-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: inherit;
+        min-width: 0;
+      }
+
+      .bm-brand-logo {
+        width: 43px;
+        height: 43px;
+        border-radius: 10px;
+        padding: 6px;
+      }
+
+.bm-brand-text {
+        display: grid;
+        gap: 1px;
+        min-width: 0;
+      }
+
+      .bm-brand-name {
+        font-weight: 850;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+      }
+
+      .bm-brand-sub {
+        font-size: 0.78rem;
+        opacity: 0.75;
+        line-height: 1.05;
+      }
+
+      bm-error-boundary:empty {
+  display: none;
+}
