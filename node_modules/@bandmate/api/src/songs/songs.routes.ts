@@ -6,6 +6,7 @@ import {
   getSongByIdForUser,
   listSongsForUser,
   updateSongForUser,
+  rateSongForUser,
 } from "./songs.repo.js";
 
 type AuthedRequest = {
@@ -76,6 +77,38 @@ export async function songsRoutes(app: FastifyInstance) {
       return reply.code(403).send({ message: "Forbidden" });
 
     return updated;
+  });
+
+  // RATE (1..5)
+  app.post("/songs/:id/rate", async (req, reply) => {
+    const userId = getUserId(req);
+    if (!userId) return reply.code(401).send({ message: "Unauthorized" });
+
+    const { id } = req.params as { id: string };
+
+    const body = (req.body ?? {}) as any;
+
+    // acepta { value } o { rating }
+    const raw = body.value ?? body.rating;
+
+    const value = Number(raw);
+
+    if (!Number.isFinite(value) || value < 1 || value > 5) {
+      return reply
+        .code(400)
+        .send({ message: "rating must be a number between 1 and 5" });
+    }
+
+    const updated = await rateSongForUser(userId, id, value);
+
+    if (!updated) return reply.code(404).send({ message: "Song not found" });
+
+    if (updated === "FORBIDDEN")
+      return reply
+        .code(403)
+        .send({ message: "Only library songs can be rated" });
+
+    return reply.code(200).send(updated);
   });
 
   // DELETE

@@ -6,7 +6,11 @@
 
     <div class="flex-grow-1">
       <h2 class="m-0">Songs</h2>
-      <div class="small opacity-75">{{ store.count() }} total</div>
+      <div class="small opacity-75">
+        Your: {{ grouped().mine.length }}
+
+        Library: {{ libraryWorks().length }}
+      </div>
     </div>
     <div class="songs-head-actions">
       <button mat-raised-button color="primary" class="songs-add" (click)="goNew()">
@@ -173,7 +177,7 @@
       </button>
     </div>
   </div>
-} @else if (grouped().hasAny) {
+} @else if (!isLoading() && hasAnythingToShow()) {
   <!-- ========================= -->
   <!-- YOUR SONGS -->
   <!-- ========================= -->
@@ -251,71 +255,94 @@
   }
 
   <!-- Divider -->
-  @if (grouped().mine.length > 0 && grouped().library.length > 0) {
+  @if (grouped().mine.length > 0 && libraryWorks().length > 0) {
     <div class="bm-section-sep"></div>
   }
 
   <!-- ========================= -->
   <!-- LIBRARY (SEED SONGS) -->
   <!-- ========================= -->
-  @if (grouped().library.length > 0) {
+
+  @if (store.libraryState() === 'loading') {
+    <div class="mt-3 small opacity-75">Loading Library…</div>
+  }
+
+  @if (store.libraryState() === 'error') {
+    <div class="alert alert-danger mt-2 d-flex align-items-center justify-content-between gap-2">
+      <span>{{ store.libraryError() }}</span>
+      <button mat-stroked-button (click)="store.loadLibrary()">
+        <mat-icon class="me-1">refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (store.libraryState() === 'ready' && libraryWorks().length === 0) {
+    <div class="mt-4 text-center opacity-75">
+      <div class="fw-semibold">Library is empty (for now)</div>
+      <div class="small">Once you import works, they’ll show up here.</div>
+    </div>
+  }
+
+  @if (libraryWorks().length > 0) {
     <div class="bm-section-head">
       <div class="bm-section-title">Library</div>
-      <div class="bm-section-sub small opacity-75">{{ grouped().library.length }} songs</div>
+      <div class="bm-section-sub small opacity-75">{{ libraryWorks().length }} songs</div>
     </div>
 
     <div class="songs-grid">
-      @for (s of grouped().library; track s.id) {
-        <mat-card
+      @for (w of libraryWorks(); track w.id) {
+        <bm-library-work-card
+          (click)="router.navigate(['/library', w.id])"
+          [work]="w"
+        ></bm-library-work-card>
+        <!-- <mat-card
           class="song-card song-card--seed"
           tabindex="0"
           role="button"
-          (keydown)="onCardKeyDown($event, s.id)"
-          (click)="goEdit(s.id)"
+          (click)="router.navigate(['/library', w.id])"
         >
           <div class="song-top">
             <div class="song-main">
               <div class="song-title-row">
-                <div class="song-title" [title]="s.title">{{ s.title }}</div>
-
+                <div class="song-title">{{ w.title }}</div>
                 <span class="bm-seed-pill">Library</span>
 
-                @if (s.key) {
-                  <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
-                    Key {{ s.key }}
-                  </span>
+                @if (w.topArrangement?.key) {
+                  <span class="bm-pill bm-pill--key"> Key {{ w.topArrangement?.key }} </span>
                 }
               </div>
 
-              <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+              <div class="song-artist">{{ w.artist }}</div>
             </div>
-
-            <!-- 🚫 No delete button for library songs -->
           </div>
 
-          @if (s.bpm || durationLabel(s.durationSec)) {
+          @if (w.topArrangement) {
             <div class="song-meta">
-              @if (s.bpm) {
+              @if (w.topArrangement.bpm) {
                 <span class="bm-pill">
                   <mat-icon class="pill-ic">speed</mat-icon>
-                  <span>{{ s.bpm }} BPM</span>
+                  {{ w.topArrangement.bpm }} BPM
                 </span>
               }
 
-              @if (durationLabel(s.durationSec)) {
+              @if (w.topArrangement.durationSec) {
                 <span class="bm-pill">
                   <mat-icon class="pill-ic">schedule</mat-icon>
-                  <span>{{ durationLabel(s.durationSec) }}</span>
+                  {{ durationLabel(w.topArrangement.durationSec) }}
                 </span>
               }
+
+              <span class="bm-pill bm-pill--rating">
+                ⭐ {{ w.topArrangement.ratingAvg | number: '1.1-1' }} ({{
+                  w.topArrangement.ratingCount
+                }})
+              </span>
             </div>
           }
 
-          <div class="song-updated opacity-75">
-            <mat-icon class="updated-ic">history</mat-icon>
-            Updated: {{ s.updatedAt | date: 'MMM d, y' }}
-          </div>
-        </mat-card>
+          <div class="song-updated opacity-75">Updated: {{ w.updatedAt | date: 'MMM d, y' }}</div>
+        </mat-card> -->
       }
     </div>
   }

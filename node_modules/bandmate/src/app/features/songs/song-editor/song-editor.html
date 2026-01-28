@@ -10,17 +10,14 @@
 
     <div class="flex-grow-1 min-w-0">
       @if (currentDetail(); as d) {
-        <!-- VIEW: título real -->
         @if (viewMode() === 'view') {
           <h2 class="m-0 text-truncate">{{ d.title }}</h2>
           <div class="small opacity-75 mt-1 text-truncate">{{ d.artist }}</div>
         } @else {
-          <!-- EDIT: etiqueta de edición (pero sin “detalle” fake) -->
           <h2 class="m-0">Edit song</h2>
           <div class="small opacity-75 mt-1 text-truncate">{{ d.title }} — {{ d.artist }}</div>
         }
       } @else {
-        <!-- NEW -->
         <h2 class="m-0">New song</h2>
         <div class="small opacity-75 mt-1">
           Add details now, and you’ll thank yourself at rehearsal.
@@ -30,7 +27,6 @@
 
     <div class="bm-header-actions d-flex align-items-center gap-2">
       @if (isEdit() && canEditBody()) {
-        <!-- chip autosave sólo en edit -->
         @if (saveUi() !== 'idle') {
           <div
             class="bm-save-chip"
@@ -115,7 +111,6 @@
 
       @if (currentDetail(); as d) {
         @if (viewMode() === 'view') {
-          <!-- META VIEW (premium, para tocar) -->
           <div class="bm-meta-view">
             <div class="bm-meta-title">{{ d.title }}</div>
             <div class="bm-meta-artist opacity-75">{{ d.artist }}</div>
@@ -153,7 +148,6 @@
             }
           </div>
         } @else {
-          <!-- META EDIT -->
           <app-song-form
             [initial]="d"
             [onSubmit]="save"
@@ -162,7 +156,6 @@
           />
         }
       } @else {
-        <!-- NEW (si querés: mostrar form igual) -->
         <app-song-form
           [initial]="undefined"
           [onSubmit]="save"
@@ -171,7 +164,6 @@
         />
       }
 
-      <!-- Body (sections/lines) - available both in NEW and EDIT -->
       @if (currentDetail()) {
         <div class="bm-body mt-4">
           <div class="bm-body-head">
@@ -200,13 +192,12 @@
                     <mat-icon class="bm-btn-ic">{{
                       autoScrollOn() ? 'pause' : 'play_arrow'
                     }}</mat-icon>
-
                     <span class="bm-auto-label">Auto-scroll</span>
 
                     @if (autoScrollOn()) {
-                      <span class="bm-auto-speed small opacity-75"
-                        >{{ autoScrollSpeed() }} px/s</span
-                      >
+                      <span class="bm-auto-speed small opacity-75">
+                        {{ autoScrollSpeed() }} px/s
+                      </span>
                     }
                   </button>
 
@@ -241,34 +232,7 @@
                 </div>
               }
 
-              @if (displayKey(); as k) {
-                <div class="bm-key-pill">
-                  <mat-icon class="bm-btn-ic">music_note</mat-icon>
-                  Key: {{ k }}
-                </div>
-              }
-
-              <div class="bm-transpose">
-                <button
-                  mat-stroked-button
-                  type="button"
-                  class="bm-tr-btn"
-                  (click)="transposeSong(-1)"
-                >
-                  <mat-icon class="bm-btn-ic">remove</mat-icon>
-                </button>
-
-                <div class="bm-tr-label">Transpose</div>
-
-                <button
-                  mat-stroked-button
-                  type="button"
-                  class="bm-tr-btn"
-                  (click)="transposeSong(1)"
-                >
-                  <mat-icon class="bm-btn-ic">add</mat-icon>
-                </button>
-              </div>
+              <bm-transpose-bar [value]="transpose()" [onChange]="transpose"></bm-transpose-bar>
 
               @if (canEditBody()) {
                 <button
@@ -364,174 +328,17 @@
                               <mat-icon>close</mat-icon>
                             </button>
                           </div>
+                        } @else {
+                          <bm-chord-line-view
+                            [source]="line.source ?? ''"
+                            [transpose]="transpose()"
+                            mode="auto"
+                            [interactive]="true"
+                          />
                         }
-
-                        @let src = transposeInlineChords(line.source ?? '', transpose());
-
-                        <!-- MOBILE: Flow mode (wrap, NO horizontal scroll) -->
-                        <div class="bm-flow" aria-label="Chord flow">
-                          @for (t of flowTokens(src); track $index) {
-                            <span class="bm-flow-token" [class.has-chord]="!!t.chord">
-                              @if (t.chord) {
-                                <button
-                                  type="button"
-                                  class="bm-chord-hit bm-flow-chord"
-                                  [class.is-hovered]="hoveredChord() === t.chord"
-                                  [class.is-selected]="selectedChord() === t.chord"
-                                  [matMenuTriggerFor]="viewMode() === 'view' ? chordMenu : null"
-                                  (mouseenter)="hoveredChord.set(t.chord)"
-                                  (mouseleave)="
-                                    hoveredChord.set(
-                                      hoveredChord() === t.chord ? null : hoveredChord()
-                                    )
-                                  "
-                                  (focus)="hoveredChord.set(t.chord)"
-                                  (blur)="
-                                    hoveredChord.set(
-                                      hoveredChord() === t.chord ? null : hoveredChord()
-                                    )
-                                  "
-                                  (click)="selectedChord.set(t.chord)"
-                                  (menuOpened)="selectedChord.set(t.chord)"
-                                  aria-label="Chord {{ t.chord }}"
-                                >
-                                  {{ t.chord }}
-                                </button>
-                              } @else {
-                                <span class="bm-flow-chord bm-flow-chord--ghost"></span>
-                              }
-                              <span class="bm-flow-text">{{ t.text }}</span>
-                            </span>
-                          }
-                        </div>
-
-                        @let built = buildLayout(src);
-
-                        <div class="bm-chart-desktop" aria-label="Chord chart desktop">
-                          <div
-                            class="bm-chart-line bm-chart-chords bm-chords-clickable"
-                            aria-label="Chords"
-                          >
-                            @for (p of built.chords; track p.pos + '_' + p.chord) {
-                              <span
-                                class="bm-chord-slot"
-                                [style.paddingLeft.ch]="chPad(p.pos, $index, built.chords)"
-                              >
-                                <button
-                                  type="button"
-                                  class="bm-chord-hit"
-                                  [class.is-hovered]="hoveredChord() === p.chord"
-                                  [class.is-selected]="selectedChord() === p.chord"
-                                  [matMenuTriggerFor]="viewMode() === 'view' ? chordMenu : null"
-                                  (mouseenter)="hoveredChord.set(p.chord)"
-                                  (mouseleave)="
-                                    hoveredChord.set(
-                                      hoveredChord() === p.chord ? null : hoveredChord()
-                                    )
-                                  "
-                                  (focus)="hoveredChord.set(p.chord)"
-                                  (blur)="
-                                    hoveredChord.set(
-                                      hoveredChord() === p.chord ? null : hoveredChord()
-                                    )
-                                  "
-                                  (click)="selectedChord.set(p.chord)"
-                                  (menuOpened)="selectedChord.set(p.chord)"
-                                  aria-label="Chord {{ p.chord }}"
-                                >
-                                  {{ p.chord }}
-                                </button>
-                              </span>
-                            }
-                          </div>
-
-                          <div class="bm-chart-line bm-chart-lyrics">{{ built.lyrics }}</div>
-                        </div>
                       }
                     }
                   </div>
-
-                  <mat-menu
-                    #chordMenu="matMenu"
-                    class="bm-chord-menu"
-                    yPosition="above"
-                    overlapTrigger="false"
-                  >
-                    <div class="bm-chord-menu-inner" (click)="$event.stopPropagation()">
-                      @if (chordInfo(); as info) {
-                        <div class="bm-chord-menu-title">{{ info.raw }}</div>
-                        <div class="bm-chord-menu-sub small opacity-75">
-                          {{ info.root }} · {{ info.quality }}
-                        </div>
-
-                        <div class="bm-chord-section-title">Notes</div>
-
-                        <div class="bm-chord-notes">
-                          @for (n of info.notes; track n) {
-                            <span class="bm-note-pill">{{ n }}</span>
-                          }
-                        </div>
-
-                        <div class="bm-chord-section-title">Guitar</div>
-
-                        <div class="bm-shapes">
-                          @let shapes = info.shapes;
-                          @let total = shapes.length;
-                          @let idx = chordShapeIndex();
-
-                          @if (total === 0) {
-                            <div class="bm-shape-empty small opacity-75">
-                              No guitar shape yet for this chord (MVP).
-                            </div>
-                          } @else {
-                            @let sh = shapeAt(shapes, idx);
-
-                            <div class="bm-shape-head">
-                              <div class="bm-shape-left">
-                                <div class="bm-shape-title">{{ sh.name }}</div>
-                                @if (total > 1) {
-                                  <div class="bm-shape-count">{{ idx + 1 }} / {{ total }}</div>
-                                }
-                              </div>
-                            </div>
-
-                            <div class="bm-shape-stage">
-                              @if (total > 1) {
-                                <button
-                                  type="button"
-                                  class="bm-shape-arrow bm-shape-arrow--left"
-                                  aria-label="Previous shape"
-                                  (click)="prevShape(total); $event.stopPropagation()"
-                                >
-                                  <mat-icon>chevron_left</mat-icon>
-                                </button>
-                              }
-
-                              <div class="bm-shape-diagram">
-                                <bm-guitar-chord-diagram
-                                  [shape]="sh"
-                                  [ariaLabel]="'Guitar chord ' + info.raw"
-                                ></bm-guitar-chord-diagram>
-                              </div>
-
-                              @if (total > 1) {
-                                <button
-                                  type="button"
-                                  class="bm-shape-arrow bm-shape-arrow--right"
-                                  aria-label="Next shape"
-                                  (click)="nextShape(total); $event.stopPropagation()"
-                                >
-                                  <mat-icon>chevron_right</mat-icon>
-                                </button>
-                              }
-                            </div>
-                          }
-                        </div>
-                      } @else {
-                        <div class="small opacity-75">No chord selected</div>
-                      }
-                    </div>
-                  </mat-menu>
                 </div>
               }
             </div>
@@ -539,7 +346,6 @@
         </div>
       }
 
-      <!-- Hard error state for edit routes when detail couldn't be loaded -->
       @if (isEdit() && !currentDetail() && store.detailState() === 'error') {
         <div class="text-center py-5">
           <mat-icon style="font-size: 56px; height: 56px; width: 56px" class="opacity-50">

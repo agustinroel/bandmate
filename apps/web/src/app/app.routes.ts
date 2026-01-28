@@ -21,29 +21,20 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
+    canActivateChild: [authGuard],
     children: [
       {
         path: 'home',
-        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/home/home-page/home-page').then((m) => m.HomePageComponent),
       },
 
-      { path: 'songs', canActivate: [authGuard], component: SongsPageComponent },
-      {
-        path: 'songs/new',
-        canActivate: [authGuard],
-        component: SongEditorPageComponent,
-      },
-      {
-        path: 'songs/:id',
-        canActivate: [authGuard],
-        component: SongEditorPageComponent,
-      },
+      { path: 'songs', component: SongsPageComponent },
+      { path: 'songs/new', component: SongEditorPageComponent },
+      { path: 'songs/:id', component: SongEditorPageComponent },
 
       {
         path: 'setlists',
-        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/setlists/pages/setlists-page/setlists-page').then(
             (m) => m.SetlistsPageComponent,
@@ -52,7 +43,6 @@ export const routes: Routes = [
 
       {
         path: 'practice',
-        canActivate: [authGuard],
         canMatch: [() => import('./features/practice/practice.guard').then((m) => m.practiceGuard)],
         loadComponent: () =>
           import('./features/practice/pages/practice-page/practice-page').then(
@@ -61,7 +51,6 @@ export const routes: Routes = [
       },
       {
         path: 'practice/:setlistId',
-        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/practice/pages/practice-page/practice-page').then(
             (m) => m.PracticePageComponent,
@@ -70,11 +59,33 @@ export const routes: Routes = [
 
       {
         path: 'settings',
-        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/settings/settings-page/settings-page').then(
             (m) => m.SettingsPageComponent,
           ),
+      },
+
+      // ✅ LIBRARY
+      {
+        path: 'library',
+        children: [
+          {
+            path: ':workId/arrangements/:arrangementId',
+            loadComponent: () =>
+              import('./features/library/pages/arrangement-view/arrangement-view').then(
+                (m) => m.ArrangementViewPageComponent,
+              ),
+          },
+          {
+            path: ':workId',
+            loadComponent: () =>
+              import('./features/library/pages/library-work-page/library-work-page').then(
+                (m) => m.LibraryWorkPageComponent,
+              ),
+          },
+          // opcional: /library => redirect (si querés)
+          { path: '', pathMatch: 'full', redirectTo: '/songs' },
+        ],
       },
 
       { path: '', pathMatch: 'full', redirectTo: 'home' },

@@ -14,6 +14,8 @@ export type SongRow = {
   version?: number | null;
   sections?: any[] | null;
   links?: any[] | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
 };
 
 export type CreateSongInput = Omit<
@@ -44,6 +46,8 @@ function mapSong(row: any) {
     sections: row.sections ?? [],
 
     links: row.links ?? [],
+    ratingAvg: row.rating_avg ?? 0,
+    ratingCount: row.rating_count ?? 0,
   };
 }
 
@@ -189,6 +193,40 @@ export async function deleteSongForUser(userId: string, id: string) {
   const { error } = await supabase.from("songs").delete().eq("id", id);
   if (error) throw error;
   return true;
+}
+
+export async function rateSongForUser(
+  userId: string,
+  id: string,
+  rating: number,
+) {
+  const song = await getSongByIdForUser(userId, id);
+  if (!song) return null;
+
+  if (!song.isSeed) return "FORBIDDEN" as const;
+
+  const value = Number(rating);
+  if (!Number.isFinite(value) || value < 1 || value > 5) {
+    throw new Error("rating must be a number between 1 and 5");
+  }
+
+  const { error } = await supabase.rpc("rate_song", {
+    p_song_id: id,
+    p_user_id: userId,
+    p_value: value,
+  });
+
+  if (error) throw error;
+
+  const { data, error: e2 } = await supabase
+    .from("songs")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (e2) throw e2;
+  if (!data) return null;
+
+  return mapSong(data);
 }
 
 function pick<T = any>(obj: any, camel: string, snake: string) {

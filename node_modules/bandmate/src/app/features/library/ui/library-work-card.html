@@ -1,0 +1,55 @@
+<mat-card
+  class="song-card song-card--seed"
+  tabindex="0"
+  role="link"
+  [attr.aria-label]="ariaLabel()"
+  (keydown)="onCardKeyDown($event)"
+  [routerLink]="['/library', work.id]"
+>
+  <div class="song-top">
+    <div class="song-main">
+      <div class="song-title-row">
+        <div class="song-title" [title]="work.title">{{ work.title }}</div>
+        <span class="bm-seed-pill">Library</span>
+
+        @if (work.topArrangement?.key) {
+          <span class="bm-pill bm-pill--key">Key {{ work.topArrangement?.key }}</span>
+        }
+      </div>
+
+      <div class="song-artist" [title]="work.artist">{{ work.artist }}</div>
+    </div>
+  </div>
+
+  @if (work.topArrangement) {
+    <div class="song-meta">
+      @if (work.topArrangement.bpm) {
+        <span class="bm-pill">
+          <mat-icon class="pill-ic">speed</mat-icon>
+          <span>{{ work.topArrangement.bpm }} BPM</span>
+        </span>
+      }
+
+      @if (durationLabel(work.topArrangement.durationSec)) {
+        <span class="bm-pill">
+          <mat-icon class="pill-ic">schedule</mat-icon>
+          <span>{{ durationLabel(work.topArrangement.durationSec) }}</span>
+        </span>
+      }
+
+      <span
+        class="bm-pill bm-pill--rating"
+        [matTooltip]="ratingLabel(work.topArrangement.ratingAvg, work.topArrangement.ratingCount)"
+      >
+        <mat-icon class="pill-ic">star</mat-icon>
+        <span>{{ work.topArrangement.ratingAvg ?? 0 | number: '1.1-1' }}</span>
+        <span class="opacity-75">({{ work.topArrangement.ratingCount ?? 0 }})</span>
+      </span>
+    </div>
+  }
+
+  <div class="song-updated opacity-75">
+    <mat-icon class="updated-ic">history</mat-icon>
+    Updated: {{ work.updatedAt || work.topArrangement?.updatedAt | date: 'MMM d, y' }}
+  </div>
+</mat-card>

@@ -1,0 +1,159 @@
+@if (state() === 'loading') {
+  <div class="bm-arr bm-center">
+    <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+  </div>
+}
+
+@if (state() === 'error') {
+  <div class="bm-arr bm-container">
+    <div class="bm-alert">
+      <div class="bm-alert__text">{{ error() }}</div>
+      <button mat-stroked-button (click)="load()">
+        <mat-icon class="bm-ic">refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+  </div>
+}
+
+@if (state() === 'ready') {
+  @if (work() && arrangement()) {
+    <div class="bm-arr">
+      <!-- Sticky header -->
+      <div class="bm-header">
+        <div class="bm-header__left">
+          <button mat-stroked-button class="bm-back" routerLink="/library/{{ workId() }}">
+            <mat-icon class="bm-ic">arrow_back</mat-icon>
+            Back
+          </button>
+
+          <div class="bm-title">
+            <div class="bm-h1">{{ work()!.title }}</div>
+            <div class="bm-sub">{{ work()!.artist }}</div>
+          </div>
+        </div>
+
+        <div class="bm-header__right" aria-label="Rate this arrangement">
+          <div class="bm-rating">
+            @for (n of [1, 2, 3, 4, 5]; track n) {
+              <button
+                mat-icon-button
+                type="button"
+                (click)="rate(n)"
+                [attr.aria-label]="'Rate ' + n + ' stars'"
+              >
+                <mat-icon>{{
+                  stars(arrangement()!.ratingAvg) >= n ? 'star' : 'star_border'
+                }}</mat-icon>
+              </button>
+            }
+            <span class="bm-rating__label">
+              {{ ratingLabel(arrangement()!.ratingAvg, arrangement()!.ratingCount) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bm-container">
+        <!-- Meta card -->
+        <mat-card class="bm-card bm-card--meta">
+          <div class="bm-meta">
+            @if (arrangement()!.key) {
+              <span class="bm-chip bm-chip--key">
+                <span class="bm-chip__k">Key</span>
+                <span class="bm-chip__v">{{ arrangement()!.key }}</span>
+              </span>
+            }
+
+            @if (arrangement()!.bpm) {
+              <span class="bm-chip">
+                <mat-icon class="bm-chip__ic">speed</mat-icon>
+                <span class="bm-chip__v">{{ arrangement()!.bpm }} BPM</span>
+              </span>
+            }
+
+            @if (durationLabel(arrangement()!.durationSec)) {
+              <span class="bm-chip">
+                <mat-icon class="bm-chip__ic">schedule</mat-icon>
+                <span class="bm-chip__v">{{ durationLabel(arrangement()!.durationSec) }}</span>
+              </span>
+            }
+
+            <span class="bm-spacer"></span>
+
+            <span class="bm-chip bm-chip--soft">
+              <mat-icon class="bm-chip__ic">verified</mat-icon>
+              <span class="bm-chip__v">Seed arrangement (SAFE)</span>
+            </span>
+          </div>
+
+          <div class="bm-note">
+            @if (arrangement()!.notes) {
+              {{ arrangement()!.notes }}
+            } @else {
+              Seed arrangement: chord progression + structure only. No copyrighted lyrics included.
+            }
+          </div>
+
+          <div class="bm-foot">Updated: {{ arrangement()!.updatedAt | date: 'MMM d, y' }}</div>
+          <div class="d-flex justify-content-center">
+            <bm-transpose-bar [value]="transpose()" [onChange]="transpose"></bm-transpose-bar>
+          </div>
+        </mat-card>
+
+        <!-- Sections -->
+        <div class="bm-sections">
+          <div class="bm-sections__title">Sections</div>
+
+          @if ((arrangement()!.sections?.length ?? 0) === 0) {
+            <mat-card class="bm-card bm-empty">
+              <div class="bm-empty__t">No sections yet</div>
+              <div class="bm-empty__s">This arrangement has no structure.</div>
+            </mat-card>
+          } @else {
+            @for (sec of arrangement()!.sections ?? []; track sec?.id ?? $index) {
+              <mat-card class="bm-card bm-sec">
+                <div class="bm-sec__head">
+                  <div class="bm-sec__name">{{ sec?.name ?? 'Section' }}</div>
+                  @if (sec?.type) {
+                    <div class="bm-sec__type">{{ sec?.type }}</div>
+                  }
+                </div>
+
+                <div class="bm-lines">
+                  @if ((sec?.lines?.length ?? 0) === 0) {
+                    <div class="bm-line bm-line--muted">—</div>
+                  } @else {
+                    @for (ln of sec?.lines ?? []; track ln?.id ?? $index) {
+                      @switch (ln?.kind) {
+                        @case ('comment') {
+                          <div class="bm-line bm-line--comment">{{ ln?.text }}</div>
+                        }
+                        @case ('blank') {
+                          <div class="bm-line bm-line--blank"></div>
+                        }
+                        @default {
+                          <!-- "lyrics" kind but we only have chords/structure -->
+                          <bm-chord-line-view
+                            [source]="ln?.source ?? ''"
+                            [transpose]="transpose()"
+                            mode="auto"
+                            [interactive]="true"
+                          ></bm-chord-line-view>
+                        }
+                      }
+                    }
+                  }
+                </div>
+              </mat-card>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="bm-arr bm-container">
+      <div class="bm-empty-inline">Arrangement not found</div>
+    </div>
+  }
+}

@@ -1,6 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import type { CreateSongDto, Song, UpdateSongDto } from '@bandmate/shared';
+import type {
+  CreateSongDto,
+  Song,
+  SongDetail,
+  SongDetailV2,
+  UpdateSongDto,
+} from '@bandmate/shared';
 import { environment } from '../../../../environments/environment';
 
 const base = environment.apiBaseUrl;
@@ -9,16 +15,12 @@ const base = environment.apiBaseUrl;
 export class SongsApiService {
   private http = inject(HttpClient);
 
-  constructor() {
-    console.log('[SongsApiService] constructed. baseUrl=', environment.apiBaseUrl);
-  }
-
   list() {
     return this.http.get<Song[]>(`${base}/songs`);
   }
 
   get(id: string) {
-    return this.http.get<Song>(`${base}/songs/${id}`);
+    return this.http.get<Song | SongDetail | SongDetailV2>(`${base}/songs/${id}`);
   }
 
   create(dto: CreateSongDto) {
@@ -27,6 +29,11 @@ export class SongsApiService {
 
   update(id: string, dto: UpdateSongDto) {
     return this.http.patch<Song>(`${base}/songs/${id}`, dto);
+  }
+
+  rateSong(id: string, value: number) {
+    return this.http.post<Song>(`${base}/songs/${id}/rate`, { value });
+    // Si tu backend devuelve otra cosa (ej: {ratingAvg, ratingCount}), decime y lo ajusto
   }
 
   remove(id: string) {

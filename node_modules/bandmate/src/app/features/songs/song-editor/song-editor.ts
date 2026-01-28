@@ -12,7 +12,7 @@ import { TitleCasePipe } from '@angular/common';
 import { GuitarChordDiagramComponent } from '../../../shared/ui/guitar-chord-diagram/guitar-chord-diagram';
 import { SongsStore } from '../../songs/state/songs-store';
 import { SongFormComponent } from '../../songs/features/songs/components/song-form/song-form';
-import { ChordLyricLayout, ChordPlacement, toChordLyricLayout } from '../utils/chord-inline';
+import { ChordPlacement } from '../utils/chord-inline';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { parseChord, chordNotes } from '../../songs/utils/chords'; // ajustá path
 import { getGuitarShapes } from '../../songs/utils/guitar-shapes';
@@ -24,6 +24,8 @@ import {
 } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
+import { ChordLineViewComponent } from '../../../shared/ui/chord-line-view/chord-line-view';
+import { TransposeBarComponent } from '../../../shared/ui/transpose-bar/transpose-bar';
 
 type SongMetaSnapshot = {
   title: string;
@@ -85,7 +87,8 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
     SongFormComponent,
     TitleCasePipe,
     MatMenuModule,
-    GuitarChordDiagramComponent,
+    ChordLineViewComponent,
+    TransposeBarComponent,
   ],
   templateUrl: './song-editor.html',
   styleUrl: './song-editor.scss',
@@ -128,10 +131,6 @@ export class SongEditorPageComponent {
   readonly isView = computed(() => this.viewMode() === 'view');
   readonly isEditing = computed(() => this.viewMode() === 'edit');
 
-  readonly hoveredChord = signal<string | null>(null);
-
-  readonly selectedChord = signal<string | null>(null);
-
   readonly chordShapeIndex = signal(0);
 
   private _autosaveTimer: any = null;
@@ -169,16 +168,6 @@ export class SongEditorPageComponent {
   private _hideSavedTimer: any = null;
 
   readonly canAutoScroll = computed(() => !this.isEditing() && !!this.currentDetail());
-
-  readonly displayKey = computed(() => {
-    const k = (this.currentDetail()?.key ?? '').toString().trim();
-    if (!k) return null;
-    const t = this.transpose();
-    return t ? transposeChordSymbol(k, t) : k;
-  });
-
-  isChordSelected = (ch: string) => computed(() => this.selectedChord() === ch);
-  isChordHovered = (ch: string) => computed(() => this.hoveredChord() === ch);
 
   private _lastModeKey = '';
 
@@ -226,22 +215,6 @@ export class SongEditorPageComponent {
     }),
     showDelayMs: 120,
     minVisibleMs: 280,
-  });
-
-  readonly chordInfo = computed(() => {
-    const raw = this.selectedChord();
-    if (!raw) return null;
-
-    const parsed = parseChord(raw);
-    if (!parsed) return { raw, notes: [], shapes: [] };
-
-    return {
-      raw: parsed.raw,
-      root: parsed.root,
-      quality: parsed.quality,
-      notes: chordNotes(parsed),
-      shapes: getGuitarShapes(parsed.raw),
-    };
   });
 
   constructor() {
@@ -477,45 +450,9 @@ export class SongEditorPageComponent {
     this.store.updateLine(sectionId, lineId, { source: value });
   }
 
-  buildLayout(source: string): ChordLyricLayout {
-    return toChordLyricLayout(source);
-  }
-
-  /**
-   * We render chords in a monospace line; each chord is a button.
-   * To keep exact alignment, we add padding-left in "ch" units based on
-   * how many characters to advance since the previous chord.
-   */
-  chPad(pos: number, index: number, all: ChordPlacement[]): number {
-    const prev = all[index - 1];
-    const prevEnd = prev ? prev.pos + prev.chord.length : 0;
-
-    const delta = Math.max(0, pos - prevEnd);
-    return delta;
-  }
-
-  transposeSong(step: number) {
-    const d = this.currentDetail();
-    if (!d) return;
-
-    // visual-only
-    this.transpose.update((n) => n + step);
-
-    this.notify.info(
-      `Transposed ${this.transpose() >= 0 ? '+' : ''}${this.transpose()}`,
-      'OK',
-      1000,
-    );
-  }
-
-  transposeInlineChords(source: string, step: number): string {
-    // replace [Chord] tokens
-    return source.replace(/\[([^\]]+)\]/g, (_m, raw) => {
-      const chord = String(raw ?? '').trim();
-      if (!chord) return '[]';
-      return `[${transposeChordSymbol(chord, step)}]`;
-    });
-  }
+  readonly setTranspose = (next: number) => {
+    this.transpose.set(next);
+  };
 
   resetTranspose() {
     this.transpose.set(0);
@@ -801,84 +738,6 @@ export class SongEditorPageComponent {
       window.removeEventListener('keydown', onKey);
     };
   }
-
-  flowTokens(source: string): FlowToken[] {
-    // source viene con [Chord] ya aplicado (y transpuesto)
-    // Queremos tokens tipo: {chord:"Em", text:"There’s "} {chord:"Dsus2", text:"something "} ...
-    const out: FlowToken[] = [];
-    const re = /\[([^\]]+)\]/g;
-
-    let lastIdx = 0;
-    let currentChord: string | null = null;
-
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(source))) {
-      const before = source.slice(lastIdx, m.index);
-      if (before) out.push({ chord: currentChord, text: before });
-
-      currentChord = String(m[1] ?? '').trim() || null;
-      lastIdx = re.lastIndex;
-    }
-
-    const tail = source.slice(lastIdx);
-    if (tail) out.push({ chord: currentChord, text: tail });
-
-    // si no había acordes, devolvemos un solo token
-    if (out.length === 0) return [{ chord: null, text: source }];
-
-    return out;
-  }
-}
-
-const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
-const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
-
-function mod(n: number, m: number) {
-  return ((n % m) + m) % m;
-}
-
-function parseChordRoot(chord: string): { root: string; rest: string } | null {
-  // root: A-G with optional #/b
-  // examples: Am, Bbmaj7, F#7, C/G (we’ll handle slash bass separately)
-  const m = chord.match(/^([A-G])([#b]?)(.*)$/);
-  if (!m) return null;
-  const root = `${m[1]}${m[2] ?? ''}`;
-  const rest = m[3] ?? '';
-  return { root, rest };
-}
-
-function transposeRoot(root: string, step: number): string {
-  // decide whether to keep flat style if input uses flats
-  const useFlats = root.includes('b');
-  const scale = useFlats ? NOTES_FLAT : NOTES_SHARP;
-
-  // find index in either array (try both)
-  let idx = (NOTES_SHARP as readonly string[]).indexOf(root);
-  if (idx === -1) idx = (NOTES_FLAT as readonly string[]).indexOf(root);
-  if (idx === -1) return root;
-
-  const nextIdx = mod(idx + step, 12);
-  return scale[nextIdx];
-}
-
-function transposeChordSymbol(symbol: string, step: number): string {
-  // handle slash chords: D/F#
-  const parts = symbol.split('/');
-  const main = parts[0];
-  const bass = parts[1];
-
-  const mainParsed = parseChordRoot(main);
-  if (!mainParsed) return symbol;
-
-  const mainNext = transposeRoot(mainParsed.root, step) + mainParsed.rest;
-
-  if (!bass) return mainNext;
-
-  const bassParsed = parseChordRoot(bass);
-  if (!bassParsed) return `${mainNext}/${bass}`;
-
-  const bassNext = transposeRoot(bassParsed.root, step) + bassParsed.rest;
-  return `${mainNext}/${bassNext}`;
 }
 
 function bodySnapshotOf(d: SongDetail): any {

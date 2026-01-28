@@ -9,15 +9,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass, DatePipe, DecimalPipe } from '@angular/common';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 import { SongPolicy } from '@bandmate/shared';
+import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -108,6 +109,7 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
     MatDividerModule,
     NgClass,
     DatePipe,
+    LibraryWorkCardComponent,
   ],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.scss',
@@ -160,15 +162,23 @@ export class SongsPageComponent {
   /** ✅ Grouped result used by the template */
   readonly grouped = computed(() => {
     const list = this.filtered();
-
     const mine = list.filter((s) => !s.isSeed);
-    const library = list.filter((s) => s.isSeed);
 
     return {
       mine: this.sortSongs(mine),
-      library: this.sortSongs(library),
-      hasAny: mine.length + library.length > 0,
+      hasMine: mine.length > 0,
     };
+  });
+
+  readonly libraryWorks = computed(() => {
+    if (this.store.libraryState() !== 'ready') return [];
+
+    return this.store
+      .library()
+      .slice()
+      .sort((a, b) => {
+        return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
+      });
   });
 
   /** Options */
@@ -212,47 +222,19 @@ export class SongsPageComponent {
     return list;
   });
 
-  /** Sorting (single source of truth: sort()) */
-  readonly sorted = computed(() => {
-    const list = this.filtered().slice();
-
-    const cmpStr = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
-
-    list.sort((a, b) => {
-      switch (this.sort()) {
-        case 'updatedDesc':
-          return this.parseTime(b.updatedAt) - this.parseTime(a.updatedAt);
-
-        case 'updatedAsc':
-          return this.parseTime(a.updatedAt) - this.parseTime(b.updatedAt);
-
-        case 'titleAsc':
-          return cmpStr(this.normalizeStr(a.title), this.normalizeStr(b.title));
-
-        case 'titleDesc':
-          return cmpStr(this.normalizeStr(b.title), this.normalizeStr(a.title));
-
-        case 'artistAsc':
-          return cmpStr(this.normalizeStr(a.artist), this.normalizeStr(b.artist));
-
-        case 'artistDesc':
-          return cmpStr(this.normalizeStr(b.artist), this.normalizeStr(a.artist));
-
-        default:
-          return 0;
-      }
-    });
-
-    return list;
-  });
-
   readonly isEmpty = computed(
     () => this.isReady() && this.store.count() === 0 && !this.query().trim(),
   );
 
+  readonly hasAnythingToShow = computed(() => {
+    const hasMine = this.grouped().mine.length > 0;
+    const hasLibrary = this.libraryWorks().length > 0;
+    return hasMine || hasLibrary;
+  });
+
   readonly isNoResults = computed(() => {
-    const g = this.grouped();
-    return this.isReady() && this.store.count() > 0 && !g.hasAny;
+    const q = this.query().trim();
+    return this.isReady() && !!q && !this.hasAnythingToShow();
   });
 
   readonly hasActiveFilters = computed(() => {
@@ -280,8 +262,15 @@ export class SongsPageComponent {
     }
 
     // 2) Load data
+
     effect(() => {
       if (this.store.state() === 'idle') this.store.load();
+    });
+
+    effect(() => {
+      if (this.store.libraryState() === 'idle') {
+        this.store.loadLibrary();
+      }
     });
 
     // 3) Limpia whitespace raro en query
@@ -453,5 +442,49 @@ export class SongsPageComponent {
     });
 
     return sorted;
+  }
+
+  ratingLabel(avg?: number | null, count?: number | null) {
+    const a = Number(avg ?? 0);
+    const c = Number(count ?? 0);
+    if (!c) return 'Not rated yet';
+    return `${a.toFixed(1)} (${c})`;
+  }
+
+  starsFill(avg?: number | null) {
+    const a = Math.max(0, Math.min(5, Number(avg ?? 0)));
+    return Math.round(a * 2) / 2; // a 0.5
+  }
+
+  starKind(i: number, avg?: number | null): 'full' | 'half' | 'empty' {
+    const a = this.starsFill(avg);
+    const n = i + 1;
+    if (a >= n) return 'full';
+    if (a >= n - 0.5) return 'half';
+    return 'empty';
+  }
+
+  onRateClick(ev: Event, songId: string, value: number) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    if (!value) return;
+
+    const s = this.store.songs().find((x) => x.id === songId);
+    if (!s?.isSeed) return; // por ahora solo Library
+
+    this.store.rateSong(songId, value).subscribe({
+      next: () => this.notify.success(`Rated ${value}★`, 'OK', 1200),
+      error: () => this.notify.error('Could not save rating', 'OK', 2200),
+    });
+  }
+
+  onRateKeydown(ev: KeyboardEvent, songId: string) {
+    // evita que Enter/Espacio abran la card
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      // opcional: abrir dialog de rating con teclado
+    }
   }
 }

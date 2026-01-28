@@ -137,9 +137,9 @@
 }
 
 .song-title-row {
+  gap: 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
   min-width: 0;
 }
 
@@ -148,12 +148,29 @@
   letter-spacing: -0.01em;
   font-size: 1.05rem;
   line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  flex: 1;
 }
+
+.song-title-row {
+
+}
+
+.song-title {
+  
+}
+
+.song-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
 
 .song-artist {
   margin-top: 4px;
@@ -522,3 +539,60 @@
 .song-card:not(.song-card--seed):hover {
   border-color: rgba(22, 62, 63, 0.14);
 }
+
+.bm-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  opacity: 0.9;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.bm-rating-ic {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.95;
+}
+
+.bm-rating-count {
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.bm-pill--rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bm-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bm-rating-text {
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.bm-star-btn {
+  all: unset;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.bm-star-btn:focus-visible {
+  outline: 2px solid rgba(201, 162, 39, 0.7);
+  outline-offset: 2px;
+}
+

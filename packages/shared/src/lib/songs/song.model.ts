@@ -66,6 +66,8 @@ export type Song = {
   createdAt: string;
   updatedAt: string;
   isSeed: boolean;
+  ratingAvg?: number; // 1..5
+  ratingCount?: number; // total votes
 };
 
 /**
@@ -80,4 +82,71 @@ export type SongDetail = Song & {
   isFavorite?: boolean;
   capo?: number;
   timeSignature?: string;
+};
+
+// =========================
+// vNext: Work + Arrangement
+// (additive, no breaking)
+// =========================
+
+export type SongWorkId = string;
+export type ArrangementId = string;
+
+export type RightsStatus =
+  | "unknown"
+  | "public-domain"
+  | "copyrighted"
+  | "licensed";
+export type WorkSource = "musicbrainz" | "wikidata" | "user" | "import";
+export type ArrangementSource = "community" | "official" | "public-domain";
+
+export type SongWork = {
+  id: SongWorkId;
+  title: string;
+  artist: string;
+
+  musicbrainzId?: string;
+  wikidataId?: string;
+
+  rights: RightsStatus;
+  rightsNotes?: string;
+
+  createdAt: string;
+  updatedAt: string;
+  source: WorkSource;
+};
+
+export type Arrangement = {
+  id: ArrangementId;
+  workId: SongWorkId;
+
+  authorUserId?: string | null;
+
+  version: 1;
+  sections: SongSection[];
+
+  key?: string;
+  bpm?: number | string;
+  durationSec?: number | string;
+  notes?: string;
+  links?: string[];
+
+  tags?: string[];
+  capo?: number;
+  timeSignature?: string;
+
+  source: ArrangementSource;
+  isSeed: boolean;
+
+  ratingAvg?: number; // 1..5
+  ratingCount?: number; // total votes
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SongDetailV2 = {
+  work: SongWork;
+  arrangements: Arrangement[];
+  activeArrangement: Arrangement;
 };

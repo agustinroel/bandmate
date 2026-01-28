@@ -1,13 +1,23 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { catchError, finalize, tap, throwError } from 'rxjs';
-import type { CreateSongDto, Song, SongDetail, SongSection, UpdateSongDto } from '@bandmate/shared';
+import type {
+  CreateSongDto,
+  Song,
+  SongDetail,
+  SongDetailV2,
+  SongSection,
+  UpdateSongDto,
+} from '@bandmate/shared';
+import { SongPolicy, toLegacySongDetail } from '@bandmate/shared';
 import { SongsApiService } from '../data/songs-api';
+import { LibraryApiService, LibraryWorkListItem } from '../data/library-api';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
 @Injectable({ providedIn: 'root' })
 export class SongsStore {
   readonly api = inject(SongsApiService);
+  readonly libraryApi = inject(LibraryApiService);
 
   readonly _state = signal<LoadState>('idle');
   readonly _songs = signal<Song[]>([]);
@@ -19,6 +29,14 @@ export class SongsStore {
   readonly _selectedError = signal<string | null>(null);
 
   readonly _detailDirtyTick = signal(0);
+
+  readonly _libraryState = signal<LoadState>('idle');
+  readonly _library = signal<LibraryWorkListItem[]>([]);
+  readonly _libraryError = signal<string | null>(null);
+
+  readonly libraryState = this._libraryState.asReadonly();
+  readonly library = this._library.asReadonly();
+  readonly libraryError = this._libraryError.asReadonly();
 
   readonly state = this._state.asReadonly();
   readonly songs = this._songs.asReadonly();
@@ -42,7 +60,10 @@ export class SongsStore {
     this.api
       .list()
       .pipe(
-        tap((songs) => this._songs.set(songs)),
+        tap((rows) => {
+          const songs = (rows ?? []).map((x: any) => this.normalizeToListSong(x));
+          this._songs.set(songs);
+        }),
         finalize(() => {
           if (this._state() !== 'error') this._state.set('ready');
         }),
@@ -51,6 +72,26 @@ export class SongsStore {
         error: (err) => {
           this._state.set('error');
           this._error.set(err?.message ?? 'Failed to load songs');
+        },
+      });
+  }
+
+  loadLibrary() {
+    this._libraryState.set('loading');
+    this._libraryError.set(null);
+
+    this.libraryApi
+      .listWorks()
+      .pipe(
+        tap((rows) => this._library.set(rows ?? [])),
+        finalize(() => {
+          if (this._libraryState() !== 'error') this._libraryState.set('ready');
+        }),
+      )
+      .subscribe({
+        error: (err) => {
+          this._libraryState.set('error');
+          this._libraryError.set(err?.message ?? 'Failed to load library');
         },
       });
   }
@@ -142,7 +183,7 @@ export class SongsStore {
           this._selected.set(detail);
 
           // cache solo si NO es seed
-          if (!(detail as any)?.is_seed && !(detail as any)?.isSeed) {
+          if (!detail.isSeed) {
             saveDetailToLocal(id, detail);
           }
         }),
@@ -162,6 +203,23 @@ export class SongsStore {
     this._selected.set(null);
     this._detailState.set('idle');
     this._selectedError.set(null);
+  }
+
+  rateSong(id: string, value: number) {
+    this._error.set(null);
+
+    return this.api.rateSong(id, value).pipe(
+      tap((updated) => {
+        // ✅ patch list
+        this._songs.set(this._songs().map((s) => (s.id === id ? { ...s, ...updated } : s)));
+
+        // ✅ patch selected si coincide
+        const sel = this._selected();
+        if (sel?.id === id) {
+          this._selected.set({ ...sel, ...updated });
+        }
+      }),
+    );
   }
 
   /**
@@ -344,19 +402,97 @@ export class SongsStore {
   /**
    * If API returns SongDetail, use it; if it returns Song, wrap it.
    */
-  private normalizeToDetail(input: Song | SongDetail): SongDetail {
+  private normalizeToDetail(input: Song | SongDetail | SongDetailV2): SongDetail {
     const asAny = input as any;
 
-    // If it already has sections/version, assume it's SongDetail
+    // ✅ v2 payload: { work, arrangements, activeArrangement }
+    if (asAny?.work && asAny?.activeArrangement) {
+      return this.mergeV2ToLegacyDetail(input as SongDetailV2);
+    }
+
+    // ✅ If it already has sections/version, assume it's SongDetail
     if (Array.isArray(asAny?.sections) && asAny?.version === 1) {
       return input as SongDetail;
     }
 
-    // Otherwise wrap metadata into a SongDetail skeleton
+    // ✅ Otherwise wrap metadata into a SongDetail skeleton
     return {
       ...(input as Song),
       version: 1,
-      sections: [],
+      sections: Array.isArray((input as any)?.sections) ? (input as any).sections : [],
+    };
+  }
+
+  private normalizeToListSong(input: any): Song {
+    const now = new Date().toISOString();
+
+    // ✅ v2 work item (si tu backend lista works):
+    // { id, title, artist, rights?, source?, ratingAvg?, ratingCount?, topArrangement?, updatedAt? ... }
+    if (input?.rights !== undefined || input?.musicbrainzId || input?.wikidataId) {
+      return {
+        id: input.id,
+        title: input.title ?? 'Untitled',
+        artist: input.artist ?? 'Unknown',
+        key: input.key ?? undefined,
+        bpm: input.bpm ?? undefined,
+        durationSec: input.durationSec ?? undefined,
+        notes: input.notes ?? undefined,
+        links: input.links ?? undefined,
+
+        createdAt: input.createdAt ?? now,
+        updatedAt: input.updatedAt ?? now,
+
+        // ⚡ Importante: que caiga en Library
+        isSeed: true,
+        ratingAvg: input.ratingAvg ?? input.rating_avg ?? 0,
+        ratingCount: input.ratingCount ?? input.rating_count ?? 0,
+      };
+    }
+
+    // ✅ legacy Song
+    return {
+      id: input.id,
+      title: input.title ?? 'Untitled',
+      artist: input.artist ?? 'Unknown',
+      key: input.key ?? undefined,
+      bpm: input.bpm ?? undefined,
+      durationSec: input.durationSec ?? undefined,
+      notes: input.notes ?? undefined,
+      links: input.links ?? undefined,
+      createdAt: input.createdAt ?? now,
+      updatedAt: input.updatedAt ?? now,
+      isSeed: !!input.isSeed,
+      ratingAvg: input.ratingAvg ?? input.rating_avg ?? 0,
+      ratingCount: input.ratingCount ?? input.rating_count ?? 0,
+    };
+  }
+
+  private mergeV2ToLegacyDetail(v2: SongDetailV2): SongDetail {
+    const now = new Date().toISOString();
+
+    const work = v2.work;
+    const a = v2.activeArrangement;
+
+    // “Legacy SongDetail” para que TODO tu editor/view siga andando
+    return {
+      id: a.id, // ⚠️ importante: tu UI actual navega por /songs/:id -> acá será arrangementId (por ahora)
+      title: work.title,
+      artist: work.artist,
+
+      key: a.key,
+      bpm: a.bpm,
+      durationSec: a.durationSec,
+      notes: a.notes,
+      links: a.links,
+
+      sections: a.sections ?? [],
+      version: 1,
+
+      createdAt: a.createdAt ?? now,
+      updatedAt: a.updatedAt ?? now,
+
+      // Para que se vea “tipo seed” y no lo trates como “user-owned”
+      isSeed: a.isSeed ?? true,
     };
   }
 
