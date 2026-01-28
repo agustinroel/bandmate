@@ -140,7 +140,7 @@
 .bm-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 7px 12px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.07);
@@ -153,6 +153,25 @@
   box-sizing: border-box;
 }
 
+.bm-pill__ic {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  opacity: 0.72;
+  flex: 0 0 auto;
+}
+
+/* SOLO para la estrella: evita clip sin romper BPM */
+.bm-pill--rating .bm-pill__ic {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  display: inline-grid;
+  place-items: center;
+}
+
+
 .bm-pill--key {
   font-weight: 800;
   border-color: rgba(201, 162, 39, 0.26);
@@ -163,15 +182,20 @@
 .bm-pill--rating {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .pill-ic {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  display: inline-grid;
+  place-items: center;
   font-size: 18px;
-  height: 18px;
-  width: 18px;
+  line-height: 1;
   opacity: 0.72;
 }
+
 
 /* ✅ Placeholder pills cuando faltan datos */
 .bm-pill.is-missing {

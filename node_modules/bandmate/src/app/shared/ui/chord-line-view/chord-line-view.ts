@@ -1,5 +1,4 @@
 import { Component, Input, computed, effect, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { ChordLyricLayout, toChordLyricLayout } from '../../../features/songs/utils/chord-inline';
@@ -12,7 +11,7 @@ type FlowToken = { chord?: string | null; text: string };
 @Component({
   selector: 'bm-chord-line-view',
   standalone: true,
-  imports: [NgClass, MatMenuModule, MatIconModule, GuitarChordDiagramComponent],
+  imports: [MatMenuModule, MatIconModule, GuitarChordDiagramComponent],
   templateUrl: './chord-line-view.html',
   styleUrl: './chord-line-view.scss',
 })

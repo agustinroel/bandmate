@@ -27,7 +27,7 @@
   <div class="song-meta">
     <!-- BPM -->
     <span class="bm-pill" [class.is-missing]="!work.topArrangement?.bpm">
-      <mat-icon class="pill-ic">speed</mat-icon>
+      <mat-icon class="bm-pill__ic">speed</mat-icon>
       <span>
         @if (work.topArrangement?.bpm) {
           {{ work.topArrangement?.bpm }} BPM
@@ -40,7 +40,7 @@
     <!-- Duration -->
     @let dur = durationLabel(work.topArrangement?.durationSec);
     <span class="bm-pill" [class.is-missing]="!dur">
-      <mat-icon class="pill-ic">schedule</mat-icon>
+      <mat-icon class="bm-pill__ic">schedule</mat-icon>
       <span>
         @if (dur) {
           {{ dur }}
@@ -56,11 +56,13 @@
       [class.is-missing]="!hasRating()"
       [matTooltip]="ratingTooltip()"
     >
-      <mat-icon class="pill-ic">star</mat-icon>
-      <span>{{ ratingAvgLabel() }}</span>
-      @if (hasRating()) {
-        <span class="opacity-75">({{ ratingCountLabel() }})</span>
-      }
+      <mat-icon class="bm-pill__ic">star</mat-icon>
+      <span>
+        {{ ratingAvgLabel() }}
+        @if (hasRating()) {
+          <span class="opacity-75">({{ ratingCountLabel() }})</span>
+        }
+      </span>
     </span>
   </div>
 

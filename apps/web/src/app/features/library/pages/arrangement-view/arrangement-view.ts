@@ -51,8 +51,6 @@ type WorkWithArrangementsDto = {
   imports: [
     RouterModule,
     DatePipe,
-    DecimalPipe,
-    NgClass,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
