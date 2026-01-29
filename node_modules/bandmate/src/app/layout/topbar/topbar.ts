@@ -371,8 +371,7 @@ export class TopbarComponent implements AfterViewInit {
   }
 
   goProfile() {
-    // placeholder: cuando exista /profile lo conectamos
-    this.router.navigateByUrl('/songs');
+    this.router.navigateByUrl('/profile');
   }
 
   async signOut() {

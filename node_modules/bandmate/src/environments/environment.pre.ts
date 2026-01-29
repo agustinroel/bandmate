@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  version: '0.0.1',
   apiBaseUrl: '/api',
   SUPABASE_URL: 'https://ojuyilbbzihtkwrrcimy.supabase.co',
   SUPABASE_ANON_PUBLIC:

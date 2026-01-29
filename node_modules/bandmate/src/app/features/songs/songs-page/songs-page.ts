@@ -14,11 +14,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
-import { NgClass, DatePipe, DecimalPipe } from '@angular/common';
+import { NgClass, DatePipe } from '@angular/common';
 import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 import { SongPolicy } from '@bandmate/shared';
 import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
+import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-run-hero';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -110,6 +111,7 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
     NgClass,
     DatePipe,
     LibraryWorkCardComponent,
+    FirstRunHeroComponent,
   ],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.scss',
@@ -240,6 +242,27 @@ export class SongsPageComponent {
   readonly hasActiveFilters = computed(() => {
     const f = this.filters();
     return !!this.query().trim() || !!f.artist || !!f.key || this.sort() !== 'updatedDesc';
+  });
+
+  readonly showFirstRun = computed(() => {
+    if (!this.isReady()) return false;
+
+    // first-run solo cuando no estás filtrando/buscando
+    if (this.hasActiveFilters()) return false;
+
+    // no tenés canciones tuyas
+    return this.grouped().mine.length === 0;
+  });
+
+  readonly isTotallyEmpty = computed(() => {
+    // “Empty state” solo si no hay nada tuyo Y tampoco hay library para mostrar
+    if (!this.isReady()) return false;
+    if (this.hasActiveFilters()) return false;
+
+    const mineEmpty = this.grouped().mine.length === 0;
+    const libraryEmpty = this.libraryWorks().length === 0;
+
+    return mineEmpty && libraryEmpty;
   });
 
   constructor() {
@@ -395,16 +418,13 @@ export class SongsPageComponent {
     }
   }
 
-  /** Helpers */
-  private normalizeStr(v: unknown): string {
-    return String(v ?? '')
-      .trim()
-      .toLowerCase();
-  }
+  scrollToLibrary() {
+    if (typeof window === 'undefined') return;
 
-  private parseTime(v: unknown): number {
-    const t = Date.parse(String(v ?? ''));
-    return Number.isFinite(t) ? t : 0;
+    const el = document.getElementById('bm-library-anchor');
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** Sorting helper (reusable for both groups) */

@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  version: '0.0.1',
   apiBaseUrl: 'https://bandmate-mp4g.onrender.com',
   SUPABASE_URL: 'https://ojuyilbbzihtkwrrcimy.supabase.co',
   SUPABASE_ANON_PUBLIC:

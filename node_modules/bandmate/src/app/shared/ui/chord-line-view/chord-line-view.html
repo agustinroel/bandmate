@@ -156,10 +156,10 @@
         <div class="bm-chord-menu-sub small opacity-75">{{ info.root }} · {{ info.quality }}</div>
       }
 
-      @if ((info.notes?.length ?? 0) > 0) {
+      @if (info.notes.length > 0) {
         <div class="bm-chord-section-title">Notes</div>
         <div class="bm-chord-notes">
-          @for (n of info.notes ?? []; track n) {
+          @for (n of info.notes; track n) {
             <span class="bm-note-pill">{{ n }}</span>
           }
         </div>
@@ -167,7 +167,7 @@
 
       <div class="bm-chord-section-title">Guitar</div>
 
-      @let shapes = info.shapes ?? [];
+      @let shapes = info.shapes;
       @let total = shapes.length;
       @let idx = chordShapeIndex();
 

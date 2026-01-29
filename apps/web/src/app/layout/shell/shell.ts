@@ -14,6 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.component';
 import { TopbarComponent } from '../topbar/topbar';
+import { environment } from '../../../environments/environment';
 @Component({
   standalone: true,
   imports: [
@@ -47,8 +48,10 @@ export class ShellComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  nowYear = new Date().getFullYear();
+
   appName = 'Bandmate';
-  version = 'v0.1';
+  version = environment.version;
 
   constructor() {
     this.router.events

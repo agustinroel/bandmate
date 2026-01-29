@@ -27,7 +27,7 @@ export type LibraryWork = {
 @Component({
   selector: 'bm-library-work-card',
   standalone: true,
-  imports: [RouterModule, DatePipe, DecimalPipe, MatCardModule, MatIconModule, MatTooltipModule],
+  imports: [RouterModule, DatePipe, MatCardModule, MatIconModule, MatTooltipModule],
   templateUrl: './library-work-card.html',
   styleUrl: './library-work-card.scss',
   providers: [DatePipe],

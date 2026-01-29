@@ -115,6 +115,15 @@
   </div>
 </div>
 
+@if (!isLoading() && showFirstRun()) {
+  <bm-first-run-hero
+    class="mt-3"
+    [libraryCount]="libraryWorks().length"
+    (createSong)="goNew()"
+    (browseLibrary)="scrollToLibrary()"
+  />
+}
+
 @if (isLoading()) {
   <div class="songs-grid">
     @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
@@ -141,7 +150,7 @@
   </div>
 }
 
-@if (!isLoading() && isEmpty()) {
+@if (!isLoading() && isTotallyEmpty()) {
   <div class="text-center py-5">
     <mat-icon style="font-size: 48px; height: 48px; width: 48px" class="opacity-50">
       queue_music
@@ -182,7 +191,7 @@
   <!-- YOUR SONGS -->
   <!-- ========================= -->
   @if (grouped().mine.length > 0) {
-    <div class="bm-section-head">
+    <div class="bm-section-head" id="bm-library-section">
       <div class="bm-section-title">Your songs</div>
       <div class="bm-section-sub small opacity-75">{{ grouped().mine.length }} songs</div>
     </div>
@@ -284,6 +293,8 @@
     </div>
   }
 
+  <div id="bm-library-anchor"></div>
+
   @if (libraryWorks().length > 0) {
     <div class="bm-section-head">
       <div class="bm-section-title">Library</div>
@@ -296,53 +307,6 @@
           (click)="router.navigate(['/library', w.id])"
           [work]="w"
         ></bm-library-work-card>
-        <!-- <mat-card
-          class="song-card song-card--seed"
-          tabindex="0"
-          role="button"
-          (click)="router.navigate(['/library', w.id])"
-        >
-          <div class="song-top">
-            <div class="song-main">
-              <div class="song-title-row">
-                <div class="song-title">{{ w.title }}</div>
-                <span class="bm-seed-pill">Library</span>
-
-                @if (w.topArrangement?.key) {
-                  <span class="bm-pill bm-pill--key"> Key {{ w.topArrangement?.key }} </span>
-                }
-              </div>
-
-              <div class="song-artist">{{ w.artist }}</div>
-            </div>
-          </div>
-
-          @if (w.topArrangement) {
-            <div class="song-meta">
-              @if (w.topArrangement.bpm) {
-                <span class="bm-pill">
-                  <mat-icon class="pill-ic">speed</mat-icon>
-                  {{ w.topArrangement.bpm }} BPM
-                </span>
-              }
-
-              @if (w.topArrangement.durationSec) {
-                <span class="bm-pill">
-                  <mat-icon class="pill-ic">schedule</mat-icon>
-                  {{ durationLabel(w.topArrangement.durationSec) }}
-                </span>
-              }
-
-              <span class="bm-pill bm-pill--rating">
-                ⭐ {{ w.topArrangement.ratingAvg | number: '1.1-1' }} ({{
-                  w.topArrangement.ratingCount
-                }})
-              </span>
-            </div>
-          }
-
-          <div class="song-updated opacity-75">Updated: {{ w.updatedAt | date: 'MMM d, y' }}</div>
-        </mat-card> -->
       }
     </div>
   }

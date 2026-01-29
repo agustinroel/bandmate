@@ -44,27 +44,98 @@
   margin: 0 auto;
 }
 
-/* Footer: normal, al fondo del flex column */
 .app-footer {
   flex: 0 0 auto;
-  height: var(--bm-footer-h);
+
   display: flex;
   align-items: center;
 
-  background: var(--bm-surface);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-
-  /* nada de sticky/fixed */
-  position: static;
-  z-index: auto;
+   height: 40px; /* o 36px */
+  background: transparent; /* como querías */
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+  animation: footerFade 200ms ease-out both;
 }
 
-/* si no querés depender de clases utilitarias */
+@keyframes footerFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .footer-inner {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+ justify-content: center;   /* en vez de space-between */
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.footer-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.footer-brand {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  opacity: 0.82;
+  white-space: nowrap;
+}
+
+.footer-muted {
+  font-size: 0.85rem;
+  opacity: 0.62;
+  white-space: nowrap;
+}
+
+.footer-dot {
+    opacity: 0.35;
+  margin: 0 4px;
+}
+
+.footer-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.footer-link {
+  font-size: 0.85rem;
+  padding: 2px 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+   color: inherit;
+  opacity: 0.55;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+
+  transform: translateY(-1px);
+
+    opacity: 0.85;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-link:active {
+  transform: translateY(0px);
+}
+
+.footer-link:focus-visible {
+  outline: 2px solid rgba(22, 62, 63, 0.25);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 /* Mobile: ocultar footer + padding safe-area */
@@ -271,6 +342,13 @@
       .bm-brand-logo {
         width: 43px;
         height: 43px;
+        border-radius: 10px;
+        padding: 6px;
+      }
+
+      .bm-brand-logo-xs {
+        width: 33px;
+        height: 33px;
         border-radius: 10px;
         padding: 6px;
       }
