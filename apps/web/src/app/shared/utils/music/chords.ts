@@ -17,21 +17,21 @@ export type NoteName =
   | 'Bb'
   | 'B';
 
-const CHROMA_SHARP: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const CHROMA_FLAT: NoteName[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+export const CHROMA_SHARP: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export const CHROMA_FLAT: NoteName[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-function mod(n: number, m: number) {
+export function mod(n: number, m: number) {
   return ((n % m) + m) % m;
 }
 
-function noteIndex(n: string): number {
+export function noteIndex(n: string): number {
   const iS = CHROMA_SHARP.indexOf(n as NoteName);
   if (iS !== -1) return iS;
   const iF = CHROMA_FLAT.indexOf(n as NoteName);
   return iF;
 }
 
-function idxToNote(idx: number, preferFlats: boolean): NoteName {
+export function idxToNote(idx: number, preferFlats: boolean): NoteName {
   return (preferFlats ? CHROMA_FLAT : CHROMA_SHARP)[mod(idx, 12)];
 }
 
@@ -116,4 +116,47 @@ export function chordNotes(chord: ParsedChord): NoteName[] {
   if (chord.bass && !notes.includes(chord.bass)) notes.unshift(chord.bass);
 
   return notes;
+}
+
+// -------------------------
+// NEW: Transposition Utils (De-duplication)
+// -------------------------
+
+export function transposeRoot(root: string, step: number): string {
+  const useFlats = root.includes('b');
+  const scale = useFlats ? CHROMA_FLAT : CHROMA_SHARP;
+
+  let idx = (CHROMA_SHARP as readonly string[]).indexOf(root);
+  if (idx === -1) idx = (CHROMA_FLAT as readonly string[]).indexOf(root);
+  if (idx === -1) return root;
+
+  const nextIdx = mod(idx + step, 12);
+  return scale[nextIdx];
+}
+
+export function parseChordRoot(chord: string): { root: string; rest: string } | null {
+  const m = chord.match(/^([A-G])([#b]?)(.*)$/);
+  if (!m) return null;
+  const root = `${m[1]}${m[2] ?? ''}`;
+  const rest = m[3] ?? '';
+  return { root, rest };
+}
+
+export function transposeChordSymbol(symbol: string, step: number): string {
+  const parts = symbol.split('/');
+  const main = parts[0];
+  const bass = parts[1];
+
+  const mainParsed = parseChordRoot(main);
+  if (!mainParsed) return symbol;
+
+  const mainNext = transposeRoot(mainParsed.root, step) + mainParsed.rest;
+
+  if (!bass) return mainNext;
+
+  const bassParsed = parseChordRoot(bass);
+  if (!bassParsed) return `${mainNext}/${bass}`;
+
+  const bassNext = transposeRoot(bassParsed.root, step) + bassParsed.rest;
+  return `${mainNext}/${bassNext}`;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as Tone from 'tone';
-import { GuitarShape } from '../../../features/songs/utils/guitar-shapes';
+import { GuitarShape } from '../../utils/music/guitar-shapes';
 
 @Injectable({ providedIn: 'root' })
 export class AudioService {

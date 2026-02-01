@@ -454,15 +454,13 @@ export class SongsStore {
    * If API returns SongDetail, use it; if it returns Song, wrap it.
    */
   private normalizeToDetail(input: Song | SongDetail | SongDetailV2): SongDetail {
-    const asAny = input as any;
-
     // ✅ v2 payload: { work, arrangements, activeArrangement }
-    if (asAny?.work && asAny?.activeArrangement) {
+    if ('work' in input && 'activeArrangement' in input) {
       return this.mergeV2ToLegacyDetail(input as SongDetailV2);
     }
 
     // ✅ If it already has sections/version, assume it's SongDetail
-    if (Array.isArray(asAny?.sections) && asAny?.version === 1) {
+    if ('sections' in input && Array.isArray((input as SongDetail).sections)) {
       return input as SongDetail;
     }
 
@@ -470,7 +468,7 @@ export class SongsStore {
     return {
       ...(input as Song),
       version: 1,
-      sections: Array.isArray((input as any)?.sections) ? (input as any).sections : [],
+      sections: [],
     };
   }
 

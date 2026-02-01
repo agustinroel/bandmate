@@ -13,10 +13,10 @@ import { TitleCasePipe } from '@angular/common';
 import { GuitarChordDiagramComponent } from '../../../shared/ui/guitar-chord-diagram/guitar-chord-diagram';
 import { SongsStore } from '../../songs/state/songs-store';
 import { SongFormComponent } from '../../songs/features/songs/components/song-form/song-form';
-import { ChordPlacement } from '../utils/chord-inline';
+import { ChordPlacement } from '../../../shared/utils/music/chord-inline';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { parseChord, chordNotes } from '../../songs/utils/chords'; // ajustá path
-import { getGuitarShapes } from '../../songs/utils/guitar-shapes';
+import { parseChord, chordNotes } from '../../../shared/utils/music/chords';
+import { getGuitarShapes } from '../../../shared/utils/music/guitar-shapes';
 import { MatDialog } from '@angular/material/dialog';
 import { AddSectionDialogComponent } from '../components/add-section-dialog/add-section.dialog';
 import {

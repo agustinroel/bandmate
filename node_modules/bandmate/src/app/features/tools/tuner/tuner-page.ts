@@ -83,7 +83,7 @@ import { MatButtonModule } from '@angular/material/button';
       padding: 24px;
       height: 100%;
       /* Background IS the Hero Gradient now */
-      background: linear-gradient(135deg, #264653 0%, #2A9D8F 100%);
+      background: linear-gradient(135deg, var(--bm-wood) 0%, var(--bm-teal) 100%);
       color: white; /* Default text for outside card */
       border-radius: 32px;
     }
@@ -102,7 +102,7 @@ import { MatButtonModule } from '@angular/material/button';
     .tuner-header h1 {
       font-size: 48px;
       font-weight: 800;
-      color: #F4F1DE; 
+      color: var(--bm-cream); 
       margin: 0;
       letter-spacing: -1px;
       text-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -120,7 +120,7 @@ import { MatButtonModule } from '@angular/material/button';
     /* Card should be Cream Style (.bm-fr match) */
     .tuner-card {
       background: linear-gradient(180deg, rgba(201, 162, 39, 0.09), rgba(0, 0, 0, 0.008));
-      background-color: #F4F1DE; 
+      background-color: var(--bm-cream); 
       border: 1px solid rgba(201, 162, 39, 0.18);
       border-radius: 32px;
       padding: 48px 32px;
@@ -135,7 +135,7 @@ import { MatButtonModule } from '@angular/material/button';
       flex-direction: column;
       gap: 24px;
       align-items: center;
-      color: #264653;
+      color: var(--bm-wood);
       
       /* Enforce fixed height to prevent jumping if content changes */
       min-height: 480px; 
@@ -155,7 +155,7 @@ import { MatButtonModule } from '@angular/material/button';
     .note-val {
       font-size: 120px;
       font-weight: 900;
-      color: var(--bm-wood, #264653);
+      color: var(--bm-wood);
       line-height: 1;
       
       /* Fixed width to prevent horizontal jumping when switching A -> A# */
@@ -165,7 +165,7 @@ import { MatButtonModule } from '@angular/material/button';
     }
 
     .note-val.in-tune {
-      color: var(--bm-teal, #2A9D8F);
+      color: var(--bm-teal);
       text-shadow: 0 0 0; /* Remove glow for cleaner look on white, or subtle */
     }
     
@@ -209,8 +209,8 @@ import { MatButtonModule } from '@angular/material/button';
 
     /* Start button - Dark Wood on Cream Card */
     .start-btn {
-       background-color: #264653 !important; 
-       color: #F4F1DE !important; 
+       background-color: var(--bm-wood) !important; 
+       color: var(--bm-cream) !important; 
        padding: 24px 48px !important;
        font-size: 18px !important;
        border-radius: 99px !important;
@@ -227,8 +227,8 @@ import { MatButtonModule } from '@angular/material/button';
     }
     
     .stop-btn {
-       border-color: #E76F51 !important;
-       color: #E76F51 !important;
+       border-color: var(--bm-burnt) !important;
+       color: var(--bm-burnt) !important;
        padding: 0 32px !important;
        height: 48px !important;
        border-radius: 99px !important;
@@ -260,9 +260,9 @@ import { MatButtonModule } from '@angular/material/button';
     
     .tone-btn:hover {
        transform: translateY(-2px);
-       background: #E9C46A; /* Gold */
-       color: #264653; /* Dark */
-       border-color: #E9C46A;
+       background: var(--bm-gold); /* Gold */
+       color: var(--bm-wood); /* Dark */
+       border-color: var(--bm-gold);
        box-shadow: 0 8px 16px rgba(233, 196, 106, 0.4);
     }
     
@@ -403,202 +403,7 @@ export class TunerPageComponent implements OnDestroy {
       osc.stop(this.audioContext.currentTime + 0.4);
   }
 
-  /* Updated Styles: Matching Home Page Hero (.bm-fr) exactly */
-  static styles = [`
-    :host {
-      display: block;
-      padding: 24px;
-      height: 100%;
-      background: transparent; /* Default page background */
-    }
 
-    .tuner-container {
-      max-width: 600px;
-      margin: 0 auto;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-      padding-top: 20px;
-    }
-
-    /* Header Text - Dark Wood since background is light */
-    .tuner-header h1 {
-      font-size: 42px;
-      font-weight: 800;
-      color: var(--bm-wood, #264653);
-      margin: 0;
-      letter-spacing: -1px;
-    }
-    
-    .subtitle {
-      color: rgba(38, 70, 83, 0.6);
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-top: 8px;
-    }
-
-    /* CARD: Exact match of Home Hero (.bm-fr) */
-    .tuner-card {
-      /* Hero Gradient (Cream/Gold) */
-      background: linear-gradient(180deg, rgba(201, 162, 39, 0.09), rgba(0, 0, 0, 0.008));
-      border: 1px solid rgba(201, 162, 39, 0.18);
-      border-radius: 18px;
-      
-      /* Inner gloss + Soft drop shadow */
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.35),
-        0 10px 26px rgba(0, 0, 0, 0.06);
-      
-      padding: 48px 32px;
-      position: relative;
-      overflow: hidden;
-      
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      align-items: center;
-      color: #264653; /* Dark text */
-      
-      min-height: 420px; 
-    }
-
-    .note-display {
-      height: 180px;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      flex-shrink: 0; 
-    }
-
-    .note-val {
-      font-size: 120px;
-      font-weight: 900;
-      color: #264653; 
-      line-height: 1;
-      width: 180px; 
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-      transition: color 0.1s ease;
-    }
-
-    .note-val.active {
-       /* When active (even if not strictly in tune yet), ensure strong color */
-       opacity: 1;
-    }
-
-    .note-val.in-tune {
-      color: #2A9D8F; /* Teal for success */
-    }
-    
-    .cents-val {
-       font-size: 18px;
-       font-weight: 700;
-       margin-top: 8px;
-       height: 24px;
-       width: 100%; 
-       text-align: center;
-       opacity: 0.6;
-       letter-spacing: 1px;
-       text-transform: uppercase;
-       font-variant-numeric: tabular-nums;
-    }
-
-    /* Placeholder Text (Idle State) - No Grey Box! */
-    .placeholder {
-       font-size: 80px;
-       font-weight: 800;
-       color: rgba(38, 70, 83, 0.1); /* Very subtle ghost text */
-       width: 100%; 
-       text-align: center;
-    }
-
-    .gauge-wrapper {
-       margin-top: -10px;
-       width: 100%;
-       max-width: 320px;
-       height: 160px; 
-       opacity: 0.9;
-    }
-    
-    .needle {
-       transition: transform 0.15s cubic-bezier(0.2, 0, 0.4, 1);
-       transform-origin: 100px 100px;
-    }
-    
-    .needle.idle {
-        opacity: 0.3; /* Dim needle when not listening */
-    }
-
-    /* Start button - Match Home Hero 'Primary' button style? 
-       Home uses a dark green button. Let's use that. */
-    /* Start button - Dark Wood on Cream Card (High Contrast) */
-    .start-btn {
-       background-color: #264653 !important; 
-       color: #F4F1DE !important; 
-       padding: 24px 48px !important;
-       font-size: 18px !important;
-       border-radius: 99px !important;
-       font-weight: 800 !important;
-       letter-spacing: 0.5px;
-       box-shadow: 0 8px 20px rgba(38, 70, 83, 0.15);
-       transition: all 0.2s;
-       border: 2px solid transparent;
-    }
-    .start-btn:hover {
-       transform: translateY(-2px);
-       box-shadow: 0 12px 24px rgba(38, 70, 83, 0.25);
-       background-color: #1a3a47 !important;
-    }
-    
-    .stop-btn {
-       border-color: #E76F51 !important;
-       color: #E76F51 !important;
-       padding: 0 32px !important;
-       height: 48px !important;
-       border-radius: 99px !important;
-       font-weight: 600 !important;
-    }
-    .stop-btn:hover {
-       background: rgba(231, 111, 81, 0.05); 
-    }
-
-    .reference-tones {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: -12px;
-    }
-
-    .tone-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      /* Light semi-transparent on Dark BG */
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.05); /* very subtle white tint */
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.9); /* readable white text */
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: all 0.2s;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    
-    .tone-btn:hover {
-       transform: translateY(-3px);
-       /* Gold Background on Hover */
-       background: #E9C46A; 
-       border-color: #E9C46A;
-       color: #264653; /* Dark text on Gold */
-       box-shadow: 0 0 20px rgba(233, 196, 106, 0.4);
-    }
-  `]; // Close styles
 
   // Need to use the new styles array in Component metadata
   // But since I'm editing the class body, I can't easily change the @Component metadata 

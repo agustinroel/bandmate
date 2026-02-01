@@ -1,10 +1,11 @@
 import { Component, Input, computed, effect, signal, inject } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
-import { ChordLyricLayout, toChordLyricLayout } from '../../../features/songs/utils/chord-inline';
+import { ChordLyricLayout, toChordLyricLayout } from '../../utils/music/chord-inline';
 import { getChordInfo, ChordInfo } from '../../utils/chords/chord-info';
 import { GuitarChordDiagramComponent } from '../guitar-chord-diagram/guitar-chord-diagram';
-import type { GuitarShape } from '../../../features/songs/utils/guitar-shapes';
+import type { GuitarShape } from '../../utils/music/guitar-shapes';
+import { transposeChordSymbol } from '../../utils/music/chords';
 import { AudioService } from '../../data-access/audio/audio.service';
 
 type FlowToken = { chord?: string | null; text: string };
@@ -140,48 +141,5 @@ export class ChordLineViewComponent {
 }
 
 // ---- transpose helpers ----
-const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
-const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
+// Removed: using shared/utils/music/chords logic
 
-function transposeChordSymbol(symbol: string, step: number): string {
-  const parts = symbol.split('/');
-  const main = parts[0];
-  const bass = parts[1];
-
-  const mainParsed = parseChordRoot(main);
-  if (!mainParsed) return symbol;
-
-  const mainNext = transposeRoot(mainParsed.root, step) + mainParsed.rest;
-
-  if (!bass) return mainNext;
-
-  const bassParsed = parseChordRoot(bass);
-  if (!bassParsed) return `${mainNext}/${bass}`;
-
-  const bassNext = transposeRoot(bassParsed.root, step) + bassParsed.rest;
-  return `${mainNext}/${bassNext}`;
-}
-
-function parseChordRoot(chord: string): { root: string; rest: string } | null {
-  const m = chord.match(/^([A-G])([#b]?)(.*)$/);
-  if (!m) return null;
-  const root = `${m[1]}${m[2] ?? ''}`;
-  const rest = m[3] ?? '';
-  return { root, rest };
-}
-
-function transposeRoot(root: string, step: number): string {
-  const useFlats = root.includes('b');
-  const scale = useFlats ? NOTES_FLAT : NOTES_SHARP;
-
-  let idx = (NOTES_SHARP as readonly string[]).indexOf(root);
-  if (idx === -1) idx = (NOTES_FLAT as readonly string[]).indexOf(root);
-  if (idx === -1) return root;
-
-  const nextIdx = mod(idx + step, 12);
-  return scale[nextIdx];
-}
-
-function mod(n: number, m: number) {
-  return ((n % m) + m) % m;
-}

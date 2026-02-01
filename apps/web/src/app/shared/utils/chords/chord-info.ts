@@ -1,5 +1,5 @@
 // chord-info.ts
-import { getGuitarShapes, GuitarShape } from '../../../features/songs/utils/guitar-shapes';
+import { getGuitarShapes, GuitarShape } from '../music/guitar-shapes';
 
 export type ChordInfo = {
   raw: string;

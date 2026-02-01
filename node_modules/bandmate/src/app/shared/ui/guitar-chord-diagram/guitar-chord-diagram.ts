@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import type { GuitarShape } from '../../../features/songs/utils/guitar-shapes';
+import type { GuitarShape } from '../../utils/music/guitar-shapes';
 
 type Marker = 'x' | 'o' | number;
 

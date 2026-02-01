@@ -11,18 +11,23 @@
 /* ---------- 2) Brand tokens (CSS vars) ---------- */
 :root {
   /* Brand */
-  --bm-primary: #234E52;   /* petrol */
-  --bm-accent:  #C9A227;   /* mustard */
-  --bm-warn:    #8C2F39;   /* wine */
+  --bm-primary: #234E52;
+  /* petrol */
+  --bm-accent: #C9A227;
+  /* mustard */
+  --bm-warn: #8C2F39;
+  /* wine */
 
   /* Surfaces */
-  --bm-bg:      #F6F7F6;   /* warm light gray */
-  --bm-surface: #FAFAFA;   /* off-white */
-  --bm-border:  rgba(0, 0, 0, 0.08);
+  --bm-bg: #F6F7F6;
+  /* warm light gray */
+  --bm-surface: #FAFAFA;
+  /* off-white */
+  --bm-border: rgba(0, 0, 0, 0.08);
 
   /* Text */
-  --bm-text:    rgba(0, 0, 0, 0.87);
-  --bm-muted:   rgba(0, 0, 0, 0.60);
+  --bm-text: rgba(0, 0, 0, 0.87);
+  --bm-muted: rgba(0, 0, 0, 0.60);
 
   /* Typography */
   --bm-font: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -33,9 +38,17 @@
   --bm-petrol-800: #1f4b50;
 
   /* Shadows */
-  --bm-shadow-0: 0 0 0 rgba(0,0,0,0);
-  --bm-shadow-1: 0 6px 14px rgba(0,0,0,0.06);
-  --bm-shadow-2: 0 10px 24px rgba(0,0,0,0.08);
+  --bm-shadow-0: 0 0 0 rgba(0, 0, 0, 0);
+  --bm-shadow-1: 0 6px 14px rgba(0, 0, 0, 0.06);
+  --bm-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.08);
+
+  /* Special Theme Colors (Tuner / Welcome) */
+  --bm-cream: #F4F1DE;
+  --bm-wood: #264653;
+  --bm-teal: #2A9D8F;
+  --bm-gold: #E9C46A;
+  --bm-orange: #F4A261;
+  --bm-burnt: #E76F51;
 
   /* Topbar height: lo setea el TopbarComponent con JS.
      Fallback por si algo falla. */
@@ -47,24 +60,21 @@ $bm-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 800);
 $bm-accent: mat.m2-define-palette(mat.$m2-amber-palette, 600);
 $bm-warn: mat.m2-define-palette(mat.$m2-red-palette, 700);
 
-$bm-typography: mat.m2-define-typography-config(
-  $font-family: var(--bm-font)
-);
+$bm-typography: mat.m2-define-typography-config($font-family: var(--bm-font));
 
-$bm-theme: mat.m2-define-light-theme((
-  color: (
-    primary: $bm-primary,
-    accent: $bm-accent,
-    warn: $bm-warn,
-  ),
-  typography: $bm-typography,
-  density: 0,
-));
+$bm-theme: mat.m2-define-light-theme((color: (primary: $bm-primary,
+        accent: $bm-accent,
+        warn: $bm-warn,
+      ),
+      typography: $bm-typography,
+      density: 0,
+    ));
 
 @include mat.all-component-themes($bm-theme);
 
 /* ---------- 4) Base ---------- */
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -137,6 +147,7 @@ mat-form-field {
   box-shadow: none !important;
   cursor: not-allowed;
 }
+
 .mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
@@ -147,6 +158,7 @@ mat-form-field {
   box-shadow: none !important;
   cursor: not-allowed;
 }
+
 .mat-mdc-unelevated-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
@@ -156,6 +168,7 @@ mat-form-field {
   color: rgba(0, 0, 0, 0.38) !important;
   cursor: not-allowed;
 }
+
 .mat-mdc-outlined-button.mat-mdc-button-disabled .mat-icon {
   color: rgba(0, 0, 0, 0.38) !important;
 }
@@ -196,6 +209,7 @@ mat-form-field {
     0 0 0 1px rgba(201, 162, 39, 0.10),
     0 0 26px rgba(201, 162, 39, 0.10);
 }
+
 .mat-mdc-snack-bar-container.bm-toast--success .mdc-snackbar__action {
   color: rgba(255, 236, 173, 0.95) !important;
   opacity: 1;
@@ -206,6 +220,7 @@ mat-form-field {
   background: rgba(26, 46, 74, 0.95) !important;
   border-color: rgba(120, 170, 255, 0.28);
 }
+
 .mat-mdc-snack-bar-container.bm-toast--info .mdc-snackbar__action {
   color: rgba(190, 215, 255, 0.95) !important;
 }
@@ -215,6 +230,7 @@ mat-form-field {
   background: rgba(74, 52, 16, 0.95) !important;
   border-color: rgba(255, 200, 90, 0.30);
 }
+
 .mat-mdc-snack-bar-container.bm-toast--warn .mdc-snackbar__action {
   color: rgba(255, 230, 170, 0.95) !important;
 }
@@ -224,6 +240,7 @@ mat-form-field {
   background: rgba(76, 18, 24, 0.95) !important;
   border-color: rgba(255, 120, 140, 0.30);
 }
+
 .mat-mdc-snack-bar-container.bm-toast--error .mdc-snackbar__action {
   color: rgba(255, 205, 215, 0.95) !important;
 }
@@ -267,7 +284,7 @@ mat-form-field {
     align-items: stretch;
   }
 
-  .bm-actions-row > * {
+  .bm-actions-row>* {
     width: 100%;
   }
 }
@@ -278,4 +295,3 @@ mat-form-field {
     margin-bottom: 10px;
   }
 }
-
