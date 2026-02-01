@@ -221,7 +221,7 @@ export async function rateArrangementForUser(
   if (e1) throw e1;
   if (!existing) return null;
 
-  if (existing.is_seed !== true) return "FORBIDDEN" as const;
+
 
   // RPC que upsertea en arrangement_ratings y recalcula avg/count en arrangements
   const { error } = await supabase.rpc("rate_arrangement", {

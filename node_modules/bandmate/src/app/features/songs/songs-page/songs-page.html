@@ -245,10 +245,18 @@
                 </span>
               }
 
+
               @if (durationLabel(s.durationSec)) {
                 <span class="bm-pill">
                   <mat-icon class="pill-ic">schedule</mat-icon>
                   <span>{{ durationLabel(s.durationSec) }}</span>
+                </span>
+              }
+
+              @if (s.workId) {
+                <span class="bm-pill" matTooltip="You created this from a Library Work">
+                  <mat-icon class="pill-ic">link</mat-icon>
+                  <span>Linked work</span>
                 </span>
               }
             </div>

@@ -1,0 +1,46 @@
+@if (loading()) {
+  <div class="sv-loading">
+    <mat-spinner diameter="32"></mat-spinner>
+    <div class="small opacity-75 mt-2">Loading song…</div>
+  </div>
+} @else if (error()) {
+  <div class="sv-error">
+    <mat-icon class="sv-error-ic">error_outline</mat-icon>
+    <div class="fw-semibold">Could not load song</div>
+    <div class="small opacity-75">{{ error() }}</div>
+  </div>
+} @else if (detail(); as d) {
+  <div class="sv-container">
+    @if (!d.sections || d.sections.length === 0) {
+      <div class="sv-empty">
+        <mat-icon class="sv-empty-ic">queue_music</mat-icon>
+        <div class="fw-semibold mt-2">No sections</div>
+        <div class="small opacity-75">This song has no content yet.</div>
+      </div>
+    } @else {
+      <div class="sv-sections">
+        @for (sec of d.sections; track sec.id) {
+          <div class="sv-section-card" [id]="'sec-' + sec.id">
+            <div class="sv-section-head">
+              <span class="sv-section-name">{{ sec.name || (sec.type | titlecase) }}</span>
+              <span class="sv-section-meta">{{ sec.type }}</span>
+            </div>
+
+            <div class="sv-lines">
+              @for (line of sec.lines; track line.id) {
+                @if (line.kind === 'lyrics') {
+                  <bm-chord-line-view
+                    [source]="line.source ?? ''"
+                    [transpose]="transpose()"
+                    mode="auto"
+                    [interactive]="true"
+                  />
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

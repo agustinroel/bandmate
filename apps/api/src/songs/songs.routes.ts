@@ -130,4 +130,34 @@ export async function songsRoutes(app: FastifyInstance) {
 
     return reply.code(204).send();
   });
+
+  // PUBLISH (Contribute to community)
+  app.post("/songs/:id/publish", async (req, reply) => {
+    const userId = getUserId(req);
+    if (!userId) return reply.code(401).send({ message: "Unauthorized" });
+
+    const { id } = req.params as { id: string };
+    
+    // 1. Get song
+
+    const { supabase } = await import("../lib/supabase.js");
+    const { data: song, error: e1 } = await supabase
+      .from("songs")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (e1) throw e1;
+    if (!song) return reply.code(404).send({ message: "Song not found" });
+
+    // 2. Validate ownership & work link
+    if (song.owner_id !== userId) return reply.code(403).send({ message: "Forbidden" });
+    if (!song.work_id) return reply.code(400).send({ message: "Song is not linked to a work" });
+
+    // 3. Publish
+    const { createArrangementFromSong } = await import("../works/works.repo.js");
+    const arrangement = await createArrangementFromSong(userId, song);
+
+    return reply.code(201).send(arrangement);
+  });
 }

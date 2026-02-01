@@ -28,6 +28,21 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/home/home-page/home-page').then((m) => m.HomePageComponent),
       },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/pages/profile-page/profile-page').then(
+            (m) => m.ProfilePageComponent,
+          ),
+      },
+      {
+        path: 'u/:username',
+        loadComponent: () =>
+          import('./features/profile/pages/public-profile-page/public-profile-page').then(
+            (m) => m.PublicProfilePageComponent,
+          ),
+      },
 
       { path: 'songs', component: SongsPageComponent },
       { path: 'songs/new', component: SongEditorPageComponent },
@@ -63,6 +78,15 @@ export const routes: Routes = [
           import('./features/settings/settings-page/settings-page').then(
             (m) => m.SettingsPageComponent,
           ),
+      },
+
+      // TOOLS
+      {
+        path: 'tools',
+        children: [
+           { path: 'tuner', loadComponent: () => import('./features/tools/tuner/tuner-page').then(m => m.TunerPageComponent) },
+           { path: '', redirectTo: 'tuner', pathMatch: 'full' }
+        ]
       },
 
       // ✅ LIBRARY

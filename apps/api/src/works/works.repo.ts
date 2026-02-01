@@ -81,6 +81,8 @@ function mapArrangement(row: any) {
     ratingAvg: row.rating_avg ?? 0,
     ratingCount: row.rating_count ?? 0,
 
+    authorName: row.profiles?.username ?? null,
+
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? row.created_at,
   };
@@ -161,7 +163,7 @@ export async function getWorkByIdWithArrangements(workId: string) {
 
   const { data: arrs, error: e2 } = await supabase
     .from("arrangements")
-    .select("*")
+    .select("*, profiles(username)")
     .eq("work_id", workId)
     .order("rating_avg", { ascending: false })
     .order("rating_count", { ascending: false })
@@ -204,4 +206,57 @@ export async function createWork(input: {
     .single();
   if (error) throw error;
   return mapWork(data);
+}
+
+
+export async function createArrangementFromSong(
+  userId: string,
+  song: {
+    work_id: string;
+    sections: any[];
+    key?: string | null;
+    bpm?: number | null;
+    duration_sec?: number | null;
+    notes?: string | null;
+    version?: number | null;
+  }
+) {
+  // 1. Create arrangements payload
+  // We'll increment version based on existing arrangements count or just use next number?
+  // Ideally we query max version. For now, let's assume we just create it.
+  
+  // Let's get max version for this work to auto-increment
+  const { data: maxVer } = await supabase
+    .from("arrangements")
+    .select("version")
+    .eq("work_id", song.work_id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const nextVersion = (maxVer?.version ?? 0) + 1;
+
+  const payload = {
+    work_id: song.work_id,
+    author_user_id: userId,
+    version: nextVersion,
+    sections: song.sections ?? [],
+    key: song.key ?? null,
+    bpm: song.bpm ? String(song.bpm) : null,
+    duration_sec: song.duration_sec ?? null,
+    notes: song.notes ?? null,
+    source: "community",
+    is_seed: false,
+    rating_avg: 0,
+    rating_count: 0
+  };
+
+  const { data, error } = await supabase
+    .from("arrangements")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return mapArrangement(data);
 }

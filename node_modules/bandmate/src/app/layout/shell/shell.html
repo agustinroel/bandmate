@@ -6,7 +6,7 @@
     class="bm-sidenav"
   >
     <div class="bm-sidenav-header">
-      <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
+      <a class="bm-brand" routerLink="/home" aria-label="Bandmate home">
         <img
           class="bm-brand-logo"
           src="../../../assets/brand/Bandmate logo gold w background.png"
@@ -18,16 +18,16 @@
           <div class="bm-brand-sub">Prep · Rehearse · Play</div>
         </div>
       </a>
-      <!-- <div class="bm-sidenav-brand">
-        <div class="bm-sidenav-logo" aria-hidden="true">
-          <img src="assets/brand/Bandmate logo tale transparent.png" alt="" />
-        </div>
+    </div>
 
-        <div class="min-w-0">
-          <div class="fw-semibold bm-side-title">Bandmate</div>
-          <div class="small opacity-75 bm-side-sub">Prep • Rehearse • Play</div>
-        </div>
-      </div> -->
+    <div class="bm-sidenav-section">
+      <div class="bm-sidenav-section-title">Main</div>
+      <mat-nav-list class="bm-nav">
+        <a mat-list-item routerLink="/home" routerLinkActive="active">
+          <mat-icon matListItemIcon class="me-2">home</mat-icon>
+          <span>Home</span>
+        </a>
+      </mat-nav-list>
     </div>
 
     <div class="bm-sidenav-section">
@@ -53,6 +53,11 @@
         <a mat-list-item routerLink="/practice" routerLinkActive="active">
           <mat-icon matListItemIcon class="me-2">fitness_center</mat-icon>
           <span>Practice</span>
+        </a>
+
+        <a mat-list-item routerLink="/tools/tuner" routerLinkActive="active">
+          <mat-icon matListItemIcon class="me-2">graphic_eq</mat-icon>
+          <span>Tuner</span>
         </a>
       </mat-nav-list>
     </div>

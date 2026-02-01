@@ -1,103 +1,56 @@
 # 🎸 Bandmate
 
-**Bandmate** is an application built by musicians, for musicians.
+**Bandmate** is evolving from a personal tool into a **Social Music Platform**.
 
-It was born from a simple but persistent problem: keeping songs, lyrics, chords, practices, and rehearsals organized in a single place — without friction, without scattered notes, and without breaking focus.
+It aims to become the essential ecosystem for:
+1. **Musicians**: To practice, manage their library, and find other musicians.
+2. **Bands**: To manage repertoires, setlists, and rehearsals collaboratively.
 
-Bandmate aims to become an **essential tool in a musician’s daily life**, whether you’re practicing alone at home, rehearsing with your band, or preparing a setlist for a live show.
+> 🚀 **See the future**: check out our [2026 Roadmap](docs/ROADMAP_2026.md) for details on Mobile Apps, Social Features, and Monetization.
 
 ---
 
 ## 🧠 Project Philosophy
 
-Bandmate is not just a song manager.
+Bandmate connects the entire lifecycle of a musician:
+**Independent Practice → Finding a Band → Rehearsing → Live Performance**
 
-It is designed to:
-
-- Reduce friction between **idea → practice → performance**
-- Support amateur and semi-professional musicians alike
-- Be fast, clear, and enjoyable to use
-- Prioritize **flow and focus** while playing music
-
-The goal is simple:  
-When you open Bandmate, **you shouldn’t think about the app — you should think about the music**.
+The goal is to provide professional tools while facilitating the social connections that keep music alive.
 
 ---
 
 ## 🎯 Problems Bandmate Solves
 
-- Lyrics and chords scattered across WhatsApp, notes, PDFs, or websites
-- Inconsistent versions of songs between band members
-- Messy or improvised setlists
-- Tools that are not designed for real rehearsal workflows
-- Overly complex or generic music apps
+- **Disconnected Tools**: Tuners app, sheet music app, messaging app for band logistics. Bandmate unifies them.
+- **Finding Musicians**: Hard to find people with compatible tastes and levels nearby.
+- **Rehearsal Chaos**: "Wait, which version of the chorus are we doing?" (Solved by Shared Repertoire).
+- **Paper & PDF Mess**: Interactive, transposable songs instead of static files.
 
 ---
 
-## ✨ What Bandmate Offers Today
+## ✨ Key Features (Current & Planned)
 
-### 🎵 Songs
+### 🎵 For You (Personal)
+- Robust Song Editor (Lyrics + Chords)
+- Practice Mode with Auto-Scroll
+- Cloud Sync (Planned)
 
-- Create and edit songs with lyrics and chords
-- Key musical metadata:
-  - Key / tonality
-  - Artist
-  - Last updated date
-- Clean, readable song view
-- Automatic persistence (no manual “save” actions)
+### 🤝 For Your Band (Planned)
+- Shared Repertoires in Real-Time
+- Role management & Invites
+- Band Profiles
 
-### 📋 Setlists
-
-- Create and manage setlists
-- Designed for rehearsals and live shows
-- Reorder and reuse easily
-
-### 🎧 Practice
-
-- Dedicated practice flow
-- Fast access: open → play → close
-- No unnecessary distractions
+### 🌍 For the Community (Planned)
+- **Musician Finder**: Find a drummer/bassist near you.
+- **Band Finder**: Find bands looking for members.
 
 ---
 
-## 🚧 Current Focus
-
-Bandmate is currently in an **active MVP phase**, focused on building a solid and scalable foundation before expanding further.
-
-Upcoming key milestones:
-
-- Auto-scroll for lyrics/chords (configurable speed)
-- Advanced song filters (artist, key, genre, etc.)
-- Authentication (JWT, guards, interceptors)
-- Dedicated backend
-- Social features:
-  - Create bands
-  - Share songs and setlists
-  - Collaborate with band members
-- Spotify integration (reference-based, not a replacement)
-
----
-
-## 🧩 Long-Term Vision
-
-Bandmate aims to be:
-
-> “The app you open before picking up your instrument.”
-
-A tool that is:
-
-- Social
-- Collaborative
-- Musically aware
-- Carefully crafted with attention to detail
-
----
-
-# ⚙️ Technical Overview
+## ⚙️ Technical Overview
 
 ## 🏗️ General Architecture
 
-Bandmate is built as a modern **Single Page Application**, with a strong focus on:
+Bandmate is a **Cross-Platform Application** (Web + Mobile), built with:
 
 - Predictable state management
 - Reactive UI

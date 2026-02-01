@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SongsStore } from '../../../songs/state/songs-store';
 
 import { environment } from '../../../../../environments/environment';
 
@@ -32,6 +33,7 @@ type ArrangementDto = {
   ratingCount?: number | null;
   updatedAt?: string | null;
   isSeed?: boolean;
+  authorName?: string | null;
 };
 
 type WorkWithArrangementsDto = {
@@ -57,7 +59,10 @@ type WorkWithArrangementsDto = {
 export class LibraryWorkPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
   private readonly http = inject(HttpClient);
+  private readonly songsStore = inject(SongsStore);
+
 
   readonly workId = signal<string>('');
 
@@ -66,6 +71,12 @@ export class LibraryWorkPageComponent {
 
   readonly work = signal<WorkDto | null>(null);
   readonly arrangements = signal<ArrangementDto[]>([]);
+  
+  readonly myVersions = computed(() => {
+    const wId = this.workId();
+    if (!wId) return [];
+    return this.songsStore.songs().filter((s: any) => s.workId === wId);
+  });
 
   readonly hasArrangements = computed(() => this.arrangements().length > 0);
 
@@ -100,6 +111,29 @@ export class LibraryWorkPageComponent {
 
   openArrangement(arrangementId: string) {
     this.router.navigate(['/library', this.workId(), 'arrangements', arrangementId]);
+  }
+
+  openMyVersion(songId: string) {
+    this.router.navigate(['/songs', songId]);
+  }
+
+  createMyVersion() {
+    const w = this.work();
+    if (!w) return;
+
+    // We fork the "Top Arrangement" if it exists, otherwise just the metadata
+    const sourceArrangement = this.arrangements()[0] ?? null;
+
+    this.songsStore.createFromWork(w, sourceArrangement).subscribe({
+      next: (newSong) => {
+        // Navigate to the editor for the new song
+        this.router.navigate(['/songs', newSong.id]); 
+      },
+      error: (err) => {
+        console.error('Failed to create version', err);
+        // Could show a notification here
+      }
+    });
   }
 
   durationLabel(value: number | string | null | undefined): string {

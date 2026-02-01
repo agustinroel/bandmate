@@ -53,6 +53,25 @@
           <mat-icon class="bm-btn-ic">{{ viewMode() === 'view' ? 'edit' : 'visibility' }}</mat-icon>
           {{ viewMode() === 'view' ? 'Edit' : 'View' }}
         </button>
+
+        @if (currentDetail()?.workId && viewMode() === 'view') {
+          <div class="bm-rating-ctrl">
+             @for (star of [1,2,3,4,5]; track star) {
+                <mat-icon 
+                  class="bm-star" 
+                  [class.filled]="userRating() >= star"
+                  (click)="rate(star)"
+                  [matTooltip]="'Rate ' + star + ' stars'">
+                  {{ userRating() >= star ? 'star' : 'star_border' }}
+                </mat-icon>
+             }
+          </div>
+
+          <button mat-flat-button color="accent" class="bm-publish-btn" (click)="publish()" matTooltip="Publish to community">
+            <mat-icon class="bm-btn-ic">public</mat-icon>
+            Publish
+          </button>
+        }
       }
     </div>
   </div>

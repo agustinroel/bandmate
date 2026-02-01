@@ -39,4 +39,12 @@ export class SongsApiService {
   remove(id: string) {
     return this.http.delete<void>(`${base}/songs/${id}`);
   }
+
+  publish(id: string) {
+    return this.http.post<any>(`${base}/songs/${id}/publish`, {});
+  }
+
+  rate(id: string, value: number) {
+    return this.http.post<any>(`${base}/songs/${id}/rate`, { value });
+  }
 }

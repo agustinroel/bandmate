@@ -39,6 +39,7 @@ type ArrangementDto = {
 
   updatedAt?: string | null;
   createdAt?: string | null;
+  authorName?: string | null;
 };
 
 type WorkWithArrangementsDto = {

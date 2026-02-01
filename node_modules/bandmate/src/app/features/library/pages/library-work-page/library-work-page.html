@@ -32,6 +32,14 @@
             <div class="bm-sub">{{ work()!.artist }}</div>
           </div>
         </div>
+
+        
+        <div class="bm-header__right">
+          <button mat-flat-button color="primary" (click)="createMyVersion()">
+            <mat-icon class="me-1">edit_note</mat-icon>
+            Create my version
+          </button>
+        </div>
       </div>
 
       <div class="bm-container">
@@ -117,9 +125,46 @@
             </mat-card>
           }
 
+          <!-- Your versions -->
+          @if (myVersions().length > 0) {
+            <div class="bm-section">
+              <div class="bm-section__title">Your versions</div>
+              <div class="bm-grid">
+                @for (song of myVersions(); track song.id) {
+                  <mat-card
+                    class="bm-card"
+                    tabindex="0"
+                    role="button"
+                    (click)="openMyVersion(song.id)"
+                    (keydown.enter)="openMyVersion(song.id)"
+                  >
+                    <div class="bm-card__head">
+                      <div class="bm-card__title">
+                        <mat-icon class="bm-ic-sm">person</mat-icon>
+                        {{ song.title }}
+                      </div>
+                    </div>
+                    
+                    <div class="bm-card__meta">
+                      @if (song.key) {
+                        <span class="bm-chip bm-chip--key">
+                          <span class="bm-chip__k">Key</span>
+                          <span class="bm-chip__v">{{ song.key }}</span>
+                        </span>
+                      }
+                      <span class="bm-chip">Personal copy</span>
+                    </div>
+
+                    <div class="bm-card__foot">Updated: {{ song.updatedAt | date: 'MMM d, y' }}</div>
+                  </mat-card>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Other arrangements -->
           <div class="bm-section">
-            <div class="bm-section__title">Arrangements</div>
+            <div class="bm-section__title">Community Arrangements</div>
 
             <div class="bm-grid">
               @for (a of arrangements(); track a.id) {
@@ -132,7 +177,12 @@
                 >
                   <div class="bm-card__head">
                     <div class="bm-card__title">
-                      Arrangement v{{ a.version ?? 1 }}
+                      @if (a.authorName) {
+                        Arrangement by {{ a.authorName }}
+                      } @else {
+                        Arrangement v{{ a.version ?? 1 }}
+                      }
+                      
                       @if (a.isSeed) {
                         <span class="bm-chip bm-chip--seed">Seed</span>
                       }

@@ -153,6 +153,49 @@ export class SongsStore {
     );
   }
 
+  seed(dtos: CreateSongDto[]) {
+    // Simple serial or parallel creation
+    // For MVP, just fire and forget loop or simple concat
+    dtos.forEach(dto => {
+      this.create(dto).subscribe();
+    });
+  }
+
+  /**
+   * Forks a work/arrangement into a user's personal song library.
+   */
+  createFromWork(work: any, arrangement?: any) {
+    // 1) Construct the new song payload based on the work + arrangement
+    const base = arrangement ?? {};
+    
+    // Explicitly cast or construct the DTO to match what the API expects
+    // Note: The API repo we just updated looks for workId / work_id
+    const dto: any = {
+      title: work.title,
+      artist: work.artist,
+      
+      // Metrics from arrangement
+      key: base.key ?? undefined,
+      bpm: base.bpm ?? undefined,
+      durationSec: base.durationSec ?? undefined,
+      
+      // Content
+      sections: base.sections ?? [], // copy sections
+      notes: base.notes ?? undefined,
+      links: base.links ?? undefined,
+      
+      // Linkage (THE IMPORTANT PART)
+      workId: work.id,
+      originArrangementId: base.id ?? undefined,
+      
+      isSeed: false, // Explicitly user owned
+      version: 1, 
+    };
+
+    // 2) Create call via API
+    return this.create(dto);
+  }
+
   // -------------------------
   // NEW: Detail (SongDetail)
   // -------------------------
@@ -220,6 +263,14 @@ export class SongsStore {
         }
       }),
     );
+  }
+
+  publish(songId: string) {
+    return this.api.publish(songId);
+  }
+
+  rate(songId: string, value: number) {
+    return this.api.rate(songId, value);
   }
 
   /**
@@ -464,6 +515,8 @@ export class SongsStore {
       isSeed: !!input.isSeed,
       ratingAvg: input.ratingAvg ?? input.rating_avg ?? 0,
       ratingCount: input.ratingCount ?? input.rating_count ?? 0,
+      workId: input.workId ?? input.work_id,
+      originArrangementId: input.originArrangementId ?? input.origin_arrangement_id,
     };
   }
 

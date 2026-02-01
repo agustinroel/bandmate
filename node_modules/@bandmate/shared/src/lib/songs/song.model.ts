@@ -68,6 +68,8 @@ export type Song = {
   isSeed: boolean;
   ratingAvg?: number; // 1..5
   ratingCount?: number; // total votes
+  workId?: string;
+  originArrangementId?: string;
 };
 
 /**

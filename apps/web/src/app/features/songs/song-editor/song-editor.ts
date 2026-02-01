@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { CreateSongDto, UpdateSongDto, SongDetail, SongPolicy } from '@bandmate/shared';
 import { TitleCasePipe } from '@angular/common';
@@ -84,6 +85,7 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
     MatCardModule,
     MatProgressBarModule,
     MatSnackBarModule,
+    MatTooltipModule,
     SongFormComponent,
     TitleCasePipe,
     MatMenuModule,
@@ -109,6 +111,8 @@ export class SongEditorPageComponent {
   readonly saving = signal(false);
 
   readonly transpose = signal(0);
+  readonly userRating = signal(0); // local state for UI feedback
+
   readonly viewMode = computed<ViewMode>(() => {
     // ✅ CREATE: siempre edit
     if (this.isCreate()) return 'edit';
@@ -380,6 +384,49 @@ export class SongEditorPageComponent {
       error: () => this.notify.error('Could not save song', 'OK', 3000),
     });
   };
+
+
+
+  publish() {
+    const id = this.songId();
+    if (!id) return;
+
+    this.confirm({
+      title: 'Publish to Community',
+      message: 'This will create a public version of your arrangement for everyone to see. You can continue editing your private copy.',
+      confirmText: 'Publish',
+      cancelText: 'Cancel',
+    }).subscribe((ok) => {
+      if (!ok) return;
+
+      this.store.publish(id).subscribe({
+        next: () => {
+          this.notify.success('Published to community!', 'OK', 3000);
+          // Optional: navigate to work page to see it?
+          // this.router.navigate(['/library', this.currentDetail()?.workId]);
+        },
+        error: (err) => this.notify.error('Failed to publish', 'OK', 3000),
+      });
+    });
+  }
+
+  rate(value: number) {
+    const id = this.songId();
+    if (!id) return;
+
+    // Optimistic UI
+    this.userRating.set(value);
+
+    // Call service (assume we need to add rate method later to store if not exists, 
+    // but for now let's assume direct call or add it to api service)
+    // Actually songs-store doesn't have rate yet, so I should add it or call API directly.
+    // Let's call store.rate() which I need to add.
+    this.store.rate(id, value).subscribe({
+      next: () => this.notify.success('Rated!', 'OK', 1500),
+      error: () => this.notify.error('Could not submit rating', 'OK', 3000)
+    });
+  }
+
 
   goBack = () => this.router.navigate(['/songs']);
 

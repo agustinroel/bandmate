@@ -51,6 +51,8 @@ export type Song = {
     isSeed: boolean;
     ratingAvg?: number;
     ratingCount?: number;
+    workId?: string;
+    originArrangementId?: string;
 };
 /**
  * Full/detail song model (MVP v0):

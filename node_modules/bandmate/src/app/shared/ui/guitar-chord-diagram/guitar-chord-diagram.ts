@@ -140,12 +140,17 @@ export class GuitarChordDiagramComponent {
 
     // base fret: smallest >0
     const pressed = frets.filter((f) => f > 0) as number[];
+    const hasOpen = frets.some(f => f === 0);
+    
+    // If we have open strings, we usually want to show from fret 1 (nut)
+    // regardless of where the pressed notes are (unless it's a capo situation, but for MVP assumes 1)
     const minF = pressed.length ? Math.min(...pressed) : 1;
     const maxF = pressed.length ? Math.max(...pressed) : 1;
 
     // if chord is far up (e.g. 8th), we display a 5-fret window starting at minF
     // for open-ish chords, baseFret=1 and we draw nut.
-    const baseFret = minF <= 1 ? 1 : minF;
+    // Also if hasOpen is true, we force baseFret 1 to show the open string context
+    const baseFret = (minF <= 1 || hasOpen) ? 1 : minF;
     const windowFrets = 5;
 
     const w = this.W;

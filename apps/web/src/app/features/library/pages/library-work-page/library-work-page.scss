@@ -20,12 +20,17 @@
   top: 0;
   z-index: 20;
 
-  
+
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
   margin: 0 auto 14px;
   max-width: 980px;
   padding: 14px 0 12px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .bm-header__left {
@@ -41,6 +46,16 @@
 
 .bm-ic {
   margin-right: 6px;
+}
+
+.bm-ic-sm {
+  margin-right: 6px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  vertical-align: middle;
+  transform: translateY(-2px);
+  opacity: 0.7;
 }
 
 .bm-title {

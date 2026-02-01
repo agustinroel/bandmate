@@ -16,6 +16,8 @@ export type SongRow = {
   links?: any[] | null;
   rating_avg?: number | null;
   rating_count?: number | null;
+  work_id?: string | null;
+  origin_arrangement_id?: string | null;
 };
 
 export type CreateSongInput = Omit<
@@ -23,6 +25,8 @@ export type CreateSongInput = Omit<
   "id" | "created_at" | "owner_id" | "is_seed"
 > & {
   // dejamos lo que viene del FE
+  workId?: string | null;
+  originArrangementId?: string | null;
 };
 
 export type UpdateSongInput = Partial<
@@ -48,6 +52,8 @@ function mapSong(row: any) {
     links: row.links ?? [],
     ratingAvg: row.rating_avg ?? 0,
     ratingCount: row.rating_count ?? 0,
+    workId: row.work_id ?? null,
+    originArrangementId: row.origin_arrangement_id ?? null,
   };
 }
 
@@ -97,6 +103,10 @@ export async function createSongForUser(userId: string, dto: CreateSongInput) {
     owner_id: userId,
     is_seed: false,
     version: pick(dto, "version", "version") ?? 1,
+
+    // Link info
+    work_id: pick(dto, "workId", "work_id") ?? null,
+    origin_arrangement_id: pick(dto, "originArrangementId", "origin_arrangement_id") ?? null,
   };
 
   const { data, error } = await supabase

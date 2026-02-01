@@ -1,10 +1,11 @@
-import { Component, Input, computed, effect, signal } from '@angular/core';
+import { Component, Input, computed, effect, signal, inject } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { ChordLyricLayout, toChordLyricLayout } from '../../../features/songs/utils/chord-inline';
 import { getChordInfo, ChordInfo } from '../../utils/chords/chord-info';
 import { GuitarChordDiagramComponent } from '../guitar-chord-diagram/guitar-chord-diagram';
 import type { GuitarShape } from '../../../features/songs/utils/guitar-shapes';
+import { AudioService } from '../../data-access/audio/audio.service';
 
 type FlowToken = { chord?: string | null; text: string };
 
@@ -16,6 +17,7 @@ type FlowToken = { chord?: string | null; text: string };
   styleUrl: './chord-line-view.scss',
 })
 export class ChordLineViewComponent {
+  private readonly audio = inject(AudioService);
   // ---- inputs -> signals internos (clave para que computed reaccione) ----
   private readonly _source = signal('');
   @Input({ required: true }) set source(v: string) {
@@ -88,6 +90,10 @@ export class ChordLineViewComponent {
   nextShape(total: number) {
     if (!total) return;
     this.shapeIdx.set(this.shapeIdx() + 1);
+  }
+
+  playShape(shape: GuitarShape) {
+    this.audio.playShape(shape);
   }
 
   // --- core ---

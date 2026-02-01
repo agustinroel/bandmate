@@ -29,7 +29,12 @@
 
           <div class="bm-title">
             <div class="bm-h1">{{ work()!.title }}</div>
-            <div class="bm-sub">{{ work()!.artist }}</div>
+            <div class="bm-sub">
+              {{ work()!.artist }}
+              @if (arrangement()?.authorName; as author) {
+                 • Arranged by {{ author }}
+              }
+            </div>
           </div>
         </div>
 
