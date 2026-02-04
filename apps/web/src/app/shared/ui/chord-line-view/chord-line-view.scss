@@ -29,11 +29,12 @@
   --bm-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-/* Shared mono typography */
+/* Shared typography */
 .bm-chart-line,
+.bm-chart-lyrics,
 .bm-flow-text,
 .bm-chord-hit {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono) !important;
 }
 
 /* -------------------------------------------------------
@@ -50,58 +51,86 @@
 /* -------------------------------------------------------
    Clickable chords (shared)
    ------------------------------------------------------- */
+/* -------------------------------------------------------
+   Clickable chords (shared) - PREMIUM GLASSY AMBER
+   ------------------------------------------------------- */
 .bm-chord-hit {
   appearance: none;
-  border: 1px solid var(--bm-border);
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--bm-text);
+
+  /* Glassy Base */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(253, 250, 240, 0.85) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  /* Border: Subtle Gold/Wood blend */
+  border: 1px solid rgba(201, 162, 39, 0.25);
+
+  /* Depth & Glow */
+  box-shadow:
+    0 2px 6px rgba(38, 70, 83, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  color: var(--bm-wood);
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   height: 28px;
-  padding: 0 10px;
+  padding: 0 14px;
+  /* Wider for elegance */
   border-radius: 999px;
 
-  font-weight: 850;
-  font-size: 12px;
-  letter-spacing: 0.2px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.3px;
   line-height: 1;
 
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 
-  transition:
-    transform 120ms ease,
-    background 140ms ease,
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateY(0);
 }
 
 .bm-chord-hit:hover,
 .bm-chord-hit.is-hovered {
-  background: var(--bm-accent-bg);
-  border-color: rgba(201, 162, 39, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.12);
+  transform: translateY(-3px) scale(1.02);
+
+  /* Brighter Background */
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF5 100%);
+  border-color: var(--bm-gold);
+
+  /* Luminous Gold Shadow */
+  box-shadow:
+    0 10px 20px -4px rgba(233, 196, 106, 0.4),
+    0 4px 8px -2px rgba(233, 196, 106, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+
+  color: var(--bm-wood);
+  z-index: 10;
 }
 
 .bm-chord-hit.is-selected {
-  background: var(--bm-accent-bg-2);
-  border-color: rgba(201, 162, 39, 0.55);
+  background: var(--bm-wood);
+  color: var(--bm-gold);
+  border-color: var(--bm-wood);
   box-shadow:
-    inset 0 0 0 1px rgba(201, 162, 39, 0.18),
-    0 0 0 3px rgba(201, 162, 39, 0.12);
+    0 8px 16px -4px rgba(38, 70, 83, 0.3),
+    inset 0 1px 1px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
 }
 
 .bm-chord-hit:active {
-  transform: translateY(1px);
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 2px 4px rgba(38, 70, 83, 0.1);
 }
 
 .bm-chord-hit:focus-visible {
   outline: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(201, 162, 39, 0.20),
-    0 0 0 3px rgba(201, 162, 39, 0.16);
+  box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.5);
 }
 
 /* -------------------------------------------------------
@@ -113,24 +142,25 @@
 
 .bm-chart-line {
   white-space: pre;
-  line-height: 1.45;
-  font-size: 13px;
+  line-height: 1.6;
+  font-size: 17px;
+  letter-spacing: -0.01em;
 }
 
 .bm-chart-chords {
   display: flex;
   align-items: baseline;
   white-space: pre;
-
-  margin-bottom: 4px;
-
-  /* que el renglón no “grite” */
-  color: rgba(0, 0, 0, 0.78);
+  justify-content: flex-start;
+  margin-bottom: 2px;
+  height: 24px;
+  color: var(--bm-teal);
 }
 
 .bm-chart-lyrics {
-  opacity: 0.92;
-  color: rgba(0, 0, 0, 0.86);
+  opacity: 1;
+  color: var(--bm-wood);
+  font-weight: 500;
 }
 
 /* slots: que no se vea raro el spacing */
@@ -175,11 +205,13 @@
   }
 
   .bm-flow-chord {
-    /* en mobile, sí queremos chip “gold” */
-    border-color: rgba(201, 162, 39, 0.35);
-    background: rgba(201, 162, 39, 0.14);
-    height: 26px;
-    padding: 0 10px;
+    /* en mobile, heredamos el premium style, solo ajustamos tamaño */
+    /* border-color: rgba(201, 162, 39, 0.35); */
+    /* background: rgba(201, 162, 39, 0.14); */
+    height: 32px;
+    /* Touch friendly */
+    padding: 0 14px;
+    font-size: 14px;
     border-radius: 999px;
   }
 
@@ -192,10 +224,11 @@
   .bm-flow-text {
     white-space: pre-wrap;
     word-break: break-word;
-    font-size: 14px;
-    line-height: 1.35;
-    opacity: 0.92;
-    color: rgba(0, 0, 0, 0.84);
+    font-size: 18px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: var(--bm-wood);
+    letter-spacing: -0.01em;
   }
 }
 

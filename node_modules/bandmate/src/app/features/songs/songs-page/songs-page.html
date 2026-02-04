@@ -12,7 +12,12 @@
         Library: {{ libraryWorks().length }}
       </div>
     </div>
-    <div class="songs-head-actions">
+    <div class="songs-head-actions d-flex gap-2">
+      <button mat-flat-button class="spotify-sync-btn" (click)="goSpotify()">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" 
+             alt="" class="spotify-logo-mini me-1">
+        Sync Spotify
+      </button>
       <button mat-raised-button color="primary" class="songs-add" (click)="goNew()">
         <mat-icon class="me-1">add</mat-icon>
         Add song

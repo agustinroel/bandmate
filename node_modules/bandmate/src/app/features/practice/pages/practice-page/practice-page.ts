@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, DestroyRef, signal, NgZone, ElementRef } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  DestroyRef,
+  signal,
+  NgZone,
+  ElementRef,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +19,7 @@ import { PracticeStore } from '../../state/practice.store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { SongsStore } from '../../../songs/state/songs-store';
 import { MetronomeService } from '../../services/metronome.service';
+import { WakeLockService } from '../../services/wake-lock.service';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -18,10 +28,22 @@ import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SongViewerComponent } from '../../../songs/ui/song-viewer/song-viewer.component';
 import { TransposeBarComponent } from '../../../../shared/ui/transpose-bar/transpose-bar';
+import { PracticeSessionService } from '../../../../core/services/practice-session.service';
 
 @Component({
   standalone: true,
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, MatSliderModule, MatMenuModule, SongViewerComponent, TransposeBarComponent, TitleCasePipe],
+  imports: [
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+    MatSliderModule,
+    MatMenuModule,
+    SongViewerComponent,
+    TransposeBarComponent,
+    TitleCasePipe,
+  ],
   templateUrl: './practice-page.html',
   styleUrl: './practice-page.scss',
   animations: [
@@ -45,8 +67,10 @@ export class PracticePageComponent {
   readonly setlists = inject(SetlistsStore);
   readonly songs = inject(SongsStore);
   readonly metronome = inject(MetronomeService);
+  readonly wakeLock = inject(WakeLockService);
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
+  private readonly sessionService = inject(PracticeSessionService);
 
   private destroyRef = inject(DestroyRef);
 
@@ -62,6 +86,25 @@ export class PracticePageComponent {
 
   readonly transpose = signal(0);
   readonly isScrolling = signal(false);
+  readonly isStageMode = signal(false);
+
+  // Mobile toolbar visibility (show/hide on swipe)
+  readonly isToolbarVisible = signal(true);
+  private _touchStartY = 0;
+  private _touchStartTime = 0;
+  private readonly SWIPE_THRESHOLD = 50; // px
+
+  // Sections for navigation
+  readonly currentSections = computed(() => {
+    const detail = this.songs.selected();
+    const currentId = this.p.currentSongId();
+
+    // Ensure the detail matches the current practice song
+    if (!detail || !currentId || detail.id !== currentId) return [];
+
+    // Filter out empty sections if desired, or show all
+    return detail.sections || [];
+  });
 
   readonly notFound = computed(() => {
     const id = this.id();
@@ -74,6 +117,8 @@ export class PracticePageComponent {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.wakeLock.disable());
+
     effect(() => {
       if (this.songs.state() === 'idle') this.songs.load();
       if (this.setlists.state() === 'idle') this.setlists.load().subscribe();
@@ -88,7 +133,19 @@ export class PracticePageComponent {
       if (this.startedForId() === setlistId) return;
       this.startedForId.set(setlistId);
 
+      this.wakeLock.enable();
       this.p.start(setlistId);
+
+      // Start tracking practice session
+      this.sessionService.startSession(setlistId);
+    });
+
+    // Track individual song views
+    effect(() => {
+      const currentId = this.p.currentSongId();
+      if (currentId) {
+        this.sessionService.recordSongStart(currentId);
+      }
     });
 
     fromEvent<KeyboardEvent>(document, 'keydown')
@@ -127,13 +184,55 @@ export class PracticePageComponent {
           this.toggleScroll();
         }
       });
+
+    // Listen for fullscreen changes (ESC key interaction)
+    fromEvent(document, 'fullscreenchange')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const isFullscreen = !!this.document.fullscreenElement;
+        // Only update if different (avoid loop)
+        if (this.isStageMode() !== isFullscreen) {
+          this.isStageMode.set(isFullscreen);
+        }
+      });
+
+    // Touch swipe detection for toolbar visibility on mobile
+    fromEvent<TouchEvent>(document, 'touchstart', { passive: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        this._touchStartY = e.touches[0].clientY;
+        this._touchStartTime = Date.now();
+      });
+
+    fromEvent<TouchEvent>(document, 'touchend', { passive: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        const deltaY = e.changedTouches[0].clientY - this._touchStartY;
+        const deltaTime = Date.now() - this._touchStartTime;
+
+        // Quick swipe detection (< 300ms, > threshold px)
+        if (deltaTime < 300 && Math.abs(deltaY) > this.SWIPE_THRESHOLD) {
+          if (deltaY > 0) {
+            // Swipe DOWN -> show toolbar
+            this.isToolbarVisible.set(true);
+          } else {
+            // Swipe UP -> hide toolbar
+            this.isToolbarVisible.set(false);
+          }
+        }
+      });
   }
 
   exit() {
     const id = this.id();
     // nice/should: stop practice state when leaving
+    this.wakeLock.disable();
     this.p.stop();
     this.stopScroll();
+
+    // End practice session tracking
+    const isCompleted = !this.p.nextSongId(); // Completed if at last song
+    this.sessionService.endSession(isCompleted);
 
     // Should: send focus id back to Setlists
     this.router.navigate(['/setlists'], { queryParams: { focus: id } });
@@ -141,7 +240,12 @@ export class PracticePageComponent {
 
   goSetlists() {
     // nice/should: stop practice state when leaving
+    this.wakeLock.disable();
     this.p.stop();
+
+    // End practice session (not completed since exiting early)
+    this.sessionService.endSession(false);
+
     this.router.navigate(['/setlists']);
   }
 
@@ -158,7 +262,7 @@ export class PracticePageComponent {
   readonly autoScrollSpeed = signal(28); // px/sec
   readonly autoScrollSpeedMin = 10;
   readonly autoScrollSpeedMax = 150;
-  
+
   private _rafId: number | null = null;
   private _lastTs: number | null = null;
   private _scrollCarry = 0;
@@ -196,7 +300,7 @@ export class PracticePageComponent {
 
         // Cap dt to avoid huge jumps if tab was backgrounded
         const dt = Math.min(dtMs, 64) / 1000;
-        
+
         const speed = this.autoScrollSpeed();
         const dyFloat = speed * dt;
 
@@ -204,27 +308,31 @@ export class PracticePageComponent {
         const dy = Math.trunc(this._scrollCarry);
 
         if (dy !== 0) {
-           this._scrollCarry -= dy;
-           
-           // Target the scrollable container (.app-main)
-           const container = document.querySelector('.app-main');
-           if (container) {
-             container.scrollBy(0, dy);
+          this._scrollCarry -= dy;
 
-             // Check end using container metrics
-             // Allow a small buffer (2px)
-             if ((container.scrollTop + container.clientHeight) >= container.scrollHeight - 2) {
-               this.zone.run(() => this.stopScroll());
-               return;
-             }
-           } else {
-             // Fallback just in case layout changes
-             window.scrollBy(0, dy);
-             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
-               this.zone.run(() => this.stopScroll());
-               return;
-             }
-           }
+          // Target the scrollable container
+          // In Stage Mode, the scrollable element is the fixed card (.p-now)
+          let container = this.isStageMode()
+            ? document.querySelector('.stage-mode-active .p-now')
+            : document.querySelector('.app-main');
+
+          if (container) {
+            container.scrollBy(0, dy);
+
+            // Check end using container metrics
+            // Allow a small buffer (2px)
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
+              this.zone.run(() => this.stopScroll());
+              return;
+            }
+          } else {
+            // Fallback just in case layout changes
+            window.scrollBy(0, dy);
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 2) {
+              this.zone.run(() => this.stopScroll());
+              return;
+            }
+          }
         }
 
         this._rafId = requestAnimationFrame(step);
@@ -235,11 +343,13 @@ export class PracticePageComponent {
   }
 
   stopScroll() {
-    this.isScrolling.set(false);
+    // Cancel RAF FIRST to prevent any pending frame from continuing
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
+
+    this.isScrolling.set(false);
     this._lastTs = null;
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = null;
@@ -249,20 +359,46 @@ export class PracticePageComponent {
     this.autoScrollSpeed.set(val);
   }
 
+  readonly el = inject(ElementRef);
+
+  toggleStageMode() {
+    const isStage = this.isStageMode();
+    const doc = this.document;
+
+    if (!isStage) {
+      // Enter fullscreen on the host component to include toolbar/rail
+      const host = this.el.nativeElement;
+      if (host.requestFullscreen) {
+        host.requestFullscreen().catch((err: any) => {
+          console.warn('Error attempting to enable fullscreen:', err);
+          this.isStageMode.set(true); // Fallback
+        });
+      } else {
+        this.isStageMode.set(true);
+      }
+    } else {
+      // Exit fullscreen
+      if (doc.exitFullscreen && doc.fullscreenElement) {
+        doc.exitFullscreen().catch((err) => console.warn('Error exit fullscreen:', err));
+      }
+      this.isStageMode.set(false);
+    }
+  }
+
   // ---- Section Navigation ----
   scrollToSection(sectionId: string) {
     const el = document.getElementById('sec-' + sectionId);
     if (el) {
       const headerOffset = 180; // approximate header height
       const container = document.querySelector('.app-main') || window;
-      
+
       // Calculate offset relative to the container if possible
-      // But simpler: el.scrollIntoView({ behavior: 'smooth', block: 'start' }) 
+      // But simpler: el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       // is easier but we have a sticky header/toolbar.
-      
+
       // Manual calc:
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
+
       // Or if we want precise offset:
       // const headerOffset = 100;
       // const elementPosition = el.getBoundingClientRect().top;
@@ -274,26 +410,26 @@ export class PracticePageComponent {
   private _bindAutoScrollInterruption(onInterrupt: () => void) {
     // Stop on manual interaction, BUT scrollbar drag might trigger 'scroll' event which is noisy.
     // Better to listen to 'wheel', 'touchstart', 'keydown' (up/down).
-    
+
     // We bind to window/document
-    const target = window; 
+    const target = window;
     const opts: AddEventListenerOptions = { passive: true };
 
     const onWheel = (e: WheelEvent) => {
-        if (!this.isScrolling()) return;
-        // Optional: Allow Shift+Wheel to speed up? For now just stop.
-        onInterrupt();
+      if (!this.isScrolling()) return;
+      // Optional: Allow Shift+Wheel to speed up? For now just stop.
+      onInterrupt();
     };
-    
+
     const onTouch = () => {
-        if (this.isScrolling()) onInterrupt();
+      if (this.isScrolling()) onInterrupt();
     };
 
     const onKey = (e: KeyboardEvent) => {
-        if (!this.isScrolling()) return;
-        if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) {
-            onInterrupt();
-        }
+      if (!this.isScrolling()) return;
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) {
+        onInterrupt();
+      }
     };
 
     target.addEventListener('wheel', onWheel, opts);
@@ -301,9 +437,9 @@ export class PracticePageComponent {
     target.addEventListener('keydown', onKey);
 
     return () => {
-        target.removeEventListener('wheel', onWheel, opts);
-        target.removeEventListener('touchstart', onTouch, opts);
-        target.removeEventListener('keydown', onKey);
+      target.removeEventListener('wheel', onWheel, opts);
+      target.removeEventListener('touchstart', onTouch, opts);
+      target.removeEventListener('keydown', onKey);
     };
   }
 

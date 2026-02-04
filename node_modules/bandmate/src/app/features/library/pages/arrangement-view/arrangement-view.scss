@@ -19,7 +19,7 @@
   top: 0;
   z-index: 20;
 
-  
+
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
   backdrop-filter: blur(10px);
@@ -78,8 +78,10 @@
 /* Rating pill */
 .bm-rating {
   display: inline-flex;
-  align-items: center;     /* ✅ centra vertical */
-  justify-content: center; /* ✅ centra */
+  align-items: center;
+  /* ✅ centra vertical */
+  justify-content: center;
+  /* ✅ centra */
   gap: 2px;
 
   padding: 6px 10px;
@@ -92,8 +94,10 @@
 .bm-rating button[mat-icon-button] {
   width: 34px;
   height: 34px;
-  padding: 0;              /* ✅ evita offsets */
-  display: inline-flex;    /* ✅ centra el icono */
+  padding: 0;
+  /* ✅ evita offsets */
+  display: inline-flex;
+  /* ✅ centra el icono */
   align-items: center;
   justify-content: center;
 }
@@ -103,7 +107,8 @@
   width: 20px;
   height: 20px;
   font-size: 20px;
-  line-height: 20px;       /* ✅ clave */
+  line-height: 20px;
+  /* ✅ clave */
   display: block;
 }
 
@@ -112,7 +117,8 @@
   font-size: 13px;
   opacity: 0.7;
   white-space: nowrap;
-  line-height: 1;          /* ✅ evita que “baje” */
+  line-height: 1;
+  /* ✅ evita que “baje” */
   display: inline-flex;
   align-items: center;
 }
@@ -216,6 +222,13 @@
 
 .bm-sec {
   padding: 14px;
+  animation: bmScaleIn 0.5s var(--bm-ease-out) both;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{0.15s + (0.05s * $i)};
+    }
+  }
 }
 
 .bm-sec__head {
@@ -272,7 +285,8 @@
   font-size: 13px;
   line-height: 1.65;
 
-  padding: 8px 2px; /* <- clave: menos "caja" */
+  padding: 8px 2px;
+  /* <- clave: menos "caja" */
   border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
 }
 

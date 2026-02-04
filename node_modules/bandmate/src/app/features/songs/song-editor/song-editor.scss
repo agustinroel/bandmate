@@ -31,29 +31,22 @@
 /* ---------- Page header ---------- */
 .bm-page-header {
   margin-bottom: 12px;
+  animation: bmFadeInUp 0.4s var(--bm-ease-out) both;
 }
 
 /* Row that contains: back + mark + titles + actions */
-.bm-page-header > .d-flex {
+.bm-page-header>.d-flex {
   align-items: center !important;
 }
 
 /* Back button: keep it visually centered with the first text line */
 .bm-back {
   margin-top: 0;
-  align-self: flex-start; /* aligns to title block top */
+  align-self: flex-start;
+  /* aligns to title block top */
 }
 
 /* Brand mark (desktop only, hidden on mobile below) */
-.bm-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgba(201, 162, 39, 0.16);
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-}
 
 /* Title block: avoid weird wrapping */
 .bm-page-header .flex-grow-1 {
@@ -97,6 +90,8 @@
   border-radius: var(--se-radius);
   overflow: auto;
   max-height: calc(100vh - 140px);
+  animation: bmScaleIn 0.6s var(--bm-ease-out) both;
+  animation-delay: 0.1s;
 }
 
 /* Mobile: NO internal scroll, body scroll */
@@ -108,6 +103,7 @@
 }
 
 @media (max-width: 640px) {
+
   /* Mientras auto-scroll está activo, volvemos a tener scroll interno */
   .bm-editor-card.bm-editor-card--autoscroll {
     overflow: auto;
@@ -219,7 +215,7 @@
   }
 
   /* el icon button (tune) fijo a la derecha */
-  .bm-auto-scroll > button[mat-icon-button] {
+  .bm-auto-scroll>button[mat-icon-button] {
     flex: 0 0 auto;
   }
 
@@ -335,6 +331,14 @@
   border-radius: 16px;
   padding: 14px 14px 12px;
   background: rgba(0, 0, 0, 0.01);
+
+  animation: bmScaleIn 0.5s var(--bm-ease-out) both;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{0.2s + (0.05s * $i)};
+    }
+  }
 }
 
 .bm-section-top {
@@ -387,7 +391,8 @@
 .bm-line-row {
   position: relative;
   display: flex;
-  align-items: flex-start; /* keep delete aligned with textarea top */
+  align-items: flex-start;
+  /* keep delete aligned with textarea top */
   gap: 10px;
 }
 
@@ -478,7 +483,8 @@
 }
 
 /* Mobile/tablet: always visible */
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
   .bm-line-del {
     opacity: 1;
     transform: none;
@@ -852,12 +858,9 @@
   }
 
   /* Remove mark to save space */
-  .bm-mark {
-    display: none;
-  }
 
   /* Make header layout more "stacked" and clean */
-  .bm-page-header > .d-flex {
+  .bm-page-header>.d-flex {
     flex-wrap: wrap;
     gap: 10px !important;
     align-items: flex-start !important;
@@ -907,7 +910,7 @@
   }
 
   /* Section header actions: keep “Add line” full width, icons on the right */
-  .bm-section-top > .d-flex {
+  .bm-section-top>.d-flex {
     width: 100%;
     justify-content: flex-start;
     gap: 10px !important;
@@ -941,6 +944,7 @@
 .bm-flow {
   display: none !important;
 }
+
 .bm-chart-desktop {
   display: block !important;
 }
@@ -952,6 +956,7 @@
     flex-wrap: wrap;
     gap: 8px 10px;
   }
+
   .bm-chart-desktop {
     display: none !important;
   }
@@ -996,7 +1001,8 @@
    ========================= */
 
 .bm-body-head {
-  align-items: center; /* antes estaba flex-start; esto ya corrige mucho */
+  align-items: center;
+  /* antes estaba flex-start; esto ya corrige mucho */
 }
 
 /* Acciones: misma altura y alineación */
@@ -1019,7 +1025,7 @@
   height: 40px;
   padding: 0 12px;
   border-radius: 999px;
-  
+
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1062,7 +1068,7 @@
   }
 
   .bm-auto-scroll {
-    flex-wrap: wrap; /* en mobile sí */
+    flex-wrap: wrap;
+    /* en mobile sí */
   }
 }
-

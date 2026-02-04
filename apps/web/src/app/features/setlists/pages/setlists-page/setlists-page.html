@@ -1,243 +1,256 @@
-<header class="d-flex align-items-start gap-3 mb-3">
-  <div class="bm-mark" aria-hidden="true"><mat-icon>queue_music</mat-icon></div>
-  <div class="flex-grow-1">
-    <h2 class="m-0">Setlists</h2>
-    <div class="small opacity-75 mt-1">Shape the flow of your rehearsal or show.</div>
-  </div>
-  <button mat-raised-button color="primary" class="sl-new" (click)="createSetlist()">
-    <mat-icon class="me-1">add</mat-icon>
-    New setlist
-  </button>
-</header>
+<div class="bm-page position-relative">
+  <div class="container main-content position-relative z-2">
+    <!-- Header (Standardized) -->
+    <div class="d-flex align-items-start gap-3 mb-4">
+      <div class="bm-mark" aria-hidden="true">
+        <mat-icon>queue_music</mat-icon>
+      </div>
+      <div class="flex-grow-1">
+        <h2 class="m-0 fw-bold">Setlists</h2>
+        <div class="small opacity-75">Curate the perfect flow for your show.</div>
+      </div>
+      <div>
+        <button mat-raised-button color="primary" (click)="createSetlist()">
+          <mat-icon class="me-2">add</mat-icon>
+          New Setlist
+        </button>
+      </div>
+    </div>
 
-@if (store.error()) {
-  <div class="alert alert-danger">{{ store.error() }}</div>
-}
+    @if (store.error()) {
+      <div class="alert alert-danger shadow-sm border-0 mb-4">{{ store.error() }}</div>
+    }
 
-<div class="sl-layout mt-2">
-  <!-- Left: setlists -->
-  <mat-card class="sl-panel">
-    <div class="sl-panel-inner">
-      <div class="fw-semibold mb-2">Your setlists</div>
+    <div class="sl-layout">
+      <!-- Left: Setlists List -->
+      <div class="sl-sidebar card-glass">
+        <div class="p-3 border-bottom">
+          <h3 class="h6 fw-bold mb-0 text-secondary text-uppercase tracking-wider">
+            Your Setlists
+          </h3>
+        </div>
 
-      @if (store.state() === 'loading') {
-        <div class="small opacity-75 py-2">Loading…</div>
-      } @else if (store.items().length === 0) {
-        <div class="small opacity-75 py-2">No setlists yet — create one to get started.</div>
-      } @else {
-        <div class="sl-list">
-          @for (s of store.items(); track s.id) {
-            <div
-              class="sl-item"
-              [attr.data-setlist-id]="s.id"
-              [class.active]="store.selectedId() === s.id"
-              (click)="store.select(s.id)"
-              role="button"
-              tabindex="0"
-            >
-              <div class="sl-item-row">
-                <div class="sl-item-main">
-                  <div class="fw-semibold text-truncate">{{ s.name }}</div>
-                  <div class="small opacity-75">{{ s.items.length }} song(s)</div>
+        <div class="sl-list-scroll custom-scrollbar">
+          @if (store.state() === 'loading' && store.items().length === 0) {
+            <div class="p-4 text-center opacity-75">
+              <mat-spinner diameter="24" class="mx-auto mb-2"></mat-spinner>
+              <div class="small">Loading library...</div>
+            </div>
+          } @else if (store.items().length === 0) {
+            <div class="p-5 text-center">
+              <mat-icon class="display-6 text-muted mb-2">playlist_add</mat-icon>
+              <div class="fw-bold text-dark">No setlists yet</div>
+              <div class="small text-muted mb-3">Create one to get started.</div>
+            </div>
+          } @else {
+            <div class="sl-list p-2">
+              @for (s of store.items(); track s.id) {
+                <div
+                  class="sl-item"
+                  [class.active]="store.selectedId() === s.id"
+                  (click)="store.select(s.id)"
+                  role="button"
+                  tabindex="0"
+                  [attr.data-setlist-id]="s.id"
+                >
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="sl-item-icon">
+                      <mat-icon>{{
+                        store.selectedId() === s.id ? 'play_arrow' : 'queue_music'
+                      }}</mat-icon>
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                      <div class="fw-bold text-truncate text-dark">{{ s.name }}</div>
+                      <div class="small text-secondary">{{ s.items.length }} Song(s)</div>
+                    </div>
+                    <div class="sl-item-actions">
+                      <button
+                        mat-icon-button
+                        class="sm-btn"
+                        (click)="openRenameSetlist(s.id, s.name); $event.stopPropagation()"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        class="sm-btn"
+                        (click)="askDeleteSetlist(s.id, s.name); $event.stopPropagation()"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Rename setlist"
-                  (click)="openRenameSetlist(s.id, s.name); $event.stopPropagation()"
-                  aria-label="Rename"
-                >
-                  <mat-icon>edit</mat-icon>
-                </button>
-
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Delete setlist"
-                  (click)="askDeleteSetlist(s.id, s.name); $event.stopPropagation()"
-                  aria-label="Delete"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
+              }
             </div>
           }
         </div>
-      }
-    </div>
-  </mat-card>
+      </div>
 
-  <!-- Right: editor -->
-  <mat-card class="sl-panel">
-    <div class="sl-panel-inner">
-      @if (!store.selected()) {
-        <div class="text-center py-5 opacity-75">
-          Pick a setlist on the left, or create a new one to begin.
-        </div>
-      } @else {
-        <div class="d-flex align-items-start gap-2">
-          <div class="sl-head">
-            <div class="sl-head-title-row">
-              <div class="sl-head-title">{{ store.selected()!.name }}</div>
-
-              <!-- Should: rename from header -->
-              <button
-                mat-icon-button
-                type="button"
-                matTooltip="Rename setlist"
-                (click)="openRenameSetlist(store.selected()!.id, store.selected()!.name)"
-              >
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
-
-            <div class="sl-head-meta">
-              <div class="sl-pill">
-                <mat-icon class="sl-pill-ic">schedule</mat-icon>
-                <span class="sl-pill-label">Total</span>
-                <span class="sl-pill-value">{{ totalDurationLabel() }}</span>
+      <!-- Right: Editor -->
+      <div class="sl-editor card-glass h-100">
+        @if (!store.selected()) {
+          <div
+            class="h-100 d-flex flex-column align-items-center justify-content-center p-5 text-center opacity-50"
+          >
+            <mat-icon class="display-1 mb-3 text-secondary">music_note</mat-icon>
+            <div class="h4 text-secondary">Select a Setlist</div>
+            <p class="text-muted">Choose a setlist from the sidebar or create a new one.</p>
+          </div>
+        } @else {
+          <div class="d-flex flex-column h-100">
+            <!-- Toolbar -->
+            <div
+              class="p-3 border-bottom d-flex flex-wrap align-items-center gap-3 bg-light-subtle rounded-top-4"
+            >
+              <div class="flex-grow-1">
+                <h2 class="h4 fw-bold mb-0 text-dark">{{ store.selected()!.name }}</h2>
+                <div class="d-flex align-items-center gap-3 mt-1 small text-muted">
+                  <div class="d-flex align-items-center gap-1">
+                    <mat-icon class="icon-xs">schedule</mat-icon>
+                    {{ totalDurationLabel() }}
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <mat-icon class="icon-xs">format_list_numbered</mat-icon>
+                    {{ store.selected()!.items.length }} Songs
+                  </div>
+                </div>
               </div>
 
-              <div class="sl-pill">
-                <mat-icon class="sl-pill-ic">music_note</mat-icon>
-                <span class="sl-pill-label">Songs</span>
-                <span class="sl-pill-value">{{ store.selected()!.items.length }}</span>
-              </div>
-
-              <div class="sl-head-actions">
-                <!-- Must: disable start practice when empty + tooltip -->
+              <div class="d-flex align-items-center gap-2">
+                <button
+                  mat-icon-button
+                  (click)="openRenameSetlist(store.selected()!.id, store.selected()!.name)"
+                  matTooltip="Rename"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
                 <button
                   mat-raised-button
                   color="primary"
-                  type="button"
+                  class="action-btn"
                   [disabled]="store.selected()!.items.length === 0"
-                  [matTooltip]="
-                    store.selected()!.items.length === 0
-                      ? 'Add at least one song to start practicing'
-                      : 'Start practicing this setlist'
-                  "
-                  [matTooltipDisabled]="false"
                   (click)="startPractice()"
                 >
-                  <mat-icon class="me-1">play_arrow</mat-icon>
-                  Start practice
+                  <mat-icon class="me-2">play_circle</mat-icon>
+                  Start Practice
                 </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="sl-grid mt-3">
-          <!-- Available songs -->
-          <div>
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="small fw-semibold">Add songs</div>
-              <div class="small opacity-75">
-                @if (songs.state() === 'loading') {
-                  Loading…
-                } @else {
-                  {{ filteredSongs().length }} available
-                }
-              </div>
-            </div>
-
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-label>Filter</mat-label>
-              <input
-                matInput
-                [value]="songQuery()"
-                (input)="songQuery.set($any($event.target).value)"
-                [disabled]="songs.state() === 'loading'"
-              />
-            </mat-form-field>
-
-            <div class="sl-songs">
-              <!-- Must: songs loading state -->
-              @if (songs.state() === 'loading') {
-                <div class="sl-empty sl-empty-sm">
-                  <mat-icon class="sl-empty-ic">hourglass_top</mat-icon>
-                  <div class="fw-semibold mt-2">Loading songs…</div>
-                  <div class="small opacity-75 mt-1">Just a second.</div>
+            <div class="flex-grow-1 d-flex flex-column flex-lg-row overflow-hidden">
+              <!-- Song Picker (Left/Top) -->
+              <div class="picker-col p-3 border-end overflow-hidden d-flex flex-column bg-white">
+                <div class="mb-3">
+                  <mat-form-field
+                    appearance="outline"
+                    subscriptSizing="dynamic"
+                    class="w-100 density-sm"
+                  >
+                    <mat-label>Add Songs</mat-label>
+                    <mat-icon matPrefix class="text-secondary ms-1 me-2">search</mat-icon>
+                    <input
+                      matInput
+                      [value]="songQuery()"
+                      (input)="songQuery.set($any($event.target).value)"
+                      placeholder="Search library..."
+                    />
+                  </mat-form-field>
                 </div>
-              } @else if (filteredSongs().length === 0) {
-                <div class="sl-empty sl-empty-sm">
-                  <mat-icon class="sl-empty-ic">check_circle</mat-icon>
 
-                  @if (store.selected()?.items?.length) {
-                    <div class="fw-semibold mt-2">All your songs are already in this setlist</div>
-                    <div class="small opacity-75 mt-1">
-                      Remove one on the right to add it again.
+                <div class="picker-list custom-scrollbar flex-grow-1 overflow-auto pe-4">
+                  @if (songs.state() === 'loading') {
+                    <div class="text-center p-3 opacity-50">
+                      <mat-spinner diameter="20" class="mx-auto"></mat-spinner>
                     </div>
-                  } @else if (songQuery()) {
-                    <div class="fw-semibold mt-2">No matches found</div>
-                    <div class="small opacity-75 mt-1">Try a different title or artist.</div>
+                  } @else if (filteredSongs().length === 0) {
+                    <div class="text-center p-4 opacity-50 small">No matching songs found.</div>
                   } @else {
-                    <div class="fw-semibold mt-2">No songs yet</div>
-                    <div class="small opacity-75 mt-1">
-                      Add songs to your library to build your first setlist.
-                    </div>
+                    @for (s of filteredSongs(); track s.id) {
+                      <button
+                        class="picker-item w-100 text-start mb-1 p-2 rounded"
+                        (click)="addSong(s.id)"
+                      >
+                        <div class="flex-grow-1 min-w-0">
+                          <div class="fw-semibold small">{{ s.title }}</div>
+                          <div class="text-muted xsmall">{{ s.artist }}</div>
+                        </div>
+                        <mat-icon class="add-icon icon-sm">add_circle</mat-icon>
+                      </button>
+                    }
                   }
                 </div>
-              } @else {
-                @for (s of filteredSongs(); track s.id) {
-                  <button class="sl-add" type="button" (click)="addSong(s.id)">
-                    <div class="text-truncate">
-                      <span class="fw-semibold">{{ s.title }}</span>
-                      <span class="opacity-75"> — {{ s.artist }}</span>
-                    </div>
-                    <mat-icon>add</mat-icon>
-                  </button>
-                }
-              }
-            </div>
-          </div>
-
-          <!-- Current setlist -->
-          <div>
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="small fw-semibold">Order</div>
-              <!-- Nice: micro-hint -->
-              <div class="small opacity-75 d-none d-lg-block">Drag to shape the flow</div>
-            </div>
-
-            @if (store.selected()!.items.length === 0) {
-              <div class="sl-empty">
-                <mat-icon class="sl-empty-ic">playlist_add</mat-icon>
-                <div class="fw-semibold mt-2">Your setlist is empty</div>
-                <div class="small opacity-75 mt-1">
-                  Add songs on the left and arrange the order when you’re ready.
-                </div>
               </div>
-            } @else {
-              <div cdkDropList class="sl-drop" (cdkDropListDropped)="drop($event)">
-                @for (it of store.selected()!.items; track it.songId) {
-                  <div class="sl-row" cdkDrag [class.moved]="it.songId === lastMovedId()">
-                    <!-- Nice: real drag handle + tooltip -->
-                    <mat-icon class="sl-grab" cdkDragHandle matTooltip="Drag to reorder"
-                      >drag_indicator</mat-icon
-                    >
 
-                    <div class="flex-grow-1 min-w-0">
-                      <div class="text-truncate fw-semibold">{{ songTitle(it.songId) }}</div>
-                      <div class="small opacity-75">
-                        {{ songArtist(it.songId) }}
-                        @if (songDuration(it.songId)) {
-                          <span class="ms-2">• {{ songDuration(it.songId) }}</span>
-                        }
+              <!-- Drag List (Right/Bottom) -->
+              <div
+                class="drag-col p-0 flex-grow-1 bg-light-subtle overflow-hidden d-flex flex-column"
+              >
+                @if (store.selected()!.items.length === 0) {
+                  <div
+                    class="h-100 d-flex flex-column align-items-center justify-content-center opacity-50"
+                  >
+                    <mat-icon class="icon-xl mb-2 text-muted">playlist_play</mat-icon>
+                    <div class="fw-bold">Empty Setlist</div>
+                    <div class="small">Add songs from the list to begin.</div>
+                  </div>
+                } @else {
+                  <div
+                    cdkDropList
+                    class="drag-list h-100 overflow-auto custom-scrollbar p-3"
+                    (cdkDropListDropped)="drop($event)"
+                  >
+                    @for (it of store.selected()!.items; track it.songId; let i = $index) {
+                      <div
+                        class="drag-row mb-2 bg-white shadow-sm rounded-3 d-flex align-items-center px-3 py-2"
+                        cdkDrag
+                        [class.moved]="it.songId === lastMovedId()"
+                      >
+                        <div
+                          class="drag-handle text-muted me-3"
+                          cdkDragHandle
+                          matTooltip="Drag to reorder"
+                        >
+                          <mat-icon>drag_indicator</mat-icon>
+                        </div>
+
+                        <div class="me-3 fw-bold text-muted index-badge">{{ i + 1 }}</div>
+
+                        <div class="flex-grow-1 min-w-0">
+                          <div class="fw-bold text-dark">{{ songTitle(it.songId) }}</div>
+                          <div class="small text-secondary d-flex align-items-center gap-2">
+                            {{ songArtist(it.songId) }}
+                            @if (songDuration(it.songId)) {
+                              <span class="badge bg-light text-dark border">{{
+                                songDuration(it.songId)
+                              }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          class="remove-btn opacity-50"
+                          (click)="removeSong(it.songId)"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+
+                        <div *cdkDragPreview class="drag-preview bg-white shadow-lg rounded-3 p-3">
+                          <div class="fw-bold">{{ songTitle(it.songId) }}</div>
+                          <div class="small text-muted">{{ songArtist(it.songId) }}</div>
+                        </div>
                       </div>
-                    </div>
-
-                    <button mat-icon-button type="button" (click)="removeSong(it.songId)">
-                      <mat-icon>close</mat-icon>
-                    </button>
+                    }
                   </div>
                 }
               </div>
-            }
+            </div>
           </div>
-        </div>
-      }
+        }
+      </div>
     </div>
-  </mat-card>
+  </div>
 </div>

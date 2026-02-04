@@ -34,15 +34,6 @@ import { MatIconModule } from '@angular/material/icon';
         margin-bottom: 12px;
       }
 
-      .bm-mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: rgba(201, 162, 39, 0.16);
-        display: grid;
-        place-items: center;
-        flex: 0 0 auto;
-      }
 
       .bm-card {
         border-radius: 16px;

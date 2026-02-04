@@ -10,8 +10,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ProfileRow, ProfilesService } from '../../services/profile.service';
+import { BandsService } from '../../../bands/services/bands.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { InviteBandDialogComponent } from '../../../bands/ui/invite-band-dialog/invite-band-dialog.component';
 
 @Component({
   standalone: true,
@@ -22,7 +25,9 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
     MatIconModule,
     MatCardModule,
     MatChipsModule,
+    MatChipsModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
   ],
   templateUrl: './public-profile-page.html',
   styleUrl: './public-profile-page.scss',
@@ -31,13 +36,16 @@ export class PublicProfilePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly profilesService = inject(ProfilesService);
+  private readonly bandsService = inject(BandsService);
   private readonly authStore = inject(AuthStore);
   private readonly titleService = inject(Title);
   private readonly notify = inject(NotificationsService);
+  private readonly dialog = inject(MatDialog);
 
   readonly usernameParam = signal('');
   readonly state = signal<'idle' | 'loading' | 'loaded' | 'error' | 'not-found'>('idle');
   readonly profile = signal<ProfileRow | null>(null);
+  readonly bands = signal<any[]>([]);
 
   readonly isOwnProfile = computed(() => {
     const user = this.authStore.user();
@@ -45,17 +53,35 @@ export class PublicProfilePageComponent {
     return user && p && user.id === p.id;
   });
 
+  // ... (rest of simple props)
+
+  openInviteDialog() {
+    if (!this.authStore.isAuthed()) {
+      this.notify.info('You must be logged in to invite users.', 'Login');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const p = this.profile();
+    if (!p) return;
+
+    this.dialog.open(InviteBandDialogComponent, {
+      data: { userId: p.id, userName: p.full_name || p.username },
+      width: '400px',
+    });
+  }
+
   readonly isPrivate = computed(() => {
     const p = this.profile();
-    return p && !p.public_profile;
+    return p && !p.is_public;
   });
 
   // Display Helpers
   readonly displayName = computed(() => this.profile()?.username || this.usernameParam());
-  
+
   // Note: We don't have public avatars yet unless we fetch from a public bucket or gravatar.
   // For now, we'll use a placeholder.
-  readonly avatarUrl = computed(() => null); 
+  readonly avatarUrl = computed(() => null);
 
   constructor() {
     this.route.paramMap.subscribe((params) => {
@@ -83,6 +109,16 @@ export class PublicProfilePageComponent {
         return;
       }
       this.profile.set(p);
+
+      // Load bands
+      try {
+        const userBands = await this.bandsService.listUserBands(p.id).toPromise();
+        this.bands.set(userBands || []);
+      } catch (e) {
+        console.error('Failed to load bands for user', e);
+        // Don't fail the whole page if bands fail
+      }
+
       this.state.set('loaded');
     } catch (err) {
       console.error(err);
@@ -101,5 +137,12 @@ export class PublicProfilePageComponent {
 
   goHome() {
     this.router.navigate(['/']);
+  }
+
+  handleAvatarError() {
+    const p = this.profile();
+    if (p) {
+      this.profile.set({ ...p, avatar_url: null });
+    }
   }
 }

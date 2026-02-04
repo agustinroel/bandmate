@@ -11,6 +11,7 @@ import type {
 import { SongPolicy, toLegacySongDetail } from '@bandmate/shared';
 import { SongsApiService } from '../data/songs-api';
 import { LibraryApiService, LibraryWorkListItem } from '../data/library-api';
+import { AchievementService } from '../../../core/services/achievement.service';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -18,6 +19,7 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 export class SongsStore {
   readonly api = inject(SongsApiService);
   readonly libraryApi = inject(LibraryApiService);
+  private readonly achievements = inject(AchievementService);
 
   readonly _state = signal<LoadState>('idle');
   readonly _songs = signal<Song[]>([]);
@@ -111,7 +113,13 @@ export class SongsStore {
 
   create(dto: CreateSongDto) {
     this._error.set(null);
-    return this.api.create(dto).pipe(tap((song) => this._songs.set([song, ...this._songs()])));
+    return this.api.create(dto).pipe(
+      tap((song) => {
+        this._songs.set([song, ...this._songs()]);
+        // ✅ Achievement Trigger
+        this.achievements.unlock('first_song_created');
+      }),
+    );
   }
 
   update(id: string, dto: UpdateSongDto) {
@@ -156,7 +164,7 @@ export class SongsStore {
   seed(dtos: CreateSongDto[]) {
     // Simple serial or parallel creation
     // For MVP, just fire and forget loop or simple concat
-    dtos.forEach(dto => {
+    dtos.forEach((dto) => {
       this.create(dto).subscribe();
     });
   }
@@ -167,33 +175,38 @@ export class SongsStore {
   createFromWork(work: any, arrangement?: any) {
     // 1) Construct the new song payload based on the work + arrangement
     const base = arrangement ?? {};
-    
+
     // Explicitly cast or construct the DTO to match what the API expects
     // Note: The API repo we just updated looks for workId / work_id
     const dto: any = {
       title: work.title,
       artist: work.artist,
-      
+
       // Metrics from arrangement
       key: base.key ?? undefined,
       bpm: base.bpm ?? undefined,
       durationSec: base.durationSec ?? undefined,
-      
+
       // Content
       sections: base.sections ?? [], // copy sections
       notes: base.notes ?? undefined,
       links: base.links ?? undefined,
-      
+
       // Linkage (THE IMPORTANT PART)
       workId: work.id,
       originArrangementId: base.id ?? undefined,
-      
+
       isSeed: false, // Explicitly user owned
-      version: 1, 
+      version: 1,
     };
 
     // 2) Create call via API
-    return this.create(dto);
+    return this.create(dto).pipe(
+      tap(() => {
+        // ✅ Achievement Trigger
+        this.achievements.unlock('first_arrangement');
+      }),
+    );
   }
 
   // -------------------------

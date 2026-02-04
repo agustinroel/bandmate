@@ -19,7 +19,10 @@
       <div class="not-found-state text-center py-5">
         <mat-icon class="icon-lg mb-3 opacity-50">person_off</mat-icon>
         <h2>User not found</h2>
-        <p class="opacity-75 mb-4">The user <strong>{{ usernameParam() }}</strong> does not exist or has changed their username.</p>
+        <p class="opacity-75 mb-4">
+          The user <strong>{{ usernameParam() }}</strong> does not exist or has changed their
+          username.
+        </p>
         <button mat-stroked-button (click)="goHome()">Go Home</button>
       </div>
     }
@@ -35,72 +38,123 @@
         </div>
       } @else {
         <!-- Public Profile View -->
-        <mat-card class="profile-card mx-auto" style="max-width: 600px;">
-          <!-- Header / Actions -->
-          <div class="d-flex justify-content-end p-2 pb-0">
-             <button mat-icon-button (click)="copyLink()" matTooltip="Copy Link">
-               <mat-icon>link</mat-icon>
-             </button>
-             @if (isOwnProfile()) {
-               <a mat-icon-button routerLink="/profile" matTooltip="Edit Profile">
-                 <mat-icon>edit</mat-icon>
-               </a>
-             }
-          </div>
 
-          <div class="p-4 pt-0">
-            <!-- Identity -->
-            <div class="text-center mb-4">
-               <div class="avatar-placeholder mb-3 mx-auto">
-                 <mat-icon class="icon-xl">person</mat-icon>
-               </div>
-               <h1 class="m-0">{{ profile()?.username }}</h1>
-               
-               @if (profile()?.sings) {
-                 <div class="mt-2">
-                   <span class="badge-sings">🎤 Sings</span>
-                 </div>
-               }
+        <mat-card class="profile-card mx-auto" appearance="outlined">
+          <div class="profile-header">
+            <!-- Cover / Gradient -->
+            <div class="profile-cover"></div>
+
+            <div class="profile-actions">
+              <button mat-icon-button (click)="copyLink()" matTooltip="Copy Link">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              @if (isOwnProfile()) {
+                <a mat-icon-button routerLink="/profile" matTooltip="Edit Profile">
+                  <mat-icon>edit</mat-icon>
+                </a>
+              } @else {
+                <button mat-icon-button (click)="openInviteDialog()" matTooltip="Invite to Band">
+                  <mat-icon>group_add</mat-icon>
+                </button>
+              }
             </div>
 
-            <!-- Bio -->
-            @if (profile()?.about; as about) {
-              <div class="mb-4 text-center">
-                <p class="about-text multiline-text">{{ about }}</p>
+            <div class="profile-identity">
+              <div class="profile-avatar">
+                @if (profile()?.avatar_url) {
+                  <img [src]="profile()?.avatar_url" (error)="handleAvatarError()" alt="Avatar" />
+                } @else {
+                  <mat-icon class="icon-xl">person</mat-icon>
+                }
+              </div>
+              <h1 class="profile-name">{{ profile()?.full_name || profile()?.username }}</h1>
+              <div class="profile-username">{{ '@' + profile()?.username }}</div>
+
+              @if (profile()?.sings) {
+                <div class="mt-2 text-center">
+                  <div class="badge-sings">
+                    <mat-icon class="icon-sm me-1">mic</mat-icon>
+                    Sings
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <mat-card-content class="profile-body">
+            @if (profile()?.about) {
+              <div class="profile-bio">
+                {{ profile()?.about }}
               </div>
             }
 
-            <hr class="opacity-10 my-4" />
-
-            <!-- Instruments -->
-            <div class="mb-4">
-              <h3 class="h6 text-uppercase opacity-50 mb-3 small fw-bold text-center">Instruments</h3>
+            <div class="profile-section">
+              <div class="section-title">Instruments</div>
               @if (profile()?.instruments?.length) {
-                <div class="d-flex gap-2 flex-wrap justify-content-center">
+                <div class="chip-grid">
                   @for (inst of profile()?.instruments; track inst) {
-                    <div class="pill-chip">{{ inst }}</div>
+                    <span class="bm-chip">{{ inst }}</span>
                   }
                 </div>
               } @else {
-                <p class="text-center small opacity-50">No instruments listed.</p>
+                <div class="empty-text">No instruments listed</div>
               }
             </div>
 
-            <!-- Genres -->
-            <div>
-              <h3 class="h6 text-uppercase opacity-50 mb-3 small fw-bold text-center">Genres</h3>
+            <div class="profile-section">
+              <div class="section-title">Genres</div>
               @if (profile()?.genres?.length) {
-                <div class="d-flex gap-2 flex-wrap justify-content-center">
+                <div class="chip-grid">
                   @for (genre of profile()?.genres; track genre) {
-                    <div class="pill-chip pill-chip--secondary">{{ genre }}</div>
+                    <span class="bm-chip bm-chip-outline">{{ genre }}</span>
                   }
                 </div>
               } @else {
-                <p class="text-center small opacity-50">No genres listed.</p>
+                <div class="empty-text">No genres listed</div>
               }
             </div>
 
-          </div>
+            <!-- Placeholder for Bands -->
+            <div class="profile-section">
+              <div class="section-title">Bands</div>
+              @if (bands().length > 0) {
+                <div class="d-flex flex-column gap-2">
+                  @for (band of bands(); track band.id) {
+                    <a
+                      [routerLink]="['/bands', band.id]"
+                      class="text-decoration-none text-reset d-block band-link"
+                    >
+                      <div
+                        class="band-item d-flex align-items-center p-2 rounded border bg-white mb-2"
+                      >
+                        <div
+                          class="band-avatar me-3 rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                          style="width: 40px; height: 40px; background: var(--bm-primary)"
+                        >
+                          @if (band.avatar_url) {
+                            <img
+                              [src]="band.avatar_url"
+                              class="w-100 h-100 rounded-circle object-fit-cover"
+                            />
+                          } @else {
+                            {{ band.name.slice(0, 1).toUpperCase() }}
+                          }
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="fw-semibold">{{ band.name }}</div>
+                          <div class="small opacity-75">
+                            {{ band.my_roles.includes('owner') ? 'Owner' : 'Member' }}
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="empty-text">No bands yet</div>
+              }
+            </div>
+          </mat-card-content>
         </mat-card>
       }
     }

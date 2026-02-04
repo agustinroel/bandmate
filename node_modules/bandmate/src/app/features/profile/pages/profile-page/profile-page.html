@@ -50,8 +50,8 @@
 @if (state() === 'ready' && draft(); as d) {
   <mat-card class="profile-card">
     <div class="profile-top">
-      @if (avatarUrl()) {
-        <img class="avatar" [src]="avatarUrl()!" alt="" aria-hidden="true" />
+      @if (avatarUrl() && !avatarLoadFailed()) {
+        <img class="avatar" [src]="avatarUrl()!" (error)="handleAvatarError()" alt="" aria-hidden="true" />
       } @else {
         <div class="avatar avatar--fallback" aria-hidden="true">
           <mat-icon>person</mat-icon>
@@ -217,6 +217,8 @@
           <div class="small opacity-75">No genres selected yet.</div>
         }
       </mat-card>
+
+      <!-- Bands section removed -->
 
       <div class="profile-bottom-actions">
         <button

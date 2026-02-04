@@ -80,11 +80,14 @@ import { ErrorStateService } from './error-state.service';
 
       .bm-err-card {
         width: min(980px, calc(100vw - 24px));
-        border-radius: 16px;
-        padding: 12px 12px 10px;
-        border: 1px solid rgba(220, 53, 69, 0.22);
-        background: rgba(220, 53, 69, 0.06);
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        padding: 16px 16px 12px;
+        /* Higher impact red / burnt orange */
+        border: 2px solid #E76F51; 
+        background: #FFF5F4;
+        box-shadow: 
+          0 20px 48px rgba(231, 111, 81, 0.15),
+          0 8px 16px rgba(0, 0, 0, 0.08);
         pointer-events: auto;
       }
 

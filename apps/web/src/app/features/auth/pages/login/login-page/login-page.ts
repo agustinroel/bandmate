@@ -15,7 +15,7 @@ import { AuthStore } from '../../../../../core/auth/auth.store';
           <!-- Brand -->
           <div class="bm-login-brand">
             <img
-              src="../../../../../../assets/brand/Bandmate logo gold transparent.png"
+              src="../../../../../../assets/brand/transparent-gold.png"
               alt="Bandmate"
               class="bm-brand-logo"
             />
@@ -195,10 +195,11 @@ export class LoginPageComponent {
   readonly error = computed<string | null>(() => null);
 
   constructor() {
-    // Si ya está logueado, afuera.
-    if (this.auth.isAuthed()) {
-      this.router.navigateByUrl('/songs');
-    }
+    this.auth.ready.then(() => {
+      if (this.auth.isAuthed()) {
+        this.router.navigateByUrl('/songs');
+      }
+    });
   }
 
   async signIn() {

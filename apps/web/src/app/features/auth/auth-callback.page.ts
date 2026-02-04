@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
+import { ProfilesService } from '../profile/services/profile.service';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -200,6 +201,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class AuthCallbackPage {
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
+  readonly profiles = inject(ProfilesService);
 
   readonly state = signal<'loading' | 'ok' | 'timeout'>('loading');
 
@@ -218,7 +220,25 @@ export class AuthCallbackPage {
         if (this.timeoutId) window.clearTimeout(this.timeoutId);
 
         // pequeño delay para que el usuario vea el check
-        window.setTimeout(() => this.router.navigateByUrl('/songs'), 350);
+        window.setTimeout(async () => {
+          // Ensure profile exists
+          const user = this.auth.user();
+          if (user) {
+            try {
+              await this.profiles.ensureForUser(user);
+            } catch (e) {
+              console.error('Profile sync failed', e);
+            }
+          }
+
+          const returnUrl = localStorage.getItem('bm_return_url');
+          if (returnUrl) {
+            localStorage.removeItem('bm_return_url');
+            this.router.navigateByUrl(returnUrl);
+          } else {
+            this.router.navigateByUrl('/songs');
+          }
+        }, 350);
       }
     });
   }

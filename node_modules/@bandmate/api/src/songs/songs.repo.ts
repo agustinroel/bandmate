@@ -4,8 +4,11 @@ export type SongRow = {
   id: string;
   owner_id: string | null;
   is_seed: boolean;
+  is_imported: boolean;
   title: string;
   artist: string;
+  spotify_id?: string | null;
+  musicbrainz_id?: string | null;
   key?: string | null;
   bpm?: number | null;
   duration_sec?: number | null;
@@ -27,6 +30,8 @@ export type CreateSongInput = Omit<
   // dejamos lo que viene del FE
   workId?: string | null;
   originArrangementId?: string | null;
+  spotifyId?: string | null;
+  musicbrainzId?: string | null;
 };
 
 export type UpdateSongInput = Partial<
@@ -45,6 +50,9 @@ function mapSong(row: any) {
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? row.created_at, // según schema
     isSeed: row.is_seed === true,
+    isImported: row.is_imported === true,
+    spotifyId: row.spotify_id ?? null,
+    musicbrainzId: row.musicbrainz_id ?? null,
 
     version: row.version ?? 1,
     sections: row.sections ?? [],
@@ -107,6 +115,9 @@ export async function createSongForUser(userId: string, dto: CreateSongInput) {
     // Link info
     work_id: pick(dto, "workId", "work_id") ?? null,
     origin_arrangement_id: pick(dto, "originArrangementId", "origin_arrangement_id") ?? null,
+    spotify_id: pick(dto, "spotifyId", "spotify_id") ?? null,
+    musicbrainz_id: pick(dto, "musicbrainzId", "musicbrainz_id") ?? null,
+    is_imported: dto.is_imported ?? false,
   };
 
   const { data, error } = await supabase
@@ -164,6 +175,16 @@ export async function updateSongForUser(
   // version: si viene, la seteamos; si no viene no tocamos
   if (p.version !== undefined)
     payload.version = p.version ?? existing.version ?? 1;
+
+  // --- EXTERNAL IDs ---
+  if (p.spotify_id !== undefined) payload.spotify_id = p.spotify_id ?? null;
+  if (p.spotifyId !== undefined) payload.spotify_id = p.spotifyId ?? null;
+
+  if (p.musicbrainz_id !== undefined) payload.musicbrainz_id = p.musicbrainz_id ?? null;
+  if (p.musicbrainzId !== undefined) payload.musicbrainz_id = p.musicbrainzId ?? null;
+
+  if (p.is_imported !== undefined) payload.is_imported = p.is_imported;
+  if (p.isImported !== undefined) payload.is_imported = p.isImported;
 
   // --- LINKS ---
 

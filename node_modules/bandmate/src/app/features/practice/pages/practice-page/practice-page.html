@@ -47,6 +47,7 @@
       <button
         mat-icon-button
         type="button"
+        class="p-metronome-btn"
         [color]="metronome.isPlaying() ? 'accent' : ''"
         (click)="metronome.toggle()"
         matTooltip="Metronome (Click to play/stop)"
@@ -68,13 +69,17 @@
         <div class="p-bpm-panel" (click)="$event.stopPropagation()">
           <div class="small opacity-75 mb-2">Tempo (BPM)</div>
           <mat-slider min="40" max="220" step="1" showTickMarks discrete>
-            <input matSliderThumb [value]="metronome.bpm()" (valueChange)="metronome.setBpm($event)" />
+            <input
+              matSliderThumb
+              [value]="metronome.bpm()"
+              (valueChange)="metronome.setBpm($event)"
+            />
           </mat-slider>
           <div class="d-flex justify-content-between mt-1">
             <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() - 5)">
               <mat-icon>remove</mat-icon>
             </button>
-             <span class="fw-bold fs-5">{{ metronome.bpm() }}</span>
+            <span class="fw-bold fs-5">{{ metronome.bpm() }}</span>
             <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() + 5)">
               <mat-icon>add</mat-icon>
             </button>
@@ -130,9 +135,18 @@
     </div>
   </mat-card>
 } @else {
-  <div class="p-grid">
+  <div class="p-grid" [class.stage-mode-active]="isStageMode()">
     <!-- NOW -->
     <mat-card class="p-card p-now">
+      <button
+        class="stage-toggle-btn"
+        mat-icon-button
+        (click)="toggleStageMode()"
+        matTooltip="Toggle Full Screen (Stage Mode)"
+      >
+        <mat-icon>{{ isStageMode() ? 'close_fullscreen' : 'fullscreen' }}</mat-icon>
+      </button>
+
       <div class="p-kicker">NOW PLAYING</div>
 
       <div class="p-swap" [@slideSwap]="p.index()">
@@ -140,7 +154,9 @@
           <div class="p-title">{{ p.currentSong()!.title }}</div>
           <div class="p-sub opacity-75">{{ p.currentSong()!.artist }}</div>
 
-          <div class="p-meta mt-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div
+            class="p-meta mt-3 d-flex align-items-center justify-content-between flex-wrap gap-2"
+          >
             <div class="d-flex flex-wrap gap-2 align-items-center">
               @if (p.currentSong()!.key) {
                 <span class="p-chip">Key: {{ p.currentSong()!.key }}</span>
@@ -153,7 +169,6 @@
               }
 
               <!-- Auto-scroll FAB -->
-
             </div>
 
             <bm-transpose-bar [value]="transpose()" [onChange]="transpose" />
@@ -167,12 +182,10 @@
           }
 
           <div class="mt-4">
-             <app-song-viewer [songId]="p.currentSong()!.id" [transpose]="transpose()" />
+            <app-song-viewer [songId]="p.currentSong()!.id" [transpose]="transpose()" />
           </div>
         }
       </div>
-
-
     </mat-card>
 
     <!-- NEXT -->
@@ -202,13 +215,13 @@
   </div>
 
   <!-- Sticky Practice Toolbar -->
-  <div class="p-toolbar">
+  <div class="p-toolbar" [class.p-toolbar-hidden]="!isToolbarVisible()">
     <!-- Group 1: Auto-scroll -->
     <div class="p-tb-group">
-      <button 
-        mat-fab 
+      <button
+        mat-fab
         extended
-        [color]="isScrolling() ? 'accent' : 'primary'" 
+        [color]="isScrolling() ? 'accent' : 'primary'"
         (click)="toggleScroll()"
         matTooltip="Auto-scroll (Hotkeys: 'S')"
       >
@@ -219,50 +232,86 @@
       <div class="p-speed">
         <div class="small fw-semibold opacity-75">Speed</div>
         <mat-slider [min]="autoScrollSpeedMin" [max]="autoScrollSpeedMax" step="2">
-          <input matSliderThumb [value]="autoScrollSpeed()" (valueChange)="setScrollSpeed($event)">
+          <input
+            matSliderThumb
+            [value]="autoScrollSpeed()"
+            (valueChange)="setScrollSpeed($event)"
+          />
         </mat-slider>
       </div>
     </div>
 
     <!-- Group 2: Song Nav -->
     <div class="p-tb-group p-tb-center">
-       <button mat-icon-button (click)="p.prev()" [disabled]="!p.prevSongId()" matTooltip="Previous Song">
-         <mat-icon>skip_previous</mat-icon>
-       </button>
-       
-       <div class="p-prog">
-         <span class="fs-5 fw-bold">{{ p.index() + 1 }}</span>
-         <span class="opacity-50">/</span>
-         <span class="opacity-75">{{ p.count() }}</span>
-       </div>
-       
-       <button mat-icon-button (click)="p.next()" [disabled]="!p.nextSongId()" matTooltip="Next Song">
-         <mat-icon>skip_next</mat-icon>
-       </button>
+      <button
+        mat-icon-button
+        (click)="p.prev()"
+        [disabled]="!p.prevSongId()"
+        matTooltip="Previous Song"
+      >
+        <mat-icon>skip_previous</mat-icon>
+      </button>
+
+      <div class="p-prog">
+        <span class="fs-5 fw-bold">{{ p.index() + 1 }}</span>
+        <span class="opacity-50">/</span>
+        <span class="opacity-75">{{ p.count() }}</span>
+      </div>
+
+      <button
+        mat-icon-button
+        (click)="p.next()"
+        [disabled]="!p.nextSongId()"
+        matTooltip="Next Song"
+      >
+        <mat-icon>skip_next</mat-icon>
+      </button>
     </div>
+
+    <!-- Quick Section Jump Rail (Floating Right) -->
+    @if (currentSections().length > 0) {
+      <div
+        class="p-section-rail d-none d-lg-flex flex-column position-fixed"
+        [style.right.px]="isStageMode() ? 32 : 24"
+        style="z-index: 100; gap: 8px"
+      >
+        @for (sec of currentSections(); track sec.id) {
+          <button
+            mat-mini-fab
+            color="basic"
+            class="section-jump-btn shadow-sm"
+            style="opacity: 0.85; font-weight: 700; font-size: 0.75rem"
+            (click)="scrollToSection(sec.id)"
+            [matTooltip]="sec.name || (sec.type | titlecase)"
+          >
+            {{ (sec.name || sec.type).substring(0, 2).toUpperCase() }}
+          </button>
+        }
+      </div>
+    }
 
     <!-- Group 3: Sections & Restart -->
     <div class="p-tb-group justify-content-end">
-       <!-- Sections Menu -->
-       @if (p.currentSong()?.sections?.length) {
-         <button mat-stroked-button [matMenuTriggerFor]="sectionsMenu">
-           <mat-icon class="me-1">segment</mat-icon>
-           Sections
-         </button>
-         <mat-menu #sectionsMenu="matMenu">
-           @for(sec of p.currentSong()?.sections ?? []; track sec.id) {
-              <button mat-menu-item (click)="scrollToSection(sec.id)">
-                 <span class="opacity-75 me-2">{{ sec.type }}</span>
-                 <span class="fw-semibold">{{ sec.name || (sec.type | titlecase) }}</span>
-              </button>
-           }
-         </mat-menu>
-       }
+      <!-- Sections Menu -->
+      @if (currentSections().length) {
+        <button mat-stroked-button [matMenuTriggerFor]="sectionsMenu">
+          <mat-icon class="me-1">segment</mat-icon>
+          Sections
+        </button>
+        <mat-menu #sectionsMenu="matMenu">
+          @for (sec of currentSections(); track sec.id) {
+            <button mat-menu-item (click)="scrollToSection(sec.id)">
+              <span class="opacity-75 me-2">{{ sec.type }}</span>
+              <span class="fw-semibold">{{ sec.name || (sec.type | titlecase) }}</span>
+            </button>
+          }
+        </mat-menu>
+      }
 
-       <!-- Restart button (only if at end or explicit need) -->
-       <button mat-icon-button (click)="p.jumpTo(0)" matTooltip="Restart Setlist">
-         <mat-icon>replay</mat-icon>
-       </button>
+      <!-- Restart button (only if at end or explicit need) -->
+      <button mat-icon-button (click)="p.jumpTo(0)" matTooltip="Restart Setlist">
+        <mat-icon>replay</mat-icon>
+      </button>
     </div>
   </div>
 }

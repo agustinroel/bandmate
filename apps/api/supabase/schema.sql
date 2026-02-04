@@ -495,3 +495,184 @@ begin
   where a.id = agg.arrangement_id;
 end;
 $$;
+
+-- =========================
+-- Practice Sessions
+-- Track user practice time for statistics
+-- =========================
+
+create table if not exists public.practice_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,                  -- auth.users.id (stored as uuid for future FK)
+  setlist_id uuid references public.setlists(id) on delete set null,
+  
+  started_at timestamptz not null default now(),
+  ended_at timestamptz,                   -- null if still in progress
+  duration_sec int,                       -- calculated on end
+  
+  songs_practiced int not null default 0, -- count of songs viewed during session
+  completed boolean not null default false, -- true if reached end of setlist
+  
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_practice_sessions_user on public.practice_sessions(user_id);
+create index if not exists idx_practice_sessions_started on public.practice_sessions(started_at);
+create index if not exists idx_practice_sessions_setlist on public.practice_sessions(setlist_id);
+
+-- New table for granular song tracking
+create table if not exists public.practice_session_songs (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.practice_sessions(id) on delete cascade,
+  song_id uuid not null references public.songs(id) on delete cascade,
+  started_at timestamptz not null default now(),
+  duration_sec int default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_pss_session on public.practice_session_songs(session_id);
+create index if not exists idx_pss_song on public.practice_session_songs(song_id);
+
+-- RPC: Get practice stats for a user
+-- (keep existing get_practice_stats and get_practice_summary as they use the main session table)
+
+-- RPC: Update song practice duration (called when navigating away from a song)
+create or replace function public.record_song_practice(
+  p_session_id uuid,
+  p_song_id uuid,
+  p_duration_sec int
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.practice_session_songs (session_id, song_id, duration_sec)
+  values (p_session_id, p_song_id, p_duration_sec);
+end;
+$$;
+
+-- UPDATED RPC: Get most practiced songs using granular tracking
+create or replace function public.get_most_practiced_songs(
+  p_user_id uuid,
+  p_limit int default 5
+)
+returns json
+language plpgsql
+security definer
+as $$
+begin
+  return (
+    select coalesce(json_agg(row_to_json(t)), '[]'::json)
+    from (
+      select 
+        s.id,
+        s.title,
+        s.artist,
+        count(pss.id) as practice_count,
+        coalesce(sum(pss.duration_sec), 0) as total_seconds
+      from public.songs s
+      join public.practice_session_songs pss on pss.song_id = s.id
+      join public.practice_sessions ps on ps.id = pss.session_id
+      where ps.user_id = p_user_id
+      group by s.id, s.title, s.artist
+      order by practice_count desc, total_seconds desc
+      limit p_limit
+    ) t
+  );
+end;
+$$;
+
+-- =========================
+-- Achievements System
+-- =========================
+
+create table if not exists public.user_achievements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null, -- stored as uuid
+  achievement_id text not null, -- slug: 'first_song', 'practice_streak_5', etc.
+  unlocked_at timestamptz not null default now(),
+  
+  unique (user_id, achievement_id)
+);
+
+create index if not exists idx_user_achievements_user on public.user_achievements(user_id);
+
+-- RPC: Unlock an achievement safely (idempotent)
+create or replace function public.unlock_achievement(
+  p_user_id uuid,
+  p_achievement_id text
+)
+returns boolean -- returns true if it was newly unlocked
+language plpgsql
+security definer
+as $$
+begin
+  if exists (
+    select 1 from public.user_achievements 
+    where user_id = p_user_id and achievement_id = p_achievement_id
+  ) then
+    return false;
+  end if;
+
+  insert into public.user_achievements (user_id, achievement_id)
+  values (p_user_id, p_achievement_id);
+  
+  return true;
+end;
+$$;
+
+-- RPC: Get user achievements
+create or replace function public.get_user_achievements(p_user_id uuid)
+returns text[]
+language plpgsql
+security definer
+as $$
+begin
+  return array(
+    select achievement_id from public.user_achievements
+    where user_id = p_user_id
+  );
+end;
+$$;
+
+
+-- RPC: Get current practice streak (consecutive days)
+create or replace function public.get_practice_streak(p_user_id uuid)
+returns int
+language plpgsql
+security definer
+as $$
+declare
+  v_streak int := 0;
+  v_current_date date := current_date;
+  v_has_today boolean;
+begin
+  -- Check if practiced today
+  select exists(
+    select 1 from public.practice_sessions
+    where user_id = p_user_id
+      and date(started_at) = v_current_date
+      and ended_at is not null
+  ) into v_has_today;
+  
+  if not v_has_today then
+    v_current_date := v_current_date - 1;
+  end if;
+  
+  -- Count consecutive days backwards
+  loop
+    exit when not exists(
+      select 1 from public.practice_sessions
+      where user_id = p_user_id
+        and date(started_at) = v_current_date
+        and ended_at is not null
+    );
+    
+    v_streak := v_streak + 1;
+    v_current_date := v_current_date - 1;
+  end loop;
+  
+  return v_streak;
+end;
+$$;

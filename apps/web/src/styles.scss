@@ -10,53 +10,96 @@
 
 /* ---------- 2) Brand tokens (CSS vars) ---------- */
 :root {
-  /* Brand */
-  --bm-primary: #234E52;
-  /* petrol */
-  --bm-accent: #C9A227;
-  /* mustard */
-  --bm-warn: #8C2F39;
-  /* wine */
+  /* Brand (Indie Rehearsal Room Identity) */
+  --bm-primary: #264653;
+  /* Deep Wood (Primary) */
+  --bm-accent: #E9C46A;
+  /* Gold (Accent) */
+  --bm-warn: #E76F51;
+  /* Burnt Orange (Warn) */
+  --bm-teal: #2A9D8F;
+  /* Teal (Secondary/Success) */
 
   /* Surfaces */
-  --bm-bg: #F6F7F6;
-  /* warm light gray */
-  --bm-surface: #FAFAFA;
-  /* off-white */
-  --bm-border: rgba(0, 0, 0, 0.08);
+  --bm-bg: #F9F7F0;
+  /* Cream (Background) */
+  --bm-surface: #FFFFFF;
+  /* High contrast white */
+  --bm-border: rgba(38, 70, 83, 0.12);
+  /* Wood tint */
 
   /* Text */
-  --bm-text: rgba(0, 0, 0, 0.87);
-  --bm-muted: rgba(0, 0, 0, 0.60);
+  --bm-text: #264653;
+  /* Deep Wood Text */
+  --bm-muted: rgba(38, 70, 83, 0.65);
 
   /* Typography */
-  --bm-font: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --bm-font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --bm-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --bm-font: var(--bm-font-sans);
 
-  /* Petrol shades */
+  /* Wood/Petrol shades (Legacy maintenance / extra depth) */
   --bm-petrol-900: #163c40;
   --bm-petrol-850: #1a4347;
   --bm-petrol-800: #1f4b50;
 
-  /* Shadows */
+  /* Shadows - Warmer for the Cream theme */
   --bm-shadow-0: 0 0 0 rgba(0, 0, 0, 0);
-  --bm-shadow-1: 0 6px 14px rgba(0, 0, 0, 0.06);
-  --bm-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.08);
+  --bm-shadow-1: 0 6px 14px rgba(38, 48, 53, 0.06);
+  --bm-shadow-2: 0 10px 24px rgba(38, 48, 53, 0.08);
 
-  /* Special Theme Colors (Tuner / Welcome) */
+  /* Legacy aliases for specific components */
   --bm-cream: #F4F1DE;
   --bm-wood: #264653;
-  --bm-teal: #2A9D8F;
   --bm-gold: #E9C46A;
   --bm-orange: #F4A261;
   --bm-burnt: #E76F51;
 
-  /* Topbar height: lo setea el TopbarComponent con JS.
-     Fallback por si algo falla. */
-  --bm-topbar-h: 60px;
+  /* Animation Tokens */
+  --bm-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --bm-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --bm-transition-fast: 150ms var(--bm-ease-out);
+  --bm-transition-base: 250ms var(--bm-ease-out);
 }
 
-/* ---------- 3) Material Theme (M2 API under m2-*) ---------- */
-$bm-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 800);
+/* Global Entrance Keyframes */
+@keyframes bmFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bmFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bmScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- 3) Material Theme (M2 API) ---------- */
+/* Using shades that match our Deep Wood and Gold */
+$bm-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 900);
 $bm-accent: mat.m2-define-palette(mat.$m2-amber-palette, 600);
 $bm-warn: mat.m2-define-palette(mat.$m2-red-palette, 700);
 
@@ -72,6 +115,38 @@ $bm-theme: mat.m2-define-light-theme((color: (primary: $bm-primary,
 
 @include mat.all-component-themes($bm-theme);
 
+/* ---------- Unified Brand Mark (.bm-mark) ---------- */
+/* USAGE: Used in page headers next to titles for consistent branding */
+.bm-mark,
+header .bm-mark,
+.bm-page-header .bm-mark {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #264653 0%, #163c40 100%) !important;
+  color: #E9C46A !important;
+  /* Gold Icon */
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+  box-shadow: 0 4px 12px rgba(22, 60, 64, 0.22) !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease !important;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(22, 60, 64, 0.3) !important;
+  }
+
+  mat-icon {
+    font-size: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    color: inherit !important;
+    display: block;
+  }
+}
+
 /* ---------- 4) Base ---------- */
 html,
 body {
@@ -83,6 +158,23 @@ body {
   background: var(--bm-bg);
   color: var(--bm-text);
   font-family: var(--bm-font);
+  position: relative;
+  overflow-x: hidden;
+
+  /* Analog Paper Grain Overlay */
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
 }
 
 /* nicer rendering */

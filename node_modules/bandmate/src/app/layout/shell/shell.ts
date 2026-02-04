@@ -1,6 +1,6 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, shareReplay } from 'rxjs';
 
@@ -14,7 +14,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.component';
 import { TopbarComponent } from '../topbar/topbar';
+import { AchievementToastComponent } from '../../shared/ui/achievement-toast/achievement-toast.component';
+import { AchievementService } from '../../core/services/achievement.service';
 import { environment } from '../../../environments/environment';
+
 @Component({
   standalone: true,
   imports: [
@@ -32,15 +35,18 @@ import { environment } from '../../../environments/environment';
     MatTooltipModule,
     ErrorBoundaryComponent,
     TopbarComponent,
+    AchievementToastComponent,
   ],
   selector: 'app-shell',
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
-export class ShellComponent {
+export class ShellComponent implements AfterViewInit {
   @ViewChild('drawer') drawer?: MatSidenav;
-  readonly bo = inject(BreakpointObserver);
+  @ViewChild(AchievementToastComponent) achievementToast?: AchievementToastComponent;
 
+  readonly bo = inject(BreakpointObserver);
+  readonly achievementService = inject(AchievementService);
   readonly router = inject(Router);
 
   readonly isHandset$ = this.bo.observe(Breakpoints.Handset).pipe(
@@ -56,10 +62,16 @@ export class ShellComponent {
   constructor() {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(() => {
+      .subscribe((e) => {
         // si está en over (handset), cerralo después de navegar
         if (this.drawer?.mode === 'over') this.drawer.close();
       });
+  }
+
+  ngAfterViewInit() {
+    if (this.achievementToast) {
+      this.achievementService.registerToast(this.achievementToast);
+    }
   }
 
   onLogin() {

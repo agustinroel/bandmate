@@ -9,6 +9,12 @@ import { importSeedLibrary } from "./seed/import-seed-library.js";
 import { libraryRoutes } from "./library/library.routes.js";
 import { worksRoutes } from "./works/works.routes.js";
 import { arrangementsRoutes } from "./arrangements/arrangements.routes.js";
+import { importRoutes } from "./import/import.routes.js";
+import { spotifyAuthRoutes } from "./auth/spotify.routes.js";
+import { profilesRoutes } from "./profiles/profiles.routes.js";
+import { bandsRoutes } from "./bands/bands.routes.js";
+import { notificationsRoutes } from "./notifications/notifications.routes.js";
+import "./services/ingestion-queue.service.js"; // Initialize worker
 
 if (process.env.SEED_LIBRARY === "true") {
   importSeedLibrary()
@@ -39,7 +45,9 @@ await app.register(cors, {
 });
 
 // Auth (adds app.requireAuth + req.user)
-await app.register(registerAuth, { publicRoutes: ["/health", "/debug"] });
+await app.register(registerAuth, {
+  publicRoutes: ["/health", "/debug", "/auth/spotify"],
+});
 app.addHook("preHandler", app.authGuardHook);
 
 // Routes ONLY via plugins
@@ -48,6 +56,11 @@ await app.register(setlistsRoutes);
 await app.register(libraryRoutes);
 await app.register(worksRoutes);
 await app.register(arrangementsRoutes);
+await app.register(importRoutes, { prefix: "/import" });
+await app.register(spotifyAuthRoutes, { prefix: "/auth/spotify" });
+await app.register(profilesRoutes);
+await app.register(bandsRoutes);
+await app.register(notificationsRoutes);
 
 app.setErrorHandler((err, req, reply) => {
   const status = (err as any).statusCode ?? 500;

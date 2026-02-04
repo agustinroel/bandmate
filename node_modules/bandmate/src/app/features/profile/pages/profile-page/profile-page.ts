@@ -11,6 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ProfileRow, ProfilesService } from '../../services/profile.service';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
@@ -120,9 +122,8 @@ export class ProfilePageComponent {
 
   readonly email = computed(() => this.user()?.email ?? '—');
   readonly avatarUrl = computed(() => {
-    const u = this.user();
-    const url = (u?.user_metadata as any)?.avatar_url || (u?.user_metadata as any)?.picture || null;
-    return url;
+    const p = this.profile();
+    return p?.avatar_url || null;
   });
 
   readonly username = computed(() => this.draft()?.username ?? '');
@@ -148,7 +149,7 @@ export class ProfilePageComponent {
       sameArr((p.genres ?? []).slice().sort(), d.genres.slice().sort()) &&
       !!p.sings === !!d.sings &&
       (p.chord_default_instrument ?? 'guitar') === d.chordDefaultInstrument &&
-      (p.public_profile ?? true) === d.publicProfile
+      (p.is_public ?? true) === d.publicProfile
     );
   });
 
@@ -164,6 +165,8 @@ export class ProfilePageComponent {
     () => this.state() === 'ready' && this.isDirty() && !this.usernameError(),
   );
 
+  readonly avatarLoadFailed = signal(false);
+
   constructor() {
     effect(() => {
       const u = this.user();
@@ -174,18 +177,32 @@ export class ProfilePageComponent {
         void this.load();
       }
     });
+
+    // Reset error state when avatar url changes
+    effect(() => {
+       const url = this.avatarUrl();
+       // We just accessed the signal, so effect runs when it changes.
+       // We use untracked to set the signal to avoid loops if needed, 
+       // but here we just want to reset the flag.
+       // Allow signal writes in effect for this purpose
+       this.avatarLoadFailed.set(false);
+    }, { allowSignalWrites: true });
   }
 
+  // ... (unchanged methods)
+
   async load() {
+    // ... (unchanged)
     const u = this.user();
     if (!u) return;
-
     this.state.set('loading');
     this.error.set('');
-
     try {
       const p = await this.profiles.ensureForUser(u);
       this.profile.set(p);
+
+      // fetch bands removed
+
 
       this.draft.set({
         username: p.username ?? '',
@@ -194,9 +211,8 @@ export class ProfilePageComponent {
         genres: (p.genres ?? []).slice(),
         sings: !!p.sings,
         chordDefaultInstrument: p.chord_default_instrument ?? 'guitar',
-        publicProfile: p.public_profile ?? true,
+        publicProfile: p.is_public ?? true,
       });
-
       this.state.set('ready');
     } catch (e: any) {
       this.state.set('error');
@@ -205,6 +221,7 @@ export class ProfilePageComponent {
   }
 
   reset() {
+    // ... (unchanged)
     const p = this.profile();
     if (!p) return;
     this.draft.set({
@@ -214,7 +231,7 @@ export class ProfilePageComponent {
       genres: (p.genres ?? []).slice(),
       sings: !!p.sings,
       chordDefaultInstrument: p.chord_default_instrument ?? 'guitar',
-      publicProfile: p.public_profile ?? true,
+      publicProfile: p.is_public ?? true,
     });
     this.notify.info('Changes reverted', 'OK', 1200);
   }
@@ -229,7 +246,6 @@ export class ProfilePageComponent {
   }
 
   setInstruments(value: string[]) {
-    // catálogo cerrado: filtramos por whitelist por seguridad extra
     const allowed = new Set(this.instrumentOptions as unknown as string[]);
     const clean = (value ?? []).filter((x) => allowed.has(x));
     this.draft.update((d) => (d ? { ...d, instruments: clean } : d));
@@ -272,15 +288,16 @@ export class ProfilePageComponent {
       await navigator.clipboard.writeText(url);
       this.notify.success('Profile link copied', 'OK', 1400);
     } catch {
-      // fallback básico
       this.notify.warn('Could not copy automatically. Select and copy manually.', 'OK', 2200);
     }
   }
 
   async save() {
+    // ... (unchanged)
     const u = this.user();
     const d = this.draft();
-    if (!u || !d) return;
+    const p = this.profile();
+    if (!u || !d || !p) return;
     if (this.usernameError()) return;
 
     this.state.set('loading');
@@ -289,12 +306,14 @@ export class ProfilePageComponent {
       const updated = await this.profiles.upsert({
         id: u.id,
         username: d.username,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
         about: d.about || null,
         instruments: d.instruments ?? [],
         genres: d.genres ?? [],
         sings: !!d.sings,
         chord_default_instrument: d.chordDefaultInstrument || 'guitar',
-        public_profile: d.publicProfile ?? true,
+        is_public: d.publicProfile ?? true,
       });
 
       this.profile.set(updated);
@@ -304,5 +323,9 @@ export class ProfilePageComponent {
       this.state.set('ready');
       this.notify.error(e?.message ?? 'Could not save profile', 'OK', 2600);
     }
+  }
+
+  handleAvatarError() {
+    this.avatarLoadFailed.set(true);
   }
 }

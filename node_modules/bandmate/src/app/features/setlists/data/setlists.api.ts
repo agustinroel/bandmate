@@ -52,7 +52,7 @@ export async function http<T>(
   }
 
   const finalUrl = toSsrAbsoluteUrl(url);
-  const res = await fetch(finalUrl, { ...init, headers });
+  const res = await fetch(finalUrl, { cache: 'no-store', ...init, headers });
 
   if (!res.ok) {
     const ct = res.headers.get('content-type') ?? '';

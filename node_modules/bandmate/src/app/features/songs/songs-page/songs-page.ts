@@ -350,6 +350,12 @@ export class SongsPageComponent {
     this.router.navigate(['/songs', id]);
   }
 
+  goSpotify() {
+    // Redirect to the backend spotify login
+    const apiUrl = 'http://localhost:3000'; // Should be dynamic
+    window.location.href = `${apiUrl}/auth/spotify/login`;
+  }
+
   /** Delete */
   askDelete(id: string, title: string) {
     const ref = this.dialog.open(ConfirmDialogComponent, {

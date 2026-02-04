@@ -15,6 +15,7 @@ import {
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SongsStore } from '../../../songs/state/songs-store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
@@ -35,6 +36,7 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
     MatSnackBarModule,
     MatDialogModule,
     MatTooltipModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './setlists-page.html',
   styleUrl: './setlists-page.scss',

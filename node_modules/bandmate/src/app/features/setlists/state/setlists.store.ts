@@ -1,8 +1,12 @@
-import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, inject, signal, effect } from '@angular/core';
 import { from, catchError, tap, throwError } from 'rxjs';
 import type { Setlist } from '@bandmate/shared';
 import { SetlistsApi } from '../data/setlists.api';
 import { isPlatformBrowser } from '@angular/common';
+import { supabase } from '../../../core/supabase/supabase.client';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+import { AuthStore } from '../../../core/auth/auth.store';
 
 @Injectable({ providedIn: 'root' })
 export class SetlistsStore {
@@ -35,6 +39,7 @@ export class SetlistsStore {
   }
 
   readonly api = inject(SetlistsApi);
+  readonly auth = inject(AuthStore);
 
   readonly _items = signal<Setlist[]>([]);
   readonly _state = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -55,16 +60,43 @@ export class SetlistsStore {
   constructor() {
     const saved = this.storageGet(this.SELECTED_KEY);
     if (saved) this._selectedId.set(saved);
+
+    effect(() => {
+      if (this.auth.session()) {
+        this._initRealtime();
+      }
+    });
   }
 
-  load() {
-    this._state.set('loading');
+  private _realtime?: RealtimeChannel;
+  private _initRealtime() {
+    if (this._realtime || !this.isBrowser) return;
+
+    this._realtime = supabase
+      .channel('setlists_db_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'setlists' }, () =>
+        this.reload(),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'setlist_items' }, () =>
+        this.reload(),
+      )
+      .subscribe();
+  }
+
+  load(silent = false) {
+    if (!silent) {
+      this._state.set('loading');
+    }
     this._error.set(null);
+    // Realtime init moved to effect
+    // this._initRealtime();
 
     return from(this.api.list()).pipe(
       tap((items) => {
         this._items.set(items);
-        this._state.set('ready');
+        if (!silent) {
+          this._state.set('ready');
+        }
 
         const current = this._selectedId();
         const exists = current && items.some((s) => s.id === current);
@@ -79,11 +111,28 @@ export class SetlistsStore {
         if (!this._selectedId() && items.length) this._selectedId.set(items[0].id);
       }),
       catchError((err) => {
-        this._state.set('error');
-        this._error.set(err?.message ?? 'Failed to load setlists');
+        if (!silent) {
+          this._state.set('error');
+          this._error.set(err?.message ?? 'Failed to load setlists');
+        }
         return throwError(() => err);
       }),
     );
+  }
+
+  private reload() {
+    // Silent reload triggered by realtime event
+    this.api
+      .list()
+      .then((items) => {
+        this._items.set(items);
+        const current = this._selectedId();
+        if (current && !items.find((s) => s.id === current)) {
+          // Current setlist was deleted
+          this._selectedId.set(items[0]?.id ?? null);
+        }
+      })
+      .catch(console.error);
   }
 
   select(id: string) {

@@ -1,0 +1,16 @@
+<svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bandmate Logo – Pixel-Perfect Identity Restoration -->
+  <g fill="#C9A227">
+    <!-- Left Pillar (Geometric Block with V-Notch) -->
+    <path d="M15 18V82L42 66L34 50L42 34L15 18Z"/>
+    
+    <!-- Right Pillar (Mirrored) -->
+    <path d="M85 18V82L58 66L66 50L58 34L85 18Z"/>
+    
+    <!-- Top Chevron (Sharp Triangle) -->
+    <path d="M50 12L72 34H28L50 12Z"/>
+    
+    <!-- Bottom Chevron (Sharp Triangle) -->
+    <path d="M50 88L28 66H72L50 88Z"/>
+  </g>
+</svg>

@@ -17,9 +17,12 @@
   "dependencies": {
     "@bandmate/shared": "*",
     "@fastify/cors": "^11.2.0",
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.91.0",
+    "bullmq": "^5.67.2",
     "dotenv": "^17.2.3",
     "fastify": "^5.6.2",
+    "ioredis": "^5.9.2",
     "jose": "^6.1.3"
   }
 }

@@ -189,12 +189,26 @@ export async function createWork(input: {
   wikidataId?: string | null;
   rightsNotes?: string | null;
 }) {
+  const { musicbrainzId, title, artist } = input;
+
+  // Try to find existing work first
+  let query = supabase.from("song_works").select("*");
+  if (musicbrainzId) {
+    query = query.eq("musicbrainz_id", musicbrainzId);
+  } else {
+    query = query.eq("title", title.trim()).eq("artist", artist.trim());
+  }
+
+  const { data: existing, error: findError } = await query.maybeSingle();
+  if (findError) throw findError;
+  if (existing) return mapWork(existing);
+
   const payload = {
-    title: input.title.trim(),
-    artist: input.artist.trim(),
+    title: title.trim(),
+    artist: artist.trim(),
     rights: input.rights ?? "unknown",
     source: input.source ?? "user",
-    musicbrainz_id: input.musicbrainzId ?? null,
+    musicbrainz_id: musicbrainzId ?? null,
     wikidata_id: input.wikidataId ?? null,
     rights_notes: input.rightsNotes ?? null,
   };
@@ -208,7 +222,6 @@ export async function createWork(input: {
   return mapWork(data);
 }
 
-
 export async function createArrangementFromSong(
   userId: string,
   song: {
@@ -219,12 +232,12 @@ export async function createArrangementFromSong(
     duration_sec?: number | null;
     notes?: string | null;
     version?: number | null;
-  }
+  },
 ) {
   // 1. Create arrangements payload
   // We'll increment version based on existing arrangements count or just use next number?
   // Ideally we query max version. For now, let's assume we just create it.
-  
+
   // Let's get max version for this work to auto-increment
   const { data: maxVer } = await supabase
     .from("arrangements")
@@ -248,7 +261,7 @@ export async function createArrangementFromSong(
     source: "community",
     is_seed: false,
     rating_avg: 0,
-    rating_count: 0
+    rating_count: 0,
   };
 
   const { data, error } = await supabase

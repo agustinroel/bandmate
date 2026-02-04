@@ -1,16 +1,9 @@
+
+
 .bm-page-header {
     margin-bottom: 24px;
 }
 
-.bm-mark {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: rgba(201, 162, 39, 0.16);
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-}
 
 // Onboarding Hero
 // Onboarding Hero
@@ -19,17 +12,30 @@
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
     gap: 16px;
-    padding: 16px 18px;
-    border-radius: 18px;
-    border: 1px solid rgba(201, 162, 39, 0.18);
-    background: linear-gradient(180deg, rgba(201, 162, 39, 0.09), rgba(0, 0, 0, 0.008));
+    padding: 24px 28px;
+    border-radius: 24px;
+    border: 1px solid rgba(38, 70, 83, 0.1);
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(244, 241, 222, 0.4) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.35),
-        0 10px 26px rgba(0, 0, 0, 0.06);
-    animation: bmFrIn 220ms ease-out;
+        0 20px 48px -12px rgba(38, 70, 83, 0.12),
+        inset 0 1px 0 #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    animation: bmScaleIn 0.6s var(--bm-ease-out) both;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--bm-accent), var(--bm-teal));
+    }
 
     @media (max-width: 900px) {
         grid-template-columns: 1fr;
+        padding: 20px 24px;
 
         .bm-fr__right {
             display: none;
@@ -80,8 +86,11 @@
 }
 
 .bm-fr__desc {
-    margin: 0 0 6px;
-    opacity: 0.82;
+    margin: 0 0 12px;
+    opacity: 0.9;
+    color: var(--bm-primary);
+    font-size: 1.05rem;
+    line-height: 1.5;
 }
 
 .bm-fr__sub {
@@ -154,16 +163,30 @@
 }
 
 .bm-card {
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
-    background: var(--mat-card-container-color, #ffffff);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: #FFFFFF;
+    border: 1px solid rgba(38, 70, 83, 0.08);
+    box-shadow: 0 4px 12px rgba(38, 70, 83, 0.05);
+    transition: all var(--bm-transition-base);
+    animation: bmFadeInUp 0.6s var(--bm-ease-out) both;
+
+    &:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.2s;
+    }
 
     &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 20px 32px -12px rgba(38, 70, 83, 0.15);
+        border-color: rgba(233, 196, 106, 0.4);
     }
 }
 
@@ -200,4 +223,255 @@
     height: 18px;
     width: 18px;
     margin-right: 6px;
+}
+
+// =========================
+// Practice Statistics Section
+// =========================
+
+.bm-stats-section {
+    margin-top: 32px;
+    animation: bmFadeInUp 0.6s var(--bm-ease-out) both;
+    animation-delay: 0.25s;
+}
+
+.bm-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: var(--bm-primary, #264653);
+}
+
+.bm-section-icon {
+    color: var(--bm-teal, #2A9D8F);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.bm-stats-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+}
+
+.bm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.bm-stat-card {
+    border-radius: 20px;
+    padding: 20px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05), 
+        0 2px 4px -1px rgba(0, 0, 0, 0.03),
+        inset 0 1px 0 #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
+        pointer-events: none;
+    }
+    
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: rgba(42, 157, 143, 0.15);
+    }
+}
+
+.bm-stat-primary {
+    background: linear-gradient(135deg, #f0f7f6 0%, #ffffff 100%);
+    
+    .bm-stat-icon {
+        background: var(--bm-teal);
+        color: #FFFFFF;
+        box-shadow: 0 8px 16px -4px rgba(42, 157, 143, 0.4);
+        
+        mat-icon {
+            color: #FFFFFF;
+        }
+    }
+    
+    .bm-stat-value {
+        color: var(--bm-teal);
+    }
+}
+
+.bm-stat-streak {
+    background: linear-gradient(135deg, #fef4f1 0%, #ffffff 100%);
+    
+    .bm-stat-icon {
+        background: #E76F51;
+        color: #FFFFFF;
+        box-shadow: 0 8px 16px -4px rgba(231, 111, 81, 0.4);
+        
+        mat-icon {
+            color: #FFFFFF;
+        }
+    }
+    
+    .bm-stat-value {
+        color: #E76F51;
+    }
+}
+
+.bm-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    
+    mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--bm-primary);
+    }
+}
+
+.bm-stat-content {
+    flex-grow: 1;
+}
+
+.bm-stat-value {
+    font-size: 1.85rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--bm-primary, #264653);
+    letter-spacing: -0.04em;
+}
+
+.bm-stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bm-muted, rgba(38, 70, 83, 0.6));
+    margin-top: 4px;
+}
+
+.bm-stat-detail {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--bm-muted);
+    opacity: 0.7;
+}
+
+// Most Practiced Songs
+.bm-top-songs {
+    margin-top: 32px;
+}
+
+.bm-subsection-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--bm-teal);
+    margin: 0 0 16px 0;
+    opacity: 0.9;
+}
+
+.bm-top-songs-list {
+    display: grid;
+    gap: 12px;
+}
+
+.bm-top-song-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    transition: all 0.25s var(--bm-ease-out);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    
+    &:hover {
+        background: #fcfdfe;
+        transform: scale(1.005) translateX(4px);
+        box-shadow: 0 10px 20px -10px rgba(42, 157, 143, 0.15);
+        border-color: rgba(42, 157, 143, 0.1);
+    }
+}
+
+.bm-top-song-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    color: var(--bm-primary);
+    font-size: 0.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bm-top-song-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.bm-top-song-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--bm-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bm-top-song-artist {
+    font-size: 0.8rem;
+    color: var(--bm-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bm-top-song-count {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--bm-teal);
+    padding: 4px 10px;
+    background: rgba(42, 157, 143, 0.1);
+    border-radius: 999px;
+}
+
+// Achievements Gallery
+.bm-achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 24px;
 }

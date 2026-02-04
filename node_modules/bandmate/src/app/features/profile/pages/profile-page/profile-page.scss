@@ -2,14 +2,6 @@
   display: block;
 }
 
-.bm-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgba(201, 162, 39, 0.16);
-  display: grid;
-  place-items: center;
-}
 
 .profile-actions {
   display: inline-flex;
@@ -20,6 +12,7 @@
 .profile-card {
   border-radius: 18px;
   padding: 16px;
+  animation: bmScaleIn 0.6s var(--bm-ease-out) both;
 }
 
 .profile-top {
@@ -85,6 +78,8 @@
   background: rgba(0, 0, 0, 0.012);
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: none;
+  animation: bmScaleIn 0.5s var(--bm-ease-out) both;
+  animation-delay: 0.1s;
 }
 
 .subhead {

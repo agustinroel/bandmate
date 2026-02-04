@@ -80,6 +80,10 @@ export const routes: Routes = [
           ),
       },
 
+      {
+        path: 'import',
+        loadComponent: () => import('./features/import/pages/import-page/import-page').then(m => m.ImportPageComponent)
+      },
       // TOOLS
       {
         path: 'tools',
@@ -110,6 +114,19 @@ export const routes: Routes = [
           // opcional: /library => redirect (si querés)
           { path: '', pathMatch: 'full', redirectTo: '/songs' },
         ],
+      },
+
+      {
+        path: 'community',
+        loadComponent: () =>
+          import('./features/community/pages/community-page/community-page').then(
+            (m) => m.CommunityPageComponent
+          ),
+      },
+
+      {
+        path: 'bands',
+        loadChildren: () => import('./features/bands/bands.routes').then(m => m.bandsRoutes)
       },
 
       { path: '', pathMatch: 'full', redirectTo: 'home' },

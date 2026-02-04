@@ -22,12 +22,11 @@
       <h2 class="bm-fr__title">Welcome to Bandmate</h2>
 
       <p class="bm-fr__desc">
-        Your digital stage is ready. Start by organizing your repertoire or creating your first setlist.
+        Your digital stage is ready. Start by organizing your repertoire or creating your first
+        setlist.
       </p>
-      
-      <p class="bm-fr__sub">
-        Tip: Seed famous songs to try out the new features quickly.
-      </p>
+
+      <p class="bm-fr__sub">Tip: Seed famous songs to try out the new features quickly.</p>
 
       <div class="bm-fr__actions">
         <a mat-raised-button color="primary" routerLink="/songs/new">
@@ -62,7 +61,12 @@
       </div>
     </div>
 
-    <button mat-icon-button class="position-absolute top-0 end-0 m-2 opacity-50" (click)="dismissOnboarding()" title="Dismiss">
+    <button
+      mat-icon-button
+      class="position-absolute top-0 end-0 m-2 opacity-50"
+      (click)="dismissOnboarding()"
+      title="Dismiss"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </section>
@@ -109,3 +113,110 @@
     </div>
   </mat-card>
 </div>
+
+<!-- Practice Statistics Section -->
+<section class="bm-stats-section" aria-label="Practice Statistics">
+  <h3 class="bm-section-title">
+    <mat-icon class="bm-section-icon">insights</mat-icon>
+    Practice Stats
+  </h3>
+
+  @if (practiceStats.isLoading()) {
+    <div class="bm-stats-loading">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  } @else {
+    <div class="bm-stats-grid">
+      <!-- This Week Card -->
+      <mat-card class="bm-stat-card bm-stat-primary">
+        <div class="bm-stat-icon">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="bm-stat-content">
+          <div class="bm-stat-value">
+            {{ practiceStats.formatDuration(practiceStats.summary()?.week?.totalSeconds || 0) }}
+          </div>
+          <div class="bm-stat-label">This Week</div>
+        </div>
+        <div class="bm-stat-detail">
+          {{ practiceStats.summary()?.week?.sessionCount || 0 }} sessions
+        </div>
+      </mat-card>
+
+      <!-- Today Card -->
+      <mat-card class="bm-stat-card">
+        <div class="bm-stat-icon">
+          <mat-icon>today</mat-icon>
+        </div>
+        <div class="bm-stat-content">
+          <div class="bm-stat-value">
+            {{ practiceStats.formatDuration(practiceStats.summary()?.today?.totalSeconds || 0) }}
+          </div>
+          <div class="bm-stat-label">Today</div>
+        </div>
+      </mat-card>
+
+      <!-- Streak Card -->
+      <mat-card class="bm-stat-card bm-stat-streak">
+        <div class="bm-stat-icon">
+          <mat-icon>local_fire_department</mat-icon>
+        </div>
+        <div class="bm-stat-content">
+          <div class="bm-stat-value">{{ practiceStats.streak() }}</div>
+          <div class="bm-stat-label">Day Streak</div>
+        </div>
+      </mat-card>
+
+      <!-- All Time Card -->
+      <mat-card class="bm-stat-card">
+        <div class="bm-stat-icon">
+          <mat-icon>emoji_events</mat-icon>
+        </div>
+        <div class="bm-stat-content">
+          <div class="bm-stat-value">
+            {{ practiceStats.formatDuration(practiceStats.summary()?.all?.totalSeconds || 0) }}
+          </div>
+          <div class="bm-stat-label">All Time</div>
+        </div>
+        <div class="bm-stat-detail">
+          {{ practiceStats.summary()?.all?.songsCount || 0 }} songs practiced
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Most Practiced Songs -->
+    @if (practiceStats.mostPracticed().length > 0) {
+      <div class="bm-top-songs">
+        <h4 class="bm-subsection-title">Most Practiced</h4>
+        <div class="bm-top-songs-list">
+          @for (song of practiceStats.mostPracticed(); track song.id; let i = $index) {
+            <div class="bm-top-song-item">
+              <span class="bm-top-song-rank">{{ i + 1 }}</span>
+              <div class="bm-top-song-info">
+                <div class="bm-top-song-title">{{ song.title }}</div>
+                <div class="bm-top-song-artist">{{ song.artist }}</div>
+              </div>
+              <div class="bm-top-song-count">{{ song.practice_count }}×</div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</section>
+
+<!-- Achievements Section -->
+@if (achievements.userAchievements().length > 0) {
+  <section class="bm-achievements-section mt-5" aria-label="Unlocked Achievements">
+    <h3 class="bm-section-title">
+      <mat-icon class="bm-section-icon" style="color: #e9c46a">workspace_premium</mat-icon>
+      Achievements
+    </h3>
+
+    <div class="bm-achievements-grid">
+      @for (achievement of achievements.userAchievements(); track achievement.id) {
+        <app-achievement-card [achievement]="achievement" />
+      }
+    </div>
+  </section>
+}
