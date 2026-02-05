@@ -16,14 +16,34 @@ import { bandsRoutes } from "./bands/bands.routes.js";
 import { notificationsRoutes } from "./notifications/notifications.routes.js";
 import { eventsRoutes } from "./events/events.routes.js";
 import { ticketingRoutes } from "./events/ticketing.routes.js";
+import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
 
 if (process.env.SEED_LIBRARY === "true") {
-  importSeedLibrary()
-    .then(() => console.log("[seed] library imported"))
-    .catch((e) => console.error("[seed] failed", e));
+  // ... existing seed logic ...
 }
-const app = Fastify({ logger: true });
+
+const app = Fastify({
+  logger: true,
+});
+
+// Hook para capturar el raw body solo en el webhook de Stripe
+app.addHook("preParsing", async (request, reply, payload) => {
+  if (request.url === "/webhooks/stripe") {
+    const chunks: Buffer[] = [];
+    for await (const chunk of payload) {
+      chunks.push(chunk as Buffer);
+    }
+    const rawBody = Buffer.concat(chunks);
+    (request as any).rawBody = rawBody;
+
+    // Devolver un nuevo stream para que Fastify siga procesando (aunque no lo usemos para JSON)
+    return (async function* () {
+      yield rawBody;
+    })();
+  }
+  return payload;
+});
 
 const allowed = new Set([
   "http://localhost:4200",
@@ -76,6 +96,7 @@ await app.register(profilesRoutes);
 await app.register(bandsRoutes);
 await app.register(eventsRoutes);
 await app.register(ticketingRoutes);
+await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
 
 app.setErrorHandler((err, req, reply) => {
