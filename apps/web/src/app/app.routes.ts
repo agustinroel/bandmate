@@ -37,6 +37,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tickets',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/events/pages/my-tickets-page/my-tickets-page').then(
+            (m) => m.MyTicketsPageComponent,
+          ),
+      },
+      {
         path: 'u/:username',
         loadComponent: () =>
           import('./features/profile/pages/public-profile-page/public-profile-page').then(
@@ -82,15 +90,22 @@ export const routes: Routes = [
 
       {
         path: 'import',
-        loadComponent: () => import('./features/import/pages/import-page/import-page').then(m => m.ImportPageComponent)
+        loadComponent: () =>
+          import('./features/import/pages/import-page/import-page').then(
+            (m) => m.ImportPageComponent,
+          ),
       },
       // TOOLS
       {
         path: 'tools',
         children: [
-           { path: 'tuner', loadComponent: () => import('./features/tools/tuner/tuner-page').then(m => m.TunerPageComponent) },
-           { path: '', redirectTo: 'tuner', pathMatch: 'full' }
-        ]
+          {
+            path: 'tuner',
+            loadComponent: () =>
+              import('./features/tools/tuner/tuner-page').then((m) => m.TunerPageComponent),
+          },
+          { path: '', redirectTo: 'tuner', pathMatch: 'full' },
+        ],
       },
 
       // ✅ LIBRARY
@@ -120,13 +135,21 @@ export const routes: Routes = [
         path: 'community',
         loadComponent: () =>
           import('./features/community/pages/community-page/community-page').then(
-            (m) => m.CommunityPageComponent
+            (m) => m.CommunityPageComponent,
+          ),
+      },
+
+      {
+        path: 'events/:id',
+        loadComponent: () =>
+          import('./features/events/pages/event-detail-page/event-detail-page').then(
+            (m) => m.EventDetailPageComponent,
           ),
       },
 
       {
         path: 'bands',
-        loadChildren: () => import('./features/bands/bands.routes').then(m => m.bandsRoutes)
+        loadChildren: () => import('./features/bands/bands.routes').then((m) => m.bandsRoutes),
       },
 
       { path: '', pathMatch: 'full', redirectTo: 'home' },

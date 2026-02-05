@@ -99,7 +99,7 @@ import { BandRow, BandsService } from '../../services/bands.service';
 
                   <div class="d-flex gap-3">
                     <button mat-flat-button color="primary">Open Dashboard</button>
-                    <button mat-stroked-button (click)="$event.stopPropagation(); createBand()">
+                    <button mat-stroked-button [routerLink]="['/bands', bands()[0].id]">
                       Invite Members
                     </button>
                   </div>

@@ -1,43 +1,61 @@
 export class MusicBrainzService {
-    baseUrl = 'https://musicbrainz.org/ws/2';
-    userAgent = 'Bandmate/1.0.0 ( https://bandmate.io )';
+    baseUrl = "https://musicbrainz.org/ws/2";
+    userAgent = "Bandmate/1.0.0 ( https://bandmate.io )";
     /**
      * Search for a recording by title and artist.
      */
     async searchRecording(title, artist) {
         const query = `recording:"${title}" AND artist:"${artist}"`;
         const url = `${this.baseUrl}/recording?query=${encodeURIComponent(query)}&fmt=json`;
+        console.log(`[MusicBrainz] Searching recording: ${url}`);
         const response = await fetch(url, {
-            headers: { 'User-Agent': this.userAgent }
+            headers: { "User-Agent": this.userAgent },
         });
         if (!response.ok) {
             throw new Error(`MusicBrainz API error: ${response.statusText}`);
         }
-        const data = await response.json();
+        const data = (await response.json());
         return (data.recordings || []).map((r) => ({
             id: r.id,
             title: r.title,
-            artist: r['artist-credit']?.[0]?.name || artist,
-            duration: r.length ? Math.round(r.length / 1000) : undefined
+            artist: r["artist-credit"]?.[0]?.name || artist,
+            duration: r.length ? Math.round(r.length / 1000) : undefined,
         }));
     }
     /**
      * Fetch detailed metadata for a recording by MBID.
      */
     async getRecordingDetails(mbid) {
-        const url = `${this.baseUrl}/recording/${mbid}?inc=artists+annotations&fmt=json`;
-        const response = await fetch(url, {
-            headers: { 'User-Agent': this.userAgent }
-        });
-        if (!response.ok)
-            return null;
-        const r = await response.json();
-        return {
-            id: r.id,
-            title: r.title,
-            artist: r['artist-credit']?.[0]?.name || 'Unknown',
-            duration: r.length ? Math.round(r.length / 1000) : undefined
-        };
+        const url = `${this.baseUrl}/recording/${mbid}?inc=artist-credits+releases&fmt=json`;
+        console.log(`[MusicBrainz] Fetching recording details: ${url}`);
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    "User-Agent": this.userAgent,
+                    Accept: "application/json",
+                },
+            });
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error(`[MusicBrainz] API error: ${response.status} ${response.statusText}`, errorBody);
+                return null;
+            }
+            const r = (await response.json());
+            if (!r || !r.id) {
+                console.error("[MusicBrainz] Unexpected null/invalid response body");
+                return null;
+            }
+            return {
+                id: r.id,
+                title: r.title,
+                artist: r["artist-credit"]?.[0]?.name || "Unknown",
+                duration: r.length ? Math.round(r.length / 1000) : undefined,
+            };
+        }
+        catch (err) {
+            console.error(`[MusicBrainz] Fetch exception for ${mbid}:`, err);
+            throw err;
+        }
     }
 }
 export const musicBrainzService = new MusicBrainzService();
