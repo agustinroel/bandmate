@@ -69,3 +69,20 @@ export async function getTicket(ticketId: string, userId: string) {
   if (error) throw error;
   return data;
 }
+export async function createTicket(
+  ticket: Omit<TicketRow, "id" | "created_at" | "status">,
+) {
+  const { data, error } = await supabase
+    .from("event_tickets")
+    .insert([
+      {
+        ...ticket,
+        status: "active",
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
