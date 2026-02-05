@@ -32,7 +32,9 @@ const allowed = new Set([
 ]);
 
 if (process.env.FRONTEND_URL) {
-  allowed.add(process.env.FRONTEND_URL);
+  // Normalizar: quitar slash final si existe
+  const normalized = process.env.FRONTEND_URL.replace(/\/$/, "");
+  allowed.add(normalized);
 }
 
 await app.register(cors, {
@@ -40,8 +42,15 @@ await app.register(cors, {
     // requests server-to-server o tools sin Origin
     if (!origin) return cb(null, true);
 
-    if (allowed.has(origin)) return cb(null, true);
+    const normalizedOrigin = origin.replace(/\/$/, "");
 
+    if (allowed.has(normalizedOrigin)) {
+      return cb(null, true);
+    }
+
+    app.log.warn(
+      `CORS blocked for origin: ${origin}. Allowed origins: ${Array.from(allowed).join(", ")}`,
+    );
     return cb(new Error(`CORS blocked for origin: ${origin}`), false);
   },
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
