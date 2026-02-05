@@ -10,7 +10,102 @@
   </div>
 </div>
 
-<div class="container main-content">
+<div class="container main-content mt-3">
+  <!-- Shows Near You Section -->
+  <div class="bm-section-head d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <div class="bm-section-title">Shows Near You</div>
+      <div class="bm-section-sub small opacity-75">
+        Discover live music in your area: {{ eventsStore.discoveryEvents().length }} events
+      </div>
+    </div>
+    <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"
+      >celebration</mat-icon
+    >
+  </div>
+
+  @if (eventsStore.loading() && eventsStore.discoveryEvents().length === 0) {
+    <div class="d-flex gap-3 py-2 overflow-auto pb-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div
+          class="skeleton-card rounded-3 shadow-sm"
+          style="min-width: 320px; height: 100px; background: #f0f0f0"
+        ></div>
+      }
+    </div>
+  } @else if (eventsStore.discoveryEvents().length > 0) {
+    <div class="d-flex gap-3 py-2 overflow-auto pb-3" style="scroll-snap-type: x mandatory">
+      @for (ev of eventsStore.discoveryEvents(); track ev.id) {
+        <mat-card
+          class="p-0 border-0 shadow-sm rounded-3 overflow-hidden"
+          style="min-width: 340px; flex-shrink: 0; cursor: pointer; scroll-snap-align: start"
+          [routerLink]="['/events', ev.id]"
+        >
+          <div class="p-3 d-flex gap-3 align-items-center">
+            <!-- Band Avatar -->
+            <div
+              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="
+                width: 56px;
+                height: 56px;
+                background: linear-gradient(135deg, var(--bm-primary), var(--bm-accent));
+                color: white;
+              "
+            >
+              @if ($any(ev).bands?.avatar_url) {
+                <img
+                  [src]="$any(ev).bands?.avatar_url"
+                  class="rounded-circle"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                />
+              } @else {
+                <mat-icon>music_note</mat-icon>
+              }
+            </div>
+
+            <!-- Event Info -->
+            <div class="flex-grow-1 min-w-0">
+              <h6 class="fw-bold mb-1 text-truncate">{{ $any(ev).title }}</h6>
+              <div class="small text-muted d-flex align-items-center gap-1 mb-1">
+                <mat-icon style="font-size: 14px; width: 14px; height: 14px">groups</mat-icon>
+                <span class="text-truncate">{{ $any(ev).bands?.name || 'Unknown Band' }}</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 small">
+                <span class="text-muted">
+                  <mat-icon
+                    style="font-size: 12px; width: 12px; height: 12px; vertical-align: middle"
+                    >calendar_today</mat-icon
+                  >
+                  {{ $any(ev).event_date | date: 'MMM d, yyyy' }}
+                </span>
+                <span class="text-muted">•</span>
+                <span class="text-muted text-truncate">{{ $any(ev).location_name }}</span>
+              </div>
+            </div>
+
+            <!-- Price Badge -->
+            <div class="text-end flex-shrink-0">
+              @if ($any(ev).ticket_price > 0) {
+                <span class="badge bg-primary rounded-pill px-3 py-2">
+                  {{ $any(ev).ticket_price | currency: $any(ev).currency || 'EUR' }}
+                </span>
+              } @else {
+                <span class="badge bg-success rounded-pill px-3 py-2">FREE</span>
+              }
+            </div>
+          </div>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="text-center py-4 opacity-50">
+      <mat-icon style="font-size: 48px; width: 48px; height: 48px">event_busy</mat-icon>
+      <p class="small mt-2 mb-0">No events nearby. Check back soon!</p>
+    </div>
+  }
+
+  <mat-divider class="my-4"></mat-divider>
+
   <!-- Filters Card -->
   <div class="filters-card">
     <div class="d-flex flex-wrap gap-3 align-items-center">
@@ -50,8 +145,14 @@
         </mat-select>
       </mat-form-field>
 
-      <div class="d-flex align-items-center gap-2 px-2 border-start h-100">
+      <div class="d-flex align-items-center gap-3 px-2 border-start h-100">
         <mat-checkbox [(ngModel)]="sings" color="primary">Sings</mat-checkbox>
+        <mat-checkbox [(ngModel)]="nearbyOnly" color="accent">
+          <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle"
+            >near_me</mat-icon
+          >
+          Nearby
+        </mat-checkbox>
       </div>
 
       <div class="d-flex gap-2 ms-auto">

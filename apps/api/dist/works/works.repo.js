@@ -120,12 +120,26 @@ export async function getWorkByIdWithArrangements(workId) {
  * Create work (optional, por si querés crear desde UI más adelante)
  */
 export async function createWork(input) {
+    const { musicbrainzId, title, artist } = input;
+    // Try to find existing work first
+    let query = supabase.from("song_works").select("*");
+    if (musicbrainzId) {
+        query = query.eq("musicbrainz_id", musicbrainzId);
+    }
+    else {
+        query = query.eq("title", title.trim()).eq("artist", artist.trim());
+    }
+    const { data: existing, error: findError } = await query.maybeSingle();
+    if (findError)
+        throw findError;
+    if (existing)
+        return mapWork(existing);
     const payload = {
-        title: input.title.trim(),
-        artist: input.artist.trim(),
+        title: title.trim(),
+        artist: artist.trim(),
         rights: input.rights ?? "unknown",
         source: input.source ?? "user",
-        musicbrainz_id: input.musicbrainzId ?? null,
+        musicbrainz_id: musicbrainzId ?? null,
         wikidata_id: input.wikidataId ?? null,
         rights_notes: input.rightsNotes ?? null,
     };
@@ -163,7 +177,7 @@ export async function createArrangementFromSong(userId, song) {
         source: "community",
         is_seed: false,
         rating_avg: 0,
-        rating_count: 0
+        rating_count: 0,
     };
     const { data, error } = await supabase
         .from("arrangements")

@@ -13,6 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { EventsStore } from '../../../events/state/events.store';
+import { MatDividerModule } from '@angular/material/divider';
 
 type ProfileDto = {
   id: string;
@@ -39,6 +41,7 @@ type ProfileDto = {
     MatInputModule,
     MatSelectModule,
     MatCheckboxModule,
+    MatDividerModule,
   ],
   templateUrl: './community-page.html',
   styles: [
@@ -163,11 +166,37 @@ type ProfileDto = {
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+
+      .community-event-scroll {
+        overflow-x: auto;
+        padding-bottom: 12px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(38, 70, 83, 0.2) transparent;
+      }
+      .community-event-scroll::-webkit-scrollbar {
+        height: 4px;
+      }
+      .community-event-scroll::-webkit-scrollbar-thumb {
+        background: rgba(38, 70, 83, 0.1);
+        border-radius: 10px;
+      }
+      .community-event-card {
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+      }
+      .community-event-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+      }
     `,
   ],
 })
 export class CommunityPageComponent {
   private http = inject(HttpClient);
+  public eventsStore = inject(EventsStore);
 
   readonly profiles = signal<ProfileDto[]>([]);
   readonly loading = signal(true);
@@ -178,6 +207,11 @@ export class CommunityPageComponent {
   readonly instruments = signal<string[]>([]);
   readonly genres = signal<string[]>([]);
   readonly sings = signal(false);
+  readonly nearbyOnly = signal(false);
+
+  // Current user location (for filtering)
+  private currentLat = signal<number | null>(null);
+  private currentLng = signal<number | null>(null);
 
   // Options
   readonly instrumentOptions = [
@@ -204,6 +238,23 @@ export class CommunityPageComponent {
 
   constructor() {
     this.load();
+    this.initDiscovery();
+  }
+
+  initDiscovery() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.eventsStore.loadDiscovery(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          // Fallback or default
+          this.eventsStore.loadDiscovery();
+        },
+      );
+    } else {
+      this.eventsStore.loadDiscovery();
+    }
   }
 
   clearFilters() {
@@ -211,6 +262,7 @@ export class CommunityPageComponent {
     this.instruments.set([]);
     this.genres.set([]);
     this.sings.set(false);
+    this.nearbyOnly.set(false);
     this.load();
   }
 

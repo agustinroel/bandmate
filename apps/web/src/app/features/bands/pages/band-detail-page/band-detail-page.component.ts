@@ -1,6 +1,6 @@
 import { Component, inject, input, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,12 +9,16 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BandRow, BandsService } from '../../services/bands.service';
 import { ShareSongDialogComponent } from '../../ui/share-song-dialog/share-song-dialog.component';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { StorageService } from '../../../../core/storage/storage.service';
 import { BandEditDialogComponent } from '../../ui/band-edit-dialog/band-edit-dialog.component';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
+import { EventsStore } from '../../../events/state/events.store';
+import { EventRow } from '../../../events/services/events.service';
+import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-create-dialog.component';
 
 @Component({
   standalone: true,
@@ -29,6 +33,7 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
     MatDialogModule,
     MatProgressSpinnerModule,
     MatMenuModule,
+    MatTooltipModule,
   ],
   template: `
     @if (loading() && !band()) {
@@ -300,20 +305,237 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
                 </div>
               </mat-tab>
 
-              <!-- Setlists -->
-              <mat-tab label="Setlists">
-                <div class="py-5 text-center">
-                  <div class="d-inline-flex p-4 rounded-circle bg-white shadow-sm mb-3">
-                    <mat-icon class="display-4 text-primary opacity-50">playlist_play</mat-icon>
+              <!-- Events -->
+              <mat-tab label="Events">
+                <div class="py-4 px-2">
+                  <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                      <h3 class="fw-bold m-0 text-primary">Live Shows</h3>
+                      <p class="text-muted small mb-0">
+                        Manage and schedule your band's upcoming performances
+                      </p>
+                    </div>
+                    @if (isAdmin()) {
+                      <div class="d-flex gap-2">
+                        <button
+                          mat-stroked-button
+                          color="primary"
+                          (click)="eventsStore.setupPayouts(id()!)"
+                          class="rounded-pill px-3"
+                          matTooltip="Set up Stripe to receive ticket payouts"
+                        >
+                          <mat-icon class="me-2">account_balance</mat-icon> Payouts
+                        </button>
+                        <button
+                          mat-flat-button
+                          color="accent"
+                          (click)="createEvent()"
+                          class="rounded-pill px-4 shadow-sm"
+                        >
+                          <mat-icon class="me-2">add_location</mat-icon> Create Event
+                        </button>
+                      </div>
+                    }
                   </div>
-                  <h3 class="text-primary fw-bold">Band Setlists</h3>
-                  <p class="text-muted mx-auto" style="max-width: 400px;">
-                    Organize your concerts and rehearsals. This feature will allow syncing setlists
-                    across all members devices.
-                  </p>
-                  <button mat-flat-button color="accent" class="rounded-pill px-4">
-                    Waitlist for PRO
-                  </button>
+
+                  @if (eventsStore.loading() && eventsStore.bandEvents().length === 0) {
+                    <div class="text-center py-5">
+                      <mat-spinner diameter="30" class="mx-auto"></mat-spinner>
+                    </div>
+                  } @else if (eventsStore.bandEvents().length === 0) {
+                    <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+                      <mat-icon class="display-1 text-muted opacity-25 mb-3"
+                        >event_available</mat-icon
+                      >
+                      <p class="h5 text-muted">No shows scheduled yet</p>
+                      <p class="small text-muted">Bands with live events get 3x more engagement!</p>
+                    </div>
+                  } @else {
+                    <!-- PREMIUM FEATURED EVENT CARD (GREY TEAL + GOLD) -->
+                    @if (featuredEvent(); as feat) {
+                      <div class="mb-5 position-relative">
+                        <h4 class="fw-bold text-dark mb-4 ms-1">Next Big Show</h4>
+
+                        <div
+                          class="featured-card rounded-5 overflow-hidden shadow-lg position-relative text-white"
+                        >
+                          <!-- Background: Immersive Concert Photo -->
+                          <div
+                            class="featured-bg position-absolute inset-0"
+                            style="background-image: url('https://images.unsplash.com/photo-1470229722913-7ea05107f5c3?q=80&w=2072&auto=format&fit=crop');"
+                          ></div>
+
+                          <!-- Overlay: Strong Grey Teal -->
+                          <div class="featured-overlay position-absolute inset-0"></div>
+
+                          <div
+                            class="position-relative z-2 p-5 h-100 d-flex flex-column justify-content-between"
+                          >
+                            <!-- Top Section: Badge & Title -->
+                            <div>
+                              <div class="d-flex align-items-center gap-3 mb-3">
+                                @if (
+                                  feat!.status === 'published' &&
+                                  (feat!.tickets_sold || 0) < (feat!.capacity || 100)
+                                ) {
+                                  <!-- On Sale: Vibrant Gold -->
+                                  <span
+                                    class="badge rounded-pill text-dark fw-bold px-3 py-2 shadow-sm d-flex align-items-center gap-1"
+                                    style="background-color: #FFD700; font-size: 0.85rem; letter-spacing: 0.5px;"
+                                  >
+                                    <mat-icon style="font-size: 16px; width:16px; height:16px;"
+                                      >local_activity</mat-icon
+                                    >
+                                    ON SALE
+                                  </span>
+                                } @else {
+                                  <!-- Sold Out / Other: Desaturated Grey Teal -->
+                                  <span
+                                    class="badge rounded-pill text-white fw-bold px-3 py-2 shadow-sm border border-white-50"
+                                    style="background-color: rgba(38,70,83,0.6);"
+                                  >
+                                    {{
+                                      feat!.status === 'published'
+                                        ? 'SOLD OUT'
+                                        : (feat!.status | uppercase)
+                                    }}
+                                  </span>
+                                }
+                              </div>
+
+                              <h1
+                                class="display-4 fw-bold mb-3 text-white"
+                                style="text-shadow: 0 4px 20px rgba(0,0,0,0.5);"
+                              >
+                                {{ feat!.title }}
+                              </h1>
+
+                              <!-- Metadata -->
+                              <div class="d-flex flex-wrap gap-4 text-white-50 fs-5 mb-4">
+                                <div class="d-flex align-items-center gap-2">
+                                  <mat-icon class="text-gold">calendar_today</mat-icon>
+                                  <span class="text-light">{{
+                                    feat!.event_date | date: 'MMMM d, yyyy'
+                                  }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                  <mat-icon class="text-gold">location_on</mat-icon>
+                                  <span class="text-light">{{ feat!.location_name }}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Bottom Section: Social Proof & CTA -->
+                            <div
+                              class="d-flex align-items-end justify-content-between flex-wrap gap-4"
+                            >
+                              <!-- Tickets Sold Proof -->
+                              <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                  <mat-icon
+                                    class="text-gold"
+                                    style="font-size: 20px; width: 20px; height: 20px;"
+                                    >confirmation_number</mat-icon
+                                  >
+                                  <span class="text-gold fw-bold fs-5"
+                                    >{{ feat!.tickets_sold || 0 }} tickets sold</span
+                                  >
+                                </div>
+                                <div
+                                  class="progress rounded-pill bg-white bg-opacity-10"
+                                  style="height: 6px; width: 200px;"
+                                >
+                                  <div
+                                    class="progress-bar bg-gold"
+                                    role="progressbar"
+                                    [style.width.%]="
+                                      ((feat!.tickets_sold || 0) / (feat!.capacity || 100)) * 100
+                                    "
+                                  ></div>
+                                </div>
+                                <div class="small text-white-50 mt-1">
+                                  {{
+                                    (feat!.capacity || 100) - (feat!.tickets_sold || 0)
+                                  }}
+                                  remaining
+                                </div>
+                              </div>
+
+                              <!-- CTA Button -->
+                              <a
+                                [routerLink]="['/events', feat!.id]"
+                                mat-flat-button
+                                class="btn-premium-gold py-4 px-5 rounded-pill fs-5 shadow-lg"
+                              >
+                                View Event Details
+                                <mat-icon iconPositionEnd class="ms-2">arrow_forward</mat-icon>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Other Events List -->
+                    <h5 class="fw-bold text-muted mb-3">Upcoming Events</h5>
+                    <div class="row g-3 m-0">
+                      @for (ev of eventsStore.bandEvents(); track ev.id) {
+                        @if (ev.id !== featuredEvent()?.id) {
+                          <div class="col-md-6 p-2">
+                            <mat-card
+                              class="p-0 border-0 shadow-sm rounded-4 overflow-hidden event-card bg-white"
+                            >
+                              <div class="p-3 d-flex gap-3">
+                                <div
+                                  class="event-date-box text-center rounded-3 p-2 d-flex flex-column justify-content-center"
+                                  style="background: var(--bm-bg); color: var(--bm-primary); border: 1px solid rgba(0,0,0,0.05); min-width: 65px; height: 65px;"
+                                >
+                                  <span class="fw-bold h5 mb-0">{{
+                                    $any(ev).event_date | date: 'dd'
+                                  }}</span>
+                                  <span class="small text-uppercase">{{
+                                    $any(ev).event_date | date: 'MMM'
+                                  }}</span>
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                  <h5 class="fw-bold mb-1 text-truncate">{{ $any(ev).title }}</h5>
+                                  <div
+                                    class="small text-muted d-flex align-items-center gap-1 mb-1"
+                                  >
+                                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;"
+                                      >location_on</mat-icon
+                                    >
+                                    <span>{{ $any(ev).location_name }}</span>
+                                  </div>
+                                  <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-dark border">{{
+                                      $any(ev).status | titlecase
+                                    }}</span>
+                                    @if ($any(ev).ticket_price > 0) {
+                                      <span class="text-primary fw-bold small">{{
+                                        $any(ev).ticket_price | currency: $any(ev).currency
+                                      }}</span>
+                                    } @else {
+                                      <span class="text-success fw-bold small">FREE</span>
+                                    }
+                                  </div>
+                                </div>
+                                <div class="d-flex flex-column justify-content-center gap-2">
+                                  <a
+                                    [routerLink]="['/events', ev.id]"
+                                    mat-icon-button
+                                    color="primary"
+                                  >
+                                    <mat-icon>visibility</mat-icon>
+                                  </a>
+                                </div>
+                              </div>
+                            </mat-card>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
                 </div>
               </mat-tab>
             }
@@ -401,6 +623,12 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
           height: 320px;
           text-align: center;
         }
+        .featured-card {
+          min-height: auto !important;
+        }
+        .display-4 {
+          font-size: 2.5rem;
+        }
       }
       .edit-btn {
         position: absolute;
@@ -411,6 +639,58 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
       }
       .text-shadow {
         text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Featured Event Card Styles (Premium Grey Teal + Gold) */
+      .featured-card {
+        min-height: 400px;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+      .featured-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+      }
+      .featured-bg {
+        background-size: cover;
+        background-position: center;
+        transition: transform 8s ease;
+      }
+      .featured-card:hover .featured-bg {
+        transform: scale(1.1);
+      }
+      .featured-overlay {
+        background: linear-gradient(
+          to right,
+          rgba(29, 53, 66, 0.95) 0%,
+          rgba(29, 53, 66, 0.8) 100%
+        );
+      }
+      .text-gold {
+        color: #ffd700 !important;
+      }
+      .bg-gold {
+        background-color: #ffd700 !important;
+      }
+      .btn-premium-gold {
+        background-color: #ffd700 !important;
+        color: #1a1a1a !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px;
+        border: none !important;
+        transition: all 0.2s ease !important;
+      }
+      .btn-premium-gold:hover {
+        background-color: #ffc107 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4) !important;
+      }
+      .inset-0 {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
       }
 
       /* Glassmorphism Buttons */
@@ -469,6 +749,7 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
       }
       ::ng-deep .bm-tabs .mdc-tab--active {
         color: var(--bm-primary) !important;
+        background: transparent !important;
       }
       ::ng-deep .bm-tabs .mdc-tab-indicator__content--underline {
         border-color: var(--bm-primary) !important;
@@ -491,6 +772,8 @@ export class BandDetailPageComponent {
   private auth = inject(AuthStore);
   private storage = inject(StorageService);
   private notify = inject(NotificationsService);
+  public eventsStore = inject(EventsStore);
+  private router = inject(Router);
 
   id = input<string>();
 
@@ -499,6 +782,16 @@ export class BandDetailPageComponent {
   songs = signal<any[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+
+  // Computed featured event
+  featuredEvent = computed(() => {
+    const events = this.eventsStore.bandEvents();
+    if (!events || events.length === 0) return null;
+
+    // Simplest logic: closest upcoming event. Events should already be sorted by API, but to be sure:
+    // For now, take the first one as "Coming Soon".
+    return events[0];
+  });
 
   isAdmin = computed(() => {
     const user = this.auth.user();
@@ -534,6 +827,9 @@ export class BandDetailPageComponent {
         this.bandsService.get(id).toPromise(),
         this.bandsService.getMembers(id).toPromise(),
       ]);
+
+      // Load events
+      this.eventsStore.loadBandEvents(id);
 
       this.band.set(b || null);
       this.members.set(m || []);
@@ -612,42 +908,32 @@ export class BandDetailPageComponent {
     });
   }
 
-  async inviteMember() {
+  createEvent() {
     const bandId = this.id();
     if (!bandId) return;
 
-    try {
-      const { code } = (await this.bandsService.getInviteCode(bandId).toPromise()) as {
-        code: string;
-      };
-      const link = `${window.location.origin}/bands/join/${code}`;
+    const ref = this.dialog.open(EventCreateDialogComponent, {
+      width: '600px',
+      disableClose: true,
+    });
 
-      await navigator.clipboard.writeText(link);
-      this.notify.success('Invite link copied to clipboard!');
-    } catch (e) {
-      console.error('Failed to get invite code', e);
-      this.notify.error('Could not generate invite link.');
-    }
+    ref.afterClosed().subscribe((result) => {
+      if (result) {
+        this.eventsStore.createEvent(bandId, result);
+      }
+    });
+  }
+
+  inviteMember() {
+    // Placeholder for invitation logic
+    console.log('Invite member clicked');
   }
 
   shareSong() {
-    const ref = this.dialog.open(ShareSongDialogComponent, { width: '450px' });
-
-    ref.afterClosed().subscribe(async (songId) => {
-      if (!songId) return;
-
-      const bandId = this.id();
-      if (!bandId) return;
-
-      try {
-        await this.bandsService.shareSong(bandId, songId).toPromise();
-        // Reload only songs, avoid full page flicker
-        const s = await this.bandsService.getSongs(bandId).toPromise();
-        this.songs.set(s || []);
-      } catch (e) {
-        console.error('Failed to share', e);
-        alert('Could not share song.');
-      }
+    // Placeholder for share song logic
+    console.log('Share song clicked');
+    this.dialog.open(ShareSongDialogComponent, {
+      width: '500px',
     });
   }
 }

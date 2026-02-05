@@ -13,6 +13,9 @@ import { spotifyAuthRoutes } from "./auth/spotify.routes.js";
 import { profilesRoutes } from "./profiles/profiles.routes.js";
 import { bandsRoutes } from "./bands/bands.routes.js";
 import { notificationsRoutes } from "./notifications/notifications.routes.js";
+import { eventsRoutes } from "./events/events.routes.js";
+import { ticketingRoutes } from "./events/ticketing.routes.js";
+import "./services/ingestion-queue.service.js"; // Initialize worker
 if (process.env.SEED_LIBRARY === "true") {
     importSeedLibrary()
         .then(() => console.log("[seed] library imported"))
@@ -53,6 +56,8 @@ await app.register(importRoutes, { prefix: "/import" });
 await app.register(spotifyAuthRoutes, { prefix: "/auth/spotify" });
 await app.register(profilesRoutes);
 await app.register(bandsRoutes);
+await app.register(eventsRoutes);
+await app.register(ticketingRoutes);
 await app.register(notificationsRoutes);
 app.setErrorHandler((err, req, reply) => {
     const status = err.statusCode ?? 500;

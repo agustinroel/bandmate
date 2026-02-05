@@ -14,8 +14,11 @@
     </div>
     <div class="songs-head-actions d-flex gap-2">
       <button mat-flat-button class="spotify-sync-btn" (click)="goSpotify()">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" 
-             alt="" class="spotify-logo-mini me-1">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg"
+          alt=""
+          class="spotify-logo-mini me-1"
+        />
         Sync Spotify
       </button>
       <button mat-raised-button color="primary" class="songs-add" (click)="goNew()">
@@ -167,7 +170,16 @@
       Add your first song and start building your rehearsal library.
     </div>
 
-    <button mat-stroked-button color="primary" (click)="goNew()">Add your first song</button>
+    <div class="d-flex gap-2 justify-content-center">
+      <button mat-stroked-button color="primary" (click)="goNew()">
+        <mat-icon class="me-1">add</mat-icon>
+        Add your first song
+      </button>
+      <button mat-stroked-button (click)="scrollToLibrary()">
+        <mat-icon class="me-1">explore</mat-icon>
+        Browse Library
+      </button>
+    </div>
   </div>
 } @else if (!isLoading() && isNoResults()) {
   <div class="text-center py-5">
@@ -188,6 +200,11 @@
       <button mat-flat-button color="primary" (click)="goNew()">
         <mat-icon class="me-1">add</mat-icon>
         Add song
+      </button>
+
+      <button mat-stroked-button (click)="scrollToLibrary()">
+        <mat-icon class="me-1">explore</mat-icon>
+        Browse Library
       </button>
     </div>
   </div>
@@ -250,7 +267,6 @@
                 </span>
               }
 
-
               @if (durationLabel(s.durationSec)) {
                 <span class="bm-pill">
                   <mat-icon class="pill-ic">schedule</mat-icon>
@@ -309,9 +325,16 @@
   <div id="bm-library-anchor"></div>
 
   @if (libraryWorks().length > 0) {
-    <div class="bm-section-head">
-      <div class="bm-section-title">Library</div>
-      <div class="bm-section-sub small opacity-75">{{ libraryWorks().length }} songs</div>
+    <div class="bm-section-head d-flex align-items-center justify-content-between">
+      <div>
+        <div class="bm-section-title">Community Library</div>
+        <div class="bm-section-sub small opacity-75">
+          Curated arrangements from the community: {{ libraryWorks().length }} songs
+        </div>
+      </div>
+      <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"
+        >auto_awesome</mat-icon
+      >
     </div>
 
     <div class="songs-grid">
