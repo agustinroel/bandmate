@@ -28,9 +28,12 @@ const app = Fastify({ logger: true });
 const allowed = new Set([
   "http://localhost:4200",
   "http://127.0.0.1:4200",
-  "http://localhost:5173", // por si alguna vez usás Vite
-  "https://bandmate-pink.vercel.app", // prod
+  "http://localhost:5173",
 ]);
+
+if (process.env.FRONTEND_URL) {
+  allowed.add(process.env.FRONTEND_URL);
+}
 
 await app.register(cors, {
   origin: (origin, cb) => {
