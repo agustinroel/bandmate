@@ -109,7 +109,10 @@ async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions) {
 
   // Hook global opcional: si lo querés global, registralo en main con app.addHook.
   app.decorate("authGuardHook", async (req: FastifyRequest) => {
-    // rutas públicas por prefix
+    // 1. Saltar OPTIONS (peticiones preflight del navegador)
+    if (req.method === "OPTIONS") return;
+
+    // 2. Rutas públicas por prefix
     const url = req.url || "";
     if (publicRoutes.some((p) => url.startsWith(p))) return;
 

@@ -29,8 +29,8 @@ const app = Fastify({
 
 // Hook para capturar el raw body solo en el webhook de Stripe
 app.addHook("preParsing", async (request, reply, payload) => {
-  // Usamos startsWith para ignorar query strings
-  if (request.url.startsWith("/webhooks/stripe")) {
+  // Usamos startsWith para ignorar query strings y filtramos por POST
+  if (request.method === "POST" && request.url.startsWith("/webhooks/stripe")) {
     const chunks: Buffer[] = [];
     for await (const chunk of payload) {
       chunks.push(chunk as Buffer);
@@ -70,7 +70,7 @@ await app.register(cors, {
     }
 
     app.log.warn(
-      `CORS blocked for origin: ${origin}. Allowed origins: ${Array.from(allowed).join(", ")}`,
+      `CORS blocked for origin: ${origin} (normalized: ${normalizedOrigin}). Allowed origins: ${Array.from(allowed).join(", ")}`,
     );
     return cb(new Error(`CORS blocked for origin: ${origin}`), false);
   },
