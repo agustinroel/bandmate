@@ -81,26 +81,27 @@ if (process.env.FRONTEND_URL) {
   }
 }
 
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true; // Server-to-server or tools
+  const normalizedOrigin = origin.replace(/\/$/, "");
+
+  // 1. Exact matches
+  if (allowed.has(normalizedOrigin)) return true;
+
+  // 2. Vercel subdomains
+  if (normalizedOrigin.endsWith(".vercel.app")) return true;
+
+  return false;
+}
+
 await app.register(cors, {
   origin: (origin, cb) => {
-    // requests server-to-server o tools sin Origin
-    if (!origin) return cb(null, true);
-
-    const normalizedOrigin = origin.replace(/\/$/, "");
-
-    // 1. Check exact matches
-    if (allowed.has(normalizedOrigin)) {
-      return cb(null, true);
-    }
-
-    // 2. Allow any Vercel subdomain (Resiliencia para despliegues dinámicos)
-    if (normalizedOrigin.endsWith(".vercel.app")) {
-      app.log.info(`CORS allowed for Vercel subdomain: ${origin}`);
+    if (isOriginAllowed(origin)) {
       return cb(null, true);
     }
 
     app.log.warn(
-      `CORS blocked for origin: ${origin} (normalized: ${normalizedOrigin}). Allowed origins: ${Array.from(allowed).join(", ")}`,
+      `CORS blocked for origin: ${origin}. Allowed origins: ${Array.from(allowed).join(", ")}`,
     );
     return cb(new Error(`CORS blocked for origin: ${origin}`), false);
   },
@@ -120,6 +121,7 @@ await app.register(registerAuth, {
   publicRoutes: [
     "/health",
     "/health/cors",
+    "/health/webhook",
     "/debug",
     "/auth/spotify",
     "/webhooks/stripe",
@@ -132,6 +134,10 @@ app.get("/health", async () => ({ status: "ok" }));
 app.get("/health/cors", async () => ({
   allowedOrigins: Array.from(allowed),
   frontendUrlEnv: process.env.FRONTEND_URL,
+}));
+app.get("/health/webhook", async () => ({
+  hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+  secretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 7),
 }));
 
 // Routes ONLY via plugins
@@ -154,15 +160,11 @@ app.setErrorHandler((err, req, reply) => {
 
   req.log.error({ err }, "Unhandled error");
 
-  // Inyectar cabeceras CORS manualmente en errores ya que Fastify-CORS
-  // a veces no lo hace si el error corta el ciclo de vida antes de tiempo (ej: 401)
+  // Inyectar cabeceras CORS de forma resiliente usando el helper unificado
   const origin = req.headers.origin;
-  if (origin) {
-    const normalizedOrigin = origin.replace(/\/$/, "");
-    if (allowed.has(normalizedOrigin)) {
-      reply.header("Access-Control-Allow-Origin", origin);
-      reply.header("Access-Control-Allow-Credentials", "true");
-    }
+  if (isOriginAllowed(origin)) {
+    reply.header("Access-Control-Allow-Origin", origin || "*");
+    reply.header("Access-Control-Allow-Credentials", "true");
   }
 
   reply.status(status).send({
