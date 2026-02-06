@@ -146,6 +146,13 @@ export const routes: Routes = [
             (m) => m.EventDetailPageComponent,
           ),
       },
+      {
+        path: 'events/:id/check-in',
+        loadComponent: () =>
+          import('./features/events/pages/check-in-page/check-in-page').then(
+            (m) => m.CheckInPageComponent,
+          ),
+      },
 
       {
         path: 'bands',
