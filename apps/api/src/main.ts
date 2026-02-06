@@ -25,6 +25,7 @@ if (process.env.SEED_LIBRARY === "true") {
 
 const app = Fastify({
   logger: true,
+  ignoreTrailingSlash: true,
 });
 
 // Hook para capturar el raw body solo en el webhook de Stripe
@@ -53,9 +54,21 @@ const allowed = new Set([
 ]);
 
 if (process.env.FRONTEND_URL) {
-  // Normalizar: quitar slash final si existe
-  const normalized = process.env.FRONTEND_URL.replace(/\/$/, "");
-  allowed.add(normalized);
+  // Soportar múltiples URLs separadas por comas
+  const urls = process.env.FRONTEND_URL.split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  for (const rawUrl of urls) {
+    let url = rawUrl;
+    // Autocompletar protocolo si falta
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = `https://${url}`;
+    }
+    // Quitar slash final
+    const normalized = url.replace(/\/$/, "");
+    allowed.add(normalized);
+  }
 }
 
 await app.register(cors, {
@@ -81,9 +94,22 @@ await app.register(cors, {
 
 // Auth (adds app.requireAuth + req.user)
 await app.register(registerAuth, {
-  publicRoutes: ["/health", "/debug", "/auth/spotify", "/webhooks/stripe"],
+  publicRoutes: [
+    "/health",
+    "/health/cors",
+    "/debug",
+    "/auth/spotify",
+    "/webhooks/stripe",
+  ],
 });
 app.addHook("preHandler", app.authGuardHook);
+
+// Diagnostic Routes
+app.get("/health", async () => ({ status: "ok" }));
+app.get("/health/cors", async () => ({
+  allowedOrigins: Array.from(allowed),
+  frontendUrlEnv: process.env.FRONTEND_URL,
+}));
 
 // Routes ONLY via plugins
 await app.register(songsRoutes);
