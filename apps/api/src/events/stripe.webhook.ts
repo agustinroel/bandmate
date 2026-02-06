@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { FastifyInstance } from "fastify";
 import { createTicket } from "./ticketing.repo.js";
+import { createNotification } from "../notifications/notifications.repo.js";
 import crypto from "node:crypto";
 
 let stripeInstance: Stripe | null = null;
@@ -92,6 +93,24 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
               stripe_payment_intent_id: session.payment_intent as string,
             });
             req.log.info("Ticket created successfully");
+
+            // Notificar al usuario
+            try {
+              await createNotification(
+                metadata.userId,
+                "ticket_purchased",
+                "¡Entrada confirmada!",
+                `Tu entrada para el evento ya está disponible en tu sección de Tickets.`,
+                { eventId: metadata.eventId },
+              );
+              req.log.info("Notification sent successfully");
+            } catch (notifErr: any) {
+              req.log.error(
+                { notifErr },
+                "Error sending fulfillment notification",
+              );
+              // No fallamos el webhook por una notificación
+            }
           } catch (repoErr: any) {
             req.log.error({ repoErr }, "Error saving ticket to database");
             // Returning 500 so Stripe retries
