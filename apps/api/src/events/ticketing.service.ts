@@ -85,14 +85,14 @@ export async function createTicketCheckoutSession(
       },
     ],
     mode: "payment",
+    metadata: {
+      userId,
+      eventId,
+    },
     payment_intent_data: {
       application_fee_amount: 0, // In future: platform fee
       transfer_data: {
         destination: connectedAccountId,
-      },
-      metadata: {
-        userId,
-        eventId,
       },
     },
     success_url: `${process.env.FRONTEND_URL}/tickets?success=true`,
