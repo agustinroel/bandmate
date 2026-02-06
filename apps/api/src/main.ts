@@ -32,17 +32,27 @@ const app = Fastify({
 app.addHook("preParsing", async (request, reply, payload) => {
   // Usamos startsWith para ignorar query strings y filtramos por POST
   if (request.method === "POST" && request.url.startsWith("/webhooks/stripe")) {
+    request.log.info(
+      { url: request.url },
+      "Capturando rawBody para Webhook de Stripe...",
+    );
     const chunks: Buffer[] = [];
-    for await (const chunk of payload) {
-      chunks.push(chunk as Buffer);
-    }
-    const rawBody = Buffer.concat(chunks);
-    (request as any).rawBody = rawBody;
+    try {
+      for await (const chunk of payload) {
+        chunks.push(chunk as Buffer);
+      }
+      const rawBody = Buffer.concat(chunks);
+      (request as any).rawBody = rawBody;
+      request.log.info({ size: rawBody.length }, "rawBody capturado con éxito");
 
-    // Devolver un nuevo stream para que Fastify siga procesando
-    return (async function* () {
-      yield rawBody;
-    })();
+      // Devolver un nuevo stream para que Fastify siga procesando
+      return (async function* () {
+        yield rawBody;
+      })();
+    } catch (err) {
+      request.log.error({ err }, "Error capturando rawBody del webhook");
+      throw err;
+    }
   }
   return payload;
 });
@@ -78,7 +88,14 @@ await app.register(cors, {
 
     const normalizedOrigin = origin.replace(/\/$/, "");
 
+    // 1. Check exact matches
     if (allowed.has(normalizedOrigin)) {
+      return cb(null, true);
+    }
+
+    // 2. Allow any Vercel subdomain (Resiliencia para despliegues dinámicos)
+    if (normalizedOrigin.endsWith(".vercel.app")) {
+      app.log.info(`CORS allowed for Vercel subdomain: ${origin}`);
       return cb(null, true);
     }
 
@@ -88,7 +105,13 @@ await app.register(cors, {
     return cb(new Error(`CORS blocked for origin: ${origin}`), false);
   },
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
   credentials: true,
 });
 
