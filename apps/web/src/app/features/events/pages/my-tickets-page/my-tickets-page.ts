@@ -104,8 +104,15 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
                   </div>
 
                   <div class="qr-vault rounded-4 mb-4">
-                    <div class="qr-container p-3">
-                      <mat-icon class="qr-icon">qr_code_2</mat-icon>
+                    <div class="qr-container p-2">
+                      <img
+                        [src]="
+                          'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' +
+                          t.qr_hash
+                        "
+                        alt="QR Code"
+                        class="qr-image"
+                      />
                     </div>
                     <div class="qr-meta">
                       <div class="entry-code">ENTRY CODE</div>
@@ -308,13 +315,17 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
         background: white;
         border-radius: 12px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        width: 64px;
+        height: 64px;
 
-        .qr-icon {
-          font-size: 48px;
-          width: 48px;
-          height: 48px;
-          color: #333;
-          opacity: 0.8;
+        .qr-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
       }
 
