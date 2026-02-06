@@ -29,7 +29,8 @@ const app = Fastify({
 
 // Hook para capturar el raw body solo en el webhook de Stripe
 app.addHook("preParsing", async (request, reply, payload) => {
-  if (request.url === "/webhooks/stripe") {
+  // Usamos startsWith para ignorar query strings
+  if (request.url.startsWith("/webhooks/stripe")) {
     const chunks: Buffer[] = [];
     for await (const chunk of payload) {
       chunks.push(chunk as Buffer);
@@ -37,7 +38,7 @@ app.addHook("preParsing", async (request, reply, payload) => {
     const rawBody = Buffer.concat(chunks);
     (request as any).rawBody = rawBody;
 
-    // Devolver un nuevo stream para que Fastify siga procesando (aunque no lo usemos para JSON)
+    // Devolver un nuevo stream para que Fastify siga procesando
     return (async function* () {
       yield rawBody;
     })();
@@ -80,7 +81,7 @@ await app.register(cors, {
 
 // Auth (adds app.requireAuth + req.user)
 await app.register(registerAuth, {
-  publicRoutes: ["/health", "/debug", "/auth/spotify"],
+  publicRoutes: ["/health", "/debug", "/auth/spotify", "/webhooks/stripe"],
 });
 app.addHook("preHandler", app.authGuardHook);
 
@@ -103,6 +104,17 @@ app.setErrorHandler((err, req, reply) => {
   const status = (err as any).statusCode ?? 500;
 
   req.log.error({ err }, "Unhandled error");
+
+  // Inyectar cabeceras CORS manualmente en errores ya que Fastify-CORS
+  // a veces no lo hace si el error corta el ciclo de vida antes de tiempo (ej: 401)
+  const origin = req.headers.origin;
+  if (origin) {
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    if (allowed.has(normalizedOrigin)) {
+      reply.header("Access-Control-Allow-Origin", origin);
+      reply.header("Access-Control-Allow-Credentials", "true");
+    }
+  }
 
   reply.status(status).send({
     statusCode: status,
