@@ -111,6 +111,17 @@ import { FormsModule } from '@angular/forms';
                     </div>
                   }
                 </div>
+
+                <div class="mt-4 d-flex gap-2">
+                  <a
+                    [routerLink]="['/events', event()!.id, 'check-in']"
+                    [queryParams]="{ bandId: event()!.band_id }"
+                    class="bm-checkin-btn"
+                  >
+                    <mat-icon class="me-2">qr_code_scanner</mat-icon>
+                    Scan Tickets
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -421,6 +432,25 @@ import { FormsModule } from '@angular/forms';
         100% {
           left: 200%;
         }
+      }
+
+      .bm-checkin-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 24px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.2s;
+        backdrop-filter: blur(4px);
+      }
+      .bm-checkin-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
       }
     `,
   ],

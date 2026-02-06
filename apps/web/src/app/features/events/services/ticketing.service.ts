@@ -46,4 +46,19 @@ export class TicketingService {
       quantity,
     });
   }
+
+  validateTicket(
+    qrHash: string,
+    bandId: string,
+  ): Observable<{
+    success: boolean;
+    message: string;
+    ticket: any;
+  }> {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+      ticket: any;
+    }>(`${this.apiUrl}/tickets/validate`, { qrHash, bandId });
+  }
 }

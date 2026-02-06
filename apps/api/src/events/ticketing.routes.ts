@@ -1,5 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { listUserTickets, getTicket } from "./ticketing.repo.js";
+import {
+  listUserTickets,
+  getTicket,
+  validateTicket,
+} from "./ticketing.repo.js";
 import {
   createStripeConnectAccount,
   createOnboardingLink,
@@ -94,6 +98,27 @@ export async function ticketingRoutes(app: FastifyInstance) {
       return reply
         .code(500)
         .send({ message: e.message || "Error creating checkout session" });
+    }
+  });
+
+  // Ticket Validation (Check-in)
+  app.post("/tickets/validate", async (req, reply) => {
+    const user = (req as any).user;
+    if (!user) return reply.code(401).send({ message: "Unauthorized" });
+
+    const { qrHash, bandId } = req.body as { qrHash: string; bandId: string };
+
+    if (!qrHash || !bandId) {
+      return reply.code(400).send({ message: "Missing qrHash or bandId" });
+    }
+
+    try {
+      const result = await validateTicket(qrHash, bandId);
+      return result;
+    } catch (e: any) {
+      req.log.error(e);
+      const status = e.message.includes("Unauthorized") ? 403 : 404;
+      return reply.code(status).send({ message: e.message });
     }
   });
 }
