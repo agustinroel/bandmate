@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import "dotenv/config";
+import { Readable } from "node:stream";
 
 import { registerAuth } from "./plugins/auth.js";
 import { songsRoutes } from "./songs/songs.routes.js";
@@ -28,6 +29,28 @@ const app = Fastify({
   ignoreTrailingSlash: true,
 });
 
+// Hook onRequest para CORS "Total Freedom": Inyectar antes de que nadie pueda bloquear
+app.addHook("onRequest", async (request, reply) => {
+  const origin = request.headers.origin;
+  if (isOriginAllowed(origin)) {
+    reply.header("Access-Control-Allow-Origin", origin || "*");
+    reply.header("Access-Control-Allow-Credentials", "true");
+    reply.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PATCH, DELETE, OPTIONS",
+    );
+    reply.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Requested-With, Accept",
+    );
+  }
+
+  // Interceptar Preflight inmediatamente
+  if (request.method === "OPTIONS") {
+    return reply.code(204).send();
+  }
+});
+
 // Hook para capturar el raw body solo en el webhook de Stripe
 app.addHook("preParsing", async (request, reply, payload) => {
   // Usamos startsWith para ignorar query strings y filtramos por POST
@@ -45,10 +68,8 @@ app.addHook("preParsing", async (request, reply, payload) => {
       (request as any).rawBody = rawBody;
       request.log.info({ size: rawBody.length }, "rawBody capturado con éxito");
 
-      // Devolver un nuevo stream para que Fastify siga procesando
-      return (async function* () {
-        yield rawBody;
-      })();
+      // DEVOLVER UN NUEVO STREAM (Node Native) para que Fastify pueda parsearlo si quiere
+      return Readable.from(rawBody);
     } catch (err) {
       request.log.error({ err }, "Error capturando rawBody del webhook");
       throw err;
