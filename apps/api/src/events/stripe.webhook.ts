@@ -17,6 +17,7 @@ function getStripe() {
 }
 
 export async function stripeWebhookRoutes(app: FastifyInstance) {
+  app.log.info("Registering Stripe Webhook routes...");
   app.post("/webhooks/stripe", {
     config: {
       rawBody: true,
