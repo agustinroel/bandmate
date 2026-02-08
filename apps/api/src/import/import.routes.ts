@@ -5,6 +5,14 @@ import { createSongForUser } from "../songs/songs.repo.js";
 import { aiOrchestrator } from "../services/ai-orchestrator.service.js";
 import { createWork, createArrangementFromSong } from "../works/works.repo.js";
 import { addToIngestionQueue } from "../services/ingestion-queue.service.js";
+import fs from "fs";
+import path from "path";
+
+function logToIngestionFile(msg: string) {
+  const logPath = path.join(process.cwd(), "ingestion.log");
+  const stamp = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${stamp}] [HTTP-Route] ${msg}\n`);
+}
 
 export const importRoutes: FastifyPluginAsync = async (app) => {
   /**
@@ -109,12 +117,29 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
       const work = await createWork({
         title: details.title,
         artist: details.artist,
+        genre: details.genre,
         musicbrainzId: mbid,
         source: "musicbrainz",
       });
 
-      // 3. Generate AI Arrangement
+      // 3. Generate AI Arrangement with duplicate check
       const generated = await aiOrchestrator.generateForWork(mbid);
+
+      // We'll use the service to handle storing etc but routes usually do direct logic too
+      // However, to keep it consistent with the queue improvements:
+      const { getWorkArrangementsCount } =
+        await import("../works/works.repo.js");
+      const arrCount = await getWorkArrangementsCount(work.id);
+
+      if (arrCount > 0 && !isForce) {
+        return {
+          success: true,
+          workId: work.id,
+          message:
+            "Work already has an arrangement. Use force=true to regenerate.",
+          skipped: true,
+        };
+      }
 
       // 4. Store Arrangement
       const arr = await createArrangementFromSong(userId, {
@@ -150,6 +175,9 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         .send({ message: "Artists must be an array of strings" });
     }
 
+    logToIngestionFile(
+      `Bulk ingestion requested for ${artists.length} artists: ${artists.join(", ")} (User: ${userId})`,
+    );
     console.log(
       `[Import] Bulk ingestion requested for ${artists.length} artists.`,
     );

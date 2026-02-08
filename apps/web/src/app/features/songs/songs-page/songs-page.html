@@ -112,11 +112,13 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Futuro: genre -->
-      <mat-form-field appearance="outline" class="bm-field bm-field--disabled">
+      <mat-form-field appearance="outline" class="bm-field">
         <mat-label>Genre</mat-label>
-        <mat-select [disabled]="true">
-          <mat-option>Coming soon</mat-option>
+        <mat-select [value]="filters().genre" (selectionChange)="setGenre($event.value)">
+          <mat-option [value]="null">All genres</mat-option>
+          @for (g of genreOptions(); track g) {
+            <mat-option [value]="g">{{ g }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>

@@ -1,6 +1,6 @@
+import "./env.js";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import "dotenv/config";
 import { Readable } from "node:stream";
 
 import { registerAuth } from "./plugins/auth.js";

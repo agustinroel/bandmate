@@ -37,3 +37,12 @@ Thumbs.db
 /.angular/
 .cache/
 node_modules
+
+# Debug/temp files
+*.log
+*_crash.log
+*_err.log
+*_build.log
+build_errors.txt
+debug_output.txt
+full_build_log.txt

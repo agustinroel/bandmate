@@ -42,3 +42,71 @@ export async function getTicket(ticketId, userId) {
         throw error;
     return data;
 }
+export async function createTicket(ticket) {
+    const { data, error } = await supabase
+        .from("event_tickets")
+        .insert([
+        {
+            ...ticket,
+            status: "active",
+        },
+    ])
+        .select()
+        .single();
+    if (error)
+        throw error;
+    return data;
+}
+export async function validateTicket(qrHash, bandId) {
+    // 1. Get ticket and verify event owner
+    const { data: ticket, error: fetchError } = await supabase
+        .from("event_tickets")
+        .select(`
+      *,
+      events!inner (
+        band_id,
+        title,
+        event_date
+      ),
+      profiles (
+        full_name
+      )
+    `)
+        .eq("qr_hash", qrHash)
+        .single();
+    if (fetchError || !ticket) {
+        throw new Error("Ticket not found");
+    }
+    // 2. Security check: Only the band that owns the event can validate
+    if (ticket.events.band_id !== bandId) {
+        throw new Error("Unauthorized: This ticket belongs to another band's event");
+    }
+    // 3. Status check
+    if (ticket.status !== "active") {
+        return {
+            success: false,
+            message: `Ticket already ${ticket.status}`,
+            ticket,
+        };
+    }
+    // 4. Update status to used
+    const { data: updated, error: updateError } = await supabase
+        .from("event_tickets")
+        .update({
+        status: "used",
+        used_at: new Date().toISOString(),
+    })
+        .eq("id", ticket.id)
+        .select()
+        .single();
+    if (updateError)
+        throw updateError;
+    return {
+        success: true,
+        message: "Ticket validated successfully",
+        ticket: {
+            ...ticket,
+            status: "used",
+        },
+    };
+}

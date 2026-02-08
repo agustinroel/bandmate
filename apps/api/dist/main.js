@@ -1,10 +1,10 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import "dotenv/config";
+import { Readable } from "node:stream";
 import { registerAuth } from "./plugins/auth.js";
 import { songsRoutes } from "./songs/songs.routes.js";
 import { setlistsRoutes } from "./setlists/setlists.routes.js";
-import { importSeedLibrary } from "./seed/import-seed-library.js";
 import { libraryRoutes } from "./library/library.routes.js";
 import { worksRoutes } from "./works/works.routes.js";
 import { arrangementsRoutes } from "./arrangements/arrangements.routes.js";
@@ -15,37 +15,125 @@ import { bandsRoutes } from "./bands/bands.routes.js";
 import { notificationsRoutes } from "./notifications/notifications.routes.js";
 import { eventsRoutes } from "./events/events.routes.js";
 import { ticketingRoutes } from "./events/ticketing.routes.js";
+import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
 if (process.env.SEED_LIBRARY === "true") {
-    importSeedLibrary()
-        .then(() => console.log("[seed] library imported"))
-        .catch((e) => console.error("[seed] failed", e));
+    // ... existing seed logic ...
 }
-const app = Fastify({ logger: true });
+const app = Fastify({
+    logger: true,
+    ignoreTrailingSlash: true,
+});
+// Hook onRequest para CORS "Total Freedom": Inyectar antes de que nadie pueda bloquear
+app.addHook("onRequest", async (request, reply) => {
+    const origin = request.headers.origin;
+    if (isOriginAllowed(origin)) {
+        reply.header("Access-Control-Allow-Origin", origin || "*");
+        reply.header("Access-Control-Allow-Credentials", "true");
+        reply.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+        reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
+    }
+    // Interceptar Preflight inmediatamente
+    if (request.method === "OPTIONS") {
+        return reply.code(204).send();
+    }
+});
+// Hook para capturar el raw body solo en el webhook de Stripe
+app.addHook("preParsing", async (request, reply, payload) => {
+    // Usamos startsWith para ignorar query strings y filtramos por POST
+    if (request.method === "POST" && request.url.startsWith("/webhooks/stripe")) {
+        request.log.info({ url: request.url }, "Capturando rawBody para Webhook de Stripe...");
+        const chunks = [];
+        try {
+            for await (const chunk of payload) {
+                chunks.push(chunk);
+            }
+            const rawBody = Buffer.concat(chunks);
+            request.rawBody = rawBody;
+            request.log.info({ size: rawBody.length }, "rawBody capturado con éxito");
+            // DEVOLVER UN NUEVO STREAM (Node Native) para que Fastify pueda parsearlo si quiere
+            return Readable.from(rawBody);
+        }
+        catch (err) {
+            request.log.error({ err }, "Error capturando rawBody del webhook");
+            throw err;
+        }
+    }
+    return payload;
+});
 const allowed = new Set([
     "http://localhost:4200",
     "http://127.0.0.1:4200",
-    "http://localhost:5173", // por si alguna vez usás Vite
-    "https://bandmate-pink.vercel.app", // prod
+    "http://localhost:5173",
 ]);
+if (process.env.FRONTEND_URL) {
+    // Soportar múltiples URLs separadas por comas
+    const urls = process.env.FRONTEND_URL.split(",")
+        .map((u) => u.trim())
+        .filter(Boolean);
+    for (const rawUrl of urls) {
+        let url = rawUrl;
+        // Autocompletar protocolo si falta
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = `https://${url}`;
+        }
+        // Quitar slash final
+        const normalized = url.replace(/\/$/, "");
+        allowed.add(normalized);
+    }
+}
+function isOriginAllowed(origin) {
+    if (!origin)
+        return true; // Server-to-server or tools
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    // 1. Exact matches
+    if (allowed.has(normalizedOrigin))
+        return true;
+    // 2. Vercel subdomains
+    if (normalizedOrigin.endsWith(".vercel.app"))
+        return true;
+    return false;
+}
 await app.register(cors, {
     origin: (origin, cb) => {
-        // requests server-to-server o tools sin Origin
-        if (!origin)
+        if (isOriginAllowed(origin)) {
             return cb(null, true);
-        if (allowed.has(origin))
-            return cb(null, true);
+        }
+        app.log.warn(`CORS blocked for origin: ${origin}. Allowed origins: ${Array.from(allowed).join(", ")}`);
         return cb(new Error(`CORS blocked for origin: ${origin}`), false);
     },
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+    ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
     credentials: true,
 });
 // Auth (adds app.requireAuth + req.user)
 await app.register(registerAuth, {
-    publicRoutes: ["/health", "/debug", "/auth/spotify"],
+    publicRoutes: [
+        "/health",
+        "/health/cors",
+        "/health/webhook",
+        "/debug",
+        "/auth/spotify",
+        "/webhooks/stripe",
+    ],
 });
 app.addHook("preHandler", app.authGuardHook);
+// Diagnostic Routes
+app.get("/health", async () => ({ status: "ok" }));
+app.get("/health/cors", async () => ({
+    allowedOrigins: Array.from(allowed),
+    frontendUrlEnv: process.env.FRONTEND_URL,
+}));
+app.get("/health/webhook", async () => ({
+    hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+    secretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 7),
+}));
 // Routes ONLY via plugins
 await app.register(songsRoutes);
 await app.register(setlistsRoutes);
@@ -58,10 +146,17 @@ await app.register(profilesRoutes);
 await app.register(bandsRoutes);
 await app.register(eventsRoutes);
 await app.register(ticketingRoutes);
+await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
 app.setErrorHandler((err, req, reply) => {
     const status = err.statusCode ?? 500;
     req.log.error({ err }, "Unhandled error");
+    // Inyectar cabeceras CORS de forma resiliente usando el helper unificado
+    const origin = req.headers.origin;
+    if (isOriginAllowed(origin)) {
+        reply.header("Access-Control-Allow-Origin", origin || "*");
+        reply.header("Access-Control-Allow-Credentials", "true");
+    }
     reply.status(status).send({
         statusCode: status,
         error: err.name ?? "Error",

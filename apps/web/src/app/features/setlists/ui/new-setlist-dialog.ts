@@ -1,16 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-
-import { Field, form, required, validate } from '@angular/forms/signals';
-
-type Model = {
-  name: string;
-  notes: string;
-};
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   standalone: true,
@@ -20,7 +14,7 @@ type Model = {
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    Field,
+    ReactiveFormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -32,9 +26,9 @@ type Model = {
     <div mat-dialog-content class="bm-dialog-content">
       <mat-form-field appearance="outline" class="w-100">
         <mat-label>Name</mat-label>
-        <input matInput [field]="f.name" placeholder="e.g. Rehearsal Friday" />
-        @if (showError(f.name)) {
-        <mat-error>{{ firstError(f.name().errors()) }}</mat-error>
+        <input matInput [formControl]="nameControl" placeholder="e.g. Rehearsal Friday" />
+        @if (nameControl.invalid && nameControl.touched) {
+          <mat-error>{{ getNameError() }}</mat-error>
         }
       </mat-form-field>
 
@@ -43,7 +37,7 @@ type Model = {
         <textarea
           matInput
           rows="3"
-          [field]="f.notes"
+          [formControl]="notesControl"
           placeholder="Optional: vibe, tempos, transitions…"
         ></textarea>
         <mat-hint>Optional</mat-hint>
@@ -57,7 +51,7 @@ type Model = {
         color="primary"
         type="button"
         (click)="save()"
-        [disabled]="!f().valid()"
+        [disabled]="nameControl.invalid"
       >
         <mat-icon class="me-1">add</mat-icon>
         Create
@@ -71,7 +65,7 @@ type Model = {
         display: grid;
         gap: 12px;
 
-        /* Misma “columna” que los form-fields */
+        /* Misma "columna" que los form-fields */
         padding: 10px 24px 0;
       }
 
@@ -86,31 +80,22 @@ type Model = {
 })
 export class NewSetlistDialogComponent {
   private ref = inject(
-    MatDialogRef<NewSetlistDialogComponent, { name: string; notes?: string } | null>
+    MatDialogRef<NewSetlistDialogComponent, { name: string; notes?: string } | null>,
   );
+  private fb = inject(FormBuilder);
 
-  readonly model = signal<Model>({
-    name: '',
-    notes: '',
-  });
-
-  readonly f = form(this.model, (p) => {
-    required(p.name, { message: 'Name is required' });
-
-    validate(p.name, ({ value }) => {
-      const v = value().trim();
-      if (v.length < 2) return { kind: 'min', message: 'Name is too short' };
-      if (v.length > 60) return { kind: 'max', message: 'Name is too long' };
-      return undefined;
-    });
-  });
+  nameControl = this.fb.control('', [
+    Validators.required,
+    Validators.minLength(2),
+    Validators.maxLength(60),
+  ]);
+  notesControl = this.fb.control('');
 
   save() {
-    if (!this.f().valid()) return;
+    if (this.nameControl.invalid) return;
 
-    const { name, notes } = this.model();
-    const cleanName = name.trim();
-    const cleanNotes = notes.trim();
+    const cleanName = this.nameControl.value?.trim() ?? '';
+    const cleanNotes = this.notesControl.value?.trim();
 
     this.ref.close({
       name: cleanName,
@@ -122,14 +107,15 @@ export class NewSetlistDialogComponent {
     this.ref.close(null);
   }
 
-  showError(field: any) {
-    return field().touched() && !field().valid();
-  }
-
-  firstError(errors: unknown): string {
-    if (Array.isArray(errors) && errors.length) {
-      const e: any = errors[0];
-      return e?.message ?? 'Invalid value';
+  getNameError(): string {
+    if (this.nameControl.hasError('required')) {
+      return 'Name is required';
+    }
+    if (this.nameControl.hasError('minlength')) {
+      return 'Name is too short';
+    }
+    if (this.nameControl.hasError('maxlength')) {
+      return 'Name is too long';
     }
     return 'Invalid value';
   }

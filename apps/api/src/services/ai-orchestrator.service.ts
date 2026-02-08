@@ -14,14 +14,37 @@ export class AIOrchestratorService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: any = null;
   private currentModelName: string = "gemini-2.0-flash"; // Default
+  private logger: ((msg: string) => void) | null = null;
 
-  // List of models to try in order of preference (including new 2.5 versions)
+  public setLogger(logger: (msg: string) => void) {
+    this.logger = logger;
+  }
+
+  private log(msg: string) {
+    if (this.logger) {
+      this.logger(msg);
+    } else {
+      console.log(`[AI] ${msg}`);
+    }
+  }
+
+  private logError(msg: string, err?: any) {
+    const errorMsg = err ? `${msg} ${err.message || err}` : msg;
+    if (this.logger) {
+      this.logger(`ERROR: ${errorMsg}`);
+    } else {
+      console.error(`[AI] ERROR: ${errorMsg}`);
+    }
+  }
+
+  // List of models to try in order of preference
+  // These were verified using scripts/list-models.ts
   private readonly MODEL_PRIORITY = [
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
+    "gemini-flash-latest", // Alias for 1.5 Flash - Currently has quota!
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
-    "gemini-1.5-flash",
+    "gemini-pro-latest", // Alias for 1.5 Pro
+    "gemini-2.0-flash-001",
   ];
 
   private initModel() {
@@ -30,53 +53,119 @@ export class AIOrchestratorService {
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
     } else {
-      console.warn("[AI-Orchestrator] No GOOGLE_GENAI_API_KEY found.");
+      this.logError("No GOOGLE_GENAI_API_KEY found.");
     }
   }
 
   /**
    * Generates an arrangement, trying multiple models if quota fails.
    */
-  async generateForWork(mbid: string): Promise<GeneratedArrangement> {
+  async generateForWork(
+    mbid: string,
+    metadata?: { title: string; artist: string },
+  ): Promise<GeneratedArrangement> {
     this.initModel();
 
-    const work = await musicBrainzService.getRecordingDetails(mbid);
-    if (!work) throw new Error("Recording not found in MusicBrainz");
-
-    if (!this.genAI) {
-      console.warn("[AI-Orchestrator] No API Key, using mock fallback.");
-      return this.callMock(work.title, work.artist);
+    let work: { title: string; artist: string } | undefined = metadata;
+    if (!work) {
+      const details = await musicBrainzService.getRecordingDetails(mbid);
+      if (details) work = details;
     }
 
-    // Attempt generation with fallback
-    let lastError = null;
+    if (!work) throw new Error(`Recording metadata not found for ${mbid}`);
+
+    if (!this.genAI) {
+      const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+      if (apiKey) {
+        this.log("Late-initializing GenAI with found API Key.");
+        this.genAI = new GoogleGenerativeAI(apiKey);
+      } else {
+        this.logError(
+          "CRITICAL: No API Key found in process.env during generation.",
+        );
+        return this.callMock(work.title, work.artist);
+      }
+    }
+
+    // Attempt generation with priority models
+    let lastError: any = null;
     for (const modelName of this.MODEL_PRIORITY) {
       try {
-        console.log(
-          `[AI-Orchestrator] Attempting generation with ${modelName}...`,
+        this.log(
+          `Attempting generation with ${modelName} for "${work.title}"...`,
         );
-        const model = this.genAI.getGenerativeModel({ model: modelName });
-        const result = await this.realCallLLM(model, work.title, work.artist);
         this.currentModelName = modelName;
-        return result;
+        const model = this.genAI.getGenerativeModel({ model: modelName });
+
+        // Retry logic for 429 (Too Many Requests)
+        let attempt = 0;
+        const maxAttempts = 2;
+        while (attempt < maxAttempts) {
+          try {
+            const result = await this.realCallLLM(
+              model,
+              work.title,
+              work.artist,
+            );
+            return result;
+          } catch (err: any) {
+            const status = err?.status || err?.response?.status;
+            if (status === 429) {
+              attempt++;
+              if (attempt < maxAttempts) {
+                this.log(
+                  `Rate limit hit for ${modelName} (Attempt ${attempt}/${maxAttempts}). Waiting 65s before retry...`,
+                );
+                await new Promise((r) => setTimeout(r, 65000));
+                continue;
+              }
+              // If we exhausted attempts for this model, we'll wait and then try next model
+              this.logError(`Exceeded retries for ${modelName} due to 429.`);
+              throw err;
+            }
+            throw err;
+          }
+        }
       } catch (err: any) {
         lastError = err;
-        console.warn(
-          `[AI-Orchestrator] Model ${modelName} failed:`,
-          err.message || err,
+        const status = err?.status || err?.response?.status;
+
+        let errorHint = err.message || String(err);
+        if (
+          errorHint.includes("Unexpected token '<'") ||
+          errorHint.includes("<!DOCTYPE")
+        ) {
+          errorHint =
+            "API returned HTML instead of JSON (likely a 5xx error or proxy intercept)";
+        }
+
+        this.logError(
+          `Model ${modelName} failed for "${work.title}": ${errorHint}`,
         );
 
-        if (err.message?.includes("404") || err.message?.includes("429")) {
-          // Wait 2 seconds before trying the next model to avoid cascading rate limits
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (status === 429) {
+          // If we hit 429, we should wait before trying a different model too!
+          this.log("Waiting 60s before trying next model after 429...");
+          await new Promise((r) => setTimeout(r, 60000));
           continue;
         }
-        throw err;
+
+        if (
+          status === 404 ||
+          status === 403 ||
+          err.message?.includes("not found")
+        ) {
+          // Continue to next model immediately
+          continue;
+        }
+
+        // For other errors, continue to next model
+        continue;
       }
     }
 
     throw new Error(
-      `AI Generation failed after trying all models. Last error: ${lastError?.message}`,
+      `AI Generation failed after trying all models. Last error: ${lastError?.message || lastError}`,
     );
   }
 
@@ -85,36 +174,50 @@ export class AIOrchestratorService {
     title: string,
     artist: string,
   ): Promise<GeneratedArrangement> {
+    if (!title || !artist) {
+      this.logError("Missing title or artist. Returning minimal arrangement.");
+      return this.callMock(title || "Unknown", artist || "Unknown");
+    }
+
     const prompt = `
-      Act as a professional music transcriber and arranger.
+      Act as a professional musicologist and transcriber.
       Song: "${title}" by "${artist}"
       
-      Task:
-      1. Provide the OFFICIAL and ACCURATE lyrics for the WHOLE song. Do not skip any verses or chorus.
-      2. Identify the correct Song Key and Tempo (BPM).
-      3. Structure the song into logical sections (Intro, Verse, Chorus, Bridge, Outro).
-      4. Place high-quality, musically accurate chords inside square brackets [like this] where they naturally occur in the lyrics.
-         Avoid generic chords; use 7ths, add9s, or specific voicings if used in the original recording.
+      Objective:
+      Provide a HIGH-FIDELITY arrangement based on the EXACT studio recording.
       
-      EXAMPLE OUTPUT (for "Wonderwall" by "Oasis"):
+      Requirements:
+      1. Lyrics: Provide the 100% accurate lyrics for the ENTIRE song. Do not truncate.
+      2. Musical Data: Key (e.g., "G Major"), Tempo (BPM), and Time Signature (e.g., "4/4").
+      3. Structure: Formal sections (Intro, Verse 1, Chorus, etc.).
+      4. Chords: Professional, jazz-accurate notation [Dm7], [Gsus4], [Cmaj9]. 
+         Place them at the EXACT syllable they change.
+      
+      STRICT FIDELITY RULES:
+      - If you do not have the exact chords/lyrics for this SPECIFIC version (especially for demos or live tracks), 
+        set key to "Unknown", bpm to 0, and provide a minimal placeholder structure rather than hallucinating.
+      - Never use generic placeholder chords like [C] [G] [Am] [F] for every song.
+      - Ensure the output is valid, minified JSON.
+      
+      JSON Schema:
       {
-        "key": "G Major",
-        "bpm": 88,
+        "key": "string",
+        "bpm": number,
+        "timeSignature": "string",
         "sections": [
-          { "type": "intro", "name": "Intro", "lines": [ { "id": "1", "source": "[F#m7] [A] [Esus4] [B7sus4]" } ] },
-          { "type": "verse", "name": "Verse 1", "lines": [ { "id": "2", "source": "[F#m7]Today is [A]gonna be the [Esus4]day that they're [B7sus4]gonna throw it back to you" } ] }
+          { 
+            "type": "intro|verse|chorus|bridge|solo|outro", 
+            "name": "string", 
+            "lines": [ { "source": "Lyric text with [Chords]" } ] 
+          }
         ]
       }
-
-      CRITICAL: Lyrics must match the original recording 100%. If you don't know the exact lyrics, do your best to retrieve them from your knowledge base of professional arrangements.
-      
-      Output ONLY a valid JSON. No conversational text or markdown blocks.
     `;
 
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0,
+        temperature: 0.05, // Near-zero for maximum determinism
         topP: 0.1,
         topK: 1,
         responseMimeType: "application/json",
@@ -123,29 +226,74 @@ export class AIOrchestratorService {
     const response = await result.response;
     let text = response.text().trim();
 
+    // Clean markdown if present
+    if (text.startsWith("```json")) {
+      text = text
+        .replace(/^```json/, "")
+        .replace(/```$/, "")
+        .trim();
+    } else if (text.startsWith("```")) {
+      text = text.replace(/^```/, "").replace(/```$/, "").trim();
+    }
+
+    // Extraction fallback
     if (text.includes("{") && text.includes("}")) {
       const start = text.indexOf("{");
       const end = text.lastIndexOf("}") + 1;
       text = text.substring(start, end);
     }
 
-    return JSON.parse(text);
+    try {
+      const data = JSON.parse(text);
+
+      // Final sanity check: if the LLM returned our former "Wonderwall" catch
+      if (
+        title.toLowerCase() !== "wonderwall" &&
+        text.includes("B7sus4") &&
+        text.includes("Esus4") &&
+        data.bpm === 88
+      ) {
+        throw new Error("AI returned generic placeholder data.");
+      }
+
+      // Add IDs to sections/lines if missing
+      data.sections = data.sections?.map((s: any, idx: number) => ({
+        ...s,
+        id: s.id || `s${idx}`,
+        lines: s.lines?.map((l: any, lidx: number) => ({
+          ...l,
+          id: l.id || `l${idx}-${lidx}`,
+        })),
+      }));
+
+      return data;
+    } catch (parseErr: any) {
+      this.logError(
+        `JSON Parse failed for "${title}". Raw length: ${text.length}`,
+      );
+      throw new Error(`Invalid JSON format from AI: ${parseErr.message}`);
+    }
   }
 
   private callMock(
     title: string,
     artist: string,
   ): Promise<GeneratedArrangement> {
-    // Return Wonderwall mock for testing if everything else fails
+    // No more "Wonderwall" lies. Return a placeholder structure.
     return Promise.resolve({
-      key: "G Major",
-      bpm: 88,
+      key: "Unknown",
+      bpm: 0,
       sections: [
         {
           id: "s1",
           type: "intro",
-          name: "Intro (Mock)",
-          lines: [{ id: "l1", source: "[F#m7] [A] [Esus4] [B7sus4]" }],
+          name: "Pending AI Processing",
+          lines: [
+            {
+              id: "l1",
+              source: "[...] No API Key provided for real generation.",
+            },
+          ],
         },
       ],
     });

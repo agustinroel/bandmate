@@ -175,12 +175,32 @@ export class SongsPageComponent {
   readonly libraryWorks = computed(() => {
     if (this.store.libraryState() !== 'ready') return [];
 
-    return this.store
-      .library()
-      .slice()
-      .sort((a, b) => {
-        return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
-      });
+    const q = this.query().trim().toLowerCase();
+    const f = this.filters();
+
+    let list = this.store.library();
+
+    if (q) {
+      list = list.filter((w) => `${w.title} ${w.artist}`.toLowerCase().includes(q));
+    }
+
+    if (f.artist) {
+      list = list.filter((w) => (w.artist ?? '').trim() === f.artist);
+    }
+
+    // library works usually dont have 'key' at the top level in the store yet,
+    // but if they do, we filter it.
+    if (f.key) {
+      list = list.filter((w) => ((w as any).key ?? '').trim() === f.key);
+    }
+
+    if (f.genre) {
+      list = list.filter((w) => ((w as any).genre ?? '').trim() === f.genre);
+    }
+
+    return list.slice().sort((a, b) => {
+      return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
+    });
   });
 
   /** Options */
@@ -198,6 +218,35 @@ export class SongsPageComponent {
     for (const s of this.store.songs()) {
       const k = (s.key ?? '').toString().trim();
       if (k) set.add(k);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
+
+  readonly genreOptions = computed(() => {
+    const predefined = [
+      'Rock',
+      'Pop',
+      'Jazz',
+      'Blues',
+      'Metal',
+      'Country',
+      'Folk',
+      'Electronic',
+      'Latin',
+      'Reggae',
+      'Classic Rock',
+    ];
+    const set = new Set<string>(predefined);
+
+    // Get genres from library works
+    for (const w of this.libraryWorks()) {
+      const g = ((w as any).genre ?? '').trim();
+      if (g) set.add(g);
+    }
+    // Also from user songs
+    for (const s of this.store.songs()) {
+      const g = ((s as any).genre ?? '').trim();
+      if (g) set.add(g);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   });
@@ -221,6 +270,10 @@ export class SongsPageComponent {
       list = list.filter((s) => ((s.key ?? '') + '').trim() === f.key);
     }
 
+    if (f.genre) {
+      list = list.filter((s) => ((s as any).genre ?? '').trim() === f.genre);
+    }
+
     return list;
   });
 
@@ -235,13 +288,14 @@ export class SongsPageComponent {
   });
 
   readonly isNoResults = computed(() => {
-    const q = this.query().trim();
-    return this.isReady() && !!q && !this.hasAnythingToShow();
+    return this.isReady() && this.hasActiveFilters() && !this.hasAnythingToShow();
   });
 
   readonly hasActiveFilters = computed(() => {
     const f = this.filters();
-    return !!this.query().trim() || !!f.artist || !!f.key || this.sort() !== 'updatedDesc';
+    return (
+      !!this.query().trim() || !!f.artist || !!f.key || !!f.genre || this.sort() !== 'updatedDesc'
+    );
   });
 
   readonly showFirstRun = computed(() => {
@@ -329,6 +383,10 @@ export class SongsPageComponent {
 
   setKey(value: string | null) {
     this.filters.update((f) => ({ ...f, key: value || null }));
+  }
+
+  setGenre(value: string | null) {
+    this.filters.update((f) => ({ ...f, genre: value || null }));
   }
 
   clearFilters() {
