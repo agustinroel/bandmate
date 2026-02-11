@@ -11,19 +11,27 @@ import type {
 import { SongPolicy, toLegacySongDetail } from '@bandmate/shared';
 import { SongsApiService } from '../data/songs-api';
 import { LibraryApiService, LibraryWorkListItem } from '../data/library-api';
+import { ImportApiService, ExternalMatch } from '../data/import-api';
 import { AchievementService } from '../../../core/services/achievement.service';
+import { Router } from '@angular/router';
 
-type LoadState = 'idle' | 'loading' | 'ready' | 'error';
+type LoadState = 'idle' | 'loading' | 'ready' | 'error' | 'ingesting';
 
 @Injectable({ providedIn: 'root' })
 export class SongsStore {
   readonly api = inject(SongsApiService);
   readonly libraryApi = inject(LibraryApiService);
+  readonly importApi = inject(ImportApiService);
   private readonly achievements = inject(AchievementService);
+  private readonly router = inject(Router);
 
   readonly _state = signal<LoadState>('idle');
   readonly _songs = signal<Song[]>([]);
   readonly _error = signal<string | null>(null);
+
+  readonly _externalResults = signal<ExternalMatch[]>([]);
+  readonly _externalState = signal<LoadState>('idle');
+  readonly _externalError = signal<string | null>(null);
 
   // NEW: detail state (for Song detail page / editor)
   readonly _detailState = signal<LoadState>('idle');
@@ -253,6 +261,59 @@ export class SongsStore {
           this._selectedError.set(err?.message ?? 'Failed to load song detail');
         },
       });
+  }
+
+  readonly externalResults = this._externalResults.asReadonly();
+  readonly externalState = this._externalState.asReadonly();
+  readonly externalError = this._externalError.asReadonly();
+
+  searchExternal(q: string) {
+    if (!q.trim()) {
+      this._externalResults.set([]);
+      this._externalState.set('idle');
+      return;
+    }
+
+    this._externalState.set('loading');
+    this._externalError.set(null);
+
+    this.importApi
+      .searchExternal(q)
+      .pipe(
+        tap((results) => {
+          this._externalResults.set(results);
+          this._externalState.set('ready');
+        }),
+        catchError((err) => {
+          this._externalState.set('error');
+          this._externalError.set(err?.message || 'Failed to search external');
+          return throwError(() => err);
+        }),
+      )
+      .subscribe();
+  }
+
+  ingestAndOpen(mbid: string) {
+    this._externalState.set('ingesting');
+
+    this.importApi.ingest(mbid).subscribe({
+      next: (res) => {
+        this._externalState.set('ready');
+        // 'res' might have songId or arrangementId.
+        // In ingest route we return arrangementId?
+        // Looking at API, it returns { success, workId, arrangementId, preview }
+        if (res.arrangementId) {
+          // In current Bandmate, arrangements are viewed in ArrangementViewPageComponent
+          // but let's see if we can just open it as a song
+          // Actually, arrangements in library have a slightly different route.
+          this.router.navigate(['/library', res.workId, 'arrangements', res.arrangementId]);
+        }
+      },
+      error: (err) => {
+        this._externalState.set('error');
+        this._externalError.set(err?.message || 'Ingestion failed');
+      },
+    });
   }
 
   clearSelected() {

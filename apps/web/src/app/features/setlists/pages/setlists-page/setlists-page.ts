@@ -23,6 +23,7 @@ import { NewSetlistDialogComponent } from '../../ui/new-setlist-dialog';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { take } from 'rxjs';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
+import { AnimationService } from '../../../../core/services/animation.service';
 
 @Component({
   standalone: true,
@@ -46,6 +47,7 @@ export class SetlistsPageComponent {
   readonly songs = inject(SongsStore);
   readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
+  readonly animation = inject(AnimationService);
 
   readonly route = inject(ActivatedRoute);
 
@@ -134,6 +136,32 @@ export class SetlistsPageComponent {
           });
         }
       });
+    });
+
+    // 1) Animate Sidebar Items
+    effect(() => {
+      const items = this.store.items();
+      if (items.length > 0) {
+        setTimeout(() => {
+          const els = document.querySelectorAll('.sl-item-gsap');
+          if (els.length > 0) {
+            this.animation.staggerList(Array.from(els), 0.05, 0.1);
+          }
+        }, 120);
+      }
+    });
+
+    // 2) Animate Editor List when setlist changes
+    effect(() => {
+      const selected = this.store.selected();
+      if (selected) {
+        setTimeout(() => {
+          const els = document.querySelectorAll('.drag-row-gsap');
+          if (els.length > 0) {
+            this.animation.staggerList(Array.from(els), 0.04, 0.2);
+          }
+        }, 150);
+      }
     });
   }
 

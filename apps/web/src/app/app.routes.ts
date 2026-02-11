@@ -16,6 +16,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/auth-callback.page').then((m) => m.AuthCallbackPage),
   },
+  {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/legal/pages/privacy-page/privacy-page').then(
+        (m) => m.PrivacyPageComponent,
+      ),
+  },
+  {
+    path: 'terms',
+    loadComponent: () =>
+      import('./features/legal/pages/terms-page/terms-page').then((m) => m.TermsPageComponent),
+  },
 
   // app
   {
@@ -163,5 +175,9 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: 'home' },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found-page').then((m) => m.NotFoundPageComponent),
+  },
 ];

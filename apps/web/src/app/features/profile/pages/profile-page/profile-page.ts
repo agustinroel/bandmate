@@ -16,6 +16,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ProfileRow, ProfilesService } from '../../services/profile.service';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
+import { SubscriptionStore } from '../../../../core/subscription/subscription.store';
+import type { SubscriptionTier } from '@bandmate/shared';
 
 type Draft = {
   username: string;
@@ -100,6 +102,7 @@ export class ProfilePageComponent {
   readonly auth = inject(AuthStore);
   readonly profiles = inject(ProfilesService);
   readonly notify = inject(NotificationsService);
+  readonly subscription = inject(SubscriptionStore);
 
   readonly instrumentOptions = INSTRUMENT_OPTIONS;
   readonly genreOptions = GENRE_OPTIONS;
@@ -179,14 +182,17 @@ export class ProfilePageComponent {
     });
 
     // Reset error state when avatar url changes
-    effect(() => {
-       const url = this.avatarUrl();
-       // We just accessed the signal, so effect runs when it changes.
-       // We use untracked to set the signal to avoid loops if needed, 
-       // but here we just want to reset the flag.
-       // Allow signal writes in effect for this purpose
-       this.avatarLoadFailed.set(false);
-    }, { allowSignalWrites: true });
+    effect(
+      () => {
+        const url = this.avatarUrl();
+        // We just accessed the signal, so effect runs when it changes.
+        // We use untracked to set the signal to avoid loops if needed,
+        // but here we just want to reset the flag.
+        // Allow signal writes in effect for this purpose
+        this.avatarLoadFailed.set(false);
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   // ... (unchanged methods)
@@ -200,9 +206,9 @@ export class ProfilePageComponent {
     try {
       const p = await this.profiles.ensureForUser(u);
       this.profile.set(p);
+      this.subscription.setTier((p.subscription_tier as SubscriptionTier) || 'free');
 
       // fetch bands removed
-
 
       this.draft.set({
         username: p.username ?? '',

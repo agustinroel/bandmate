@@ -73,7 +73,7 @@
 }
 
 <div class="bm-home-grid">
-  <mat-card class="bm-card">
+  <mat-card class="bm-card bm-card-gsap">
     <div class="bm-card-inner">
       <div class="bm-card-title">Songs</div>
       <div class="bm-card-sub small opacity-75">Create, edit and organize your library.</div>
@@ -87,7 +87,7 @@
     </div>
   </mat-card>
 
-  <mat-card class="bm-card">
+  <mat-card class="bm-card bm-card-gsap">
     <div class="bm-card-inner">
       <div class="bm-card-title">Setlists</div>
       <div class="bm-card-sub small opacity-75">Group songs and order them for gigs.</div>
@@ -100,7 +100,7 @@
     </div>
   </mat-card>
 
-  <mat-card class="bm-card">
+  <mat-card class="bm-card bm-card-gsap">
     <div class="bm-card-inner">
       <div class="bm-card-title">Practice</div>
       <div class="bm-card-sub small opacity-75">Minimal practice tools (MVP placeholders).</div>
@@ -128,7 +128,7 @@
   } @else {
     <div class="bm-stats-grid">
       <!-- This Week Card -->
-      <mat-card class="bm-stat-card bm-stat-primary">
+      <mat-card class="bm-stat-card bm-stat-primary bm-stat-card-gsap">
         <div class="bm-stat-icon">
           <mat-icon>schedule</mat-icon>
         </div>
@@ -144,7 +144,7 @@
       </mat-card>
 
       <!-- Today Card -->
-      <mat-card class="bm-stat-card">
+      <mat-card class="bm-stat-card bm-stat-card-gsap">
         <div class="bm-stat-icon">
           <mat-icon>today</mat-icon>
         </div>
@@ -157,7 +157,7 @@
       </mat-card>
 
       <!-- Streak Card -->
-      <mat-card class="bm-stat-card bm-stat-streak">
+      <mat-card class="bm-stat-card bm-stat-streak bm-stat-card-gsap">
         <div class="bm-stat-icon">
           <mat-icon>local_fire_department</mat-icon>
         </div>
@@ -168,7 +168,7 @@
       </mat-card>
 
       <!-- All Time Card -->
-      <mat-card class="bm-stat-card">
+      <mat-card class="bm-stat-card bm-stat-card-gsap">
         <div class="bm-stat-icon">
           <mat-icon>emoji_events</mat-icon>
         </div>
@@ -190,7 +190,7 @@
         <h4 class="bm-subsection-title">Most Practiced</h4>
         <div class="bm-top-songs-list">
           @for (song of practiceStats.mostPracticed(); track song.id; let i = $index) {
-            <div class="bm-top-song-item">
+            <div class="bm-top-song-item bm-top-song-gsap">
               <span class="bm-top-song-rank">{{ i + 1 }}</span>
               <div class="bm-top-song-info">
                 <div class="bm-top-song-title">{{ song.title }}</div>
@@ -215,7 +215,7 @@
 
     <div class="bm-achievements-grid">
       @for (achievement of achievements.userAchievements(); track achievement.id) {
-        <app-achievement-card [achievement]="achievement" />
+        <app-achievement-card class="bm-achievement-gsap" [achievement]="achievement" />
       }
     </div>
   </section>

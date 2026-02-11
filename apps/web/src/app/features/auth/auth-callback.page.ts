@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { ProfilesService } from '../profile/services/profile.service';
+import { SubscriptionStore } from '../../core/subscription/subscription.store';
+import type { SubscriptionTier } from '@bandmate/shared';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -202,6 +204,7 @@ export class AuthCallbackPage {
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
   readonly profiles = inject(ProfilesService);
+  readonly subscription = inject(SubscriptionStore);
 
   readonly state = signal<'loading' | 'ok' | 'timeout'>('loading');
 
@@ -225,7 +228,8 @@ export class AuthCallbackPage {
           const user = this.auth.user();
           if (user) {
             try {
-              await this.profiles.ensureForUser(user);
+              const profile = await this.profiles.ensureForUser(user);
+              this.subscription.setTier((profile.subscription_tier as SubscriptionTier) || 'free');
             } catch (e) {
               console.error('Profile sync failed', e);
             }

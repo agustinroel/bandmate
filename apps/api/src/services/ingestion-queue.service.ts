@@ -117,7 +117,10 @@ async function processFallback(data: any) {
   }
 }
 
-async function processArtistIngestion(artistName: string, userId: string) {
+export async function processArtistIngestion(
+  artistName: string,
+  userId: string,
+) {
   logToFile(
     `[ArtistIngestion] Discovering recordings for: ${artistName} (User: ${userId})`,
   );
@@ -180,7 +183,7 @@ async function processArtistIngestion(artistName: string, userId: string) {
   }
 }
 
-async function processSingleSongIngestion(
+export async function processSingleSongIngestion(
   mbid: string,
   userId: string,
   force: boolean = false,
@@ -252,6 +255,7 @@ async function processSingleSongIngestion(
       key: generated.key,
       bpm: generated.bpm,
       source: "community",
+      notes: `AI Confidence: ${generated.confidence}\nAI Source: ${generated.source}\nFidelity filters applied.`,
     } as any);
 
     logToFile(

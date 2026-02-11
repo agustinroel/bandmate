@@ -37,6 +37,26 @@ export async function setlistsRoutes(app: FastifyInstance) {
     const dto = req.body;
     if (!dto?.name?.trim())
       return reply.code(400).send({ message: "name is required" });
+
+    // Subscription limit check
+    const { checkResourceLimit } =
+      await import("../services/subscription.middleware.js");
+    const atLimit = await checkResourceLimit(
+      userId,
+      "setlists",
+      req.subscriptionTier,
+    );
+    if (atLimit) {
+      return reply.code(403).send({
+        statusCode: 403,
+        error: "LimitReached",
+        message:
+          "You have reached the maximum number of setlists for your plan.",
+        requiredTier: "pro",
+        currentTier: req.subscriptionTier,
+      });
+    }
+
     const created = await createSetlistForUser(userId, {
       name: dto.name,
       notes: (dto as any).notes,

@@ -192,4 +192,20 @@ export class SetlistsStore {
   updateName(setlistId: string, dto: { name: string }) {
     return from(this.api.update(setlistId, dto)).pipe(tap((updated) => this.replace(updated)));
   }
+
+  createJamToday() {
+    const today = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const name = `Jam ${today}`;
+
+    // 1. Check if exists
+    const existing = this._items().find((s) => s.name === name);
+    if (existing) {
+      this._selectedId.set(existing.id);
+      this.storageSet(this.SELECTED_KEY, existing.id);
+      return from([existing]);
+    }
+
+    // 2. Create new
+    return this.create({ name, notes: 'Automated Jam Session' });
+  }
 }

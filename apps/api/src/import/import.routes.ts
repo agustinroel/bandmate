@@ -150,6 +150,20 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         duration_sec: details.duration,
       });
 
+      // 5. Create legacy song entry for user visibility in Setlists/Library
+      await createSongForUser(userId, {
+        title: details.title,
+        artist: details.artist,
+        durationSec: details.duration,
+        musicbrainzId: mbid,
+        workId: work.id,
+        originArrangementId: arr.id,
+        sections: generated.sections,
+        key: generated.key,
+        bpm: generated.bpm,
+        is_imported: true,
+      });
+
       return {
         success: true,
         workId: work.id,
@@ -195,5 +209,28 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
       message: `${artists.length} artist ingestion jobs accepted.`,
       processingMode: "Resilient Hybrid (Redis or Sequential)",
     };
+  });
+
+  /**
+   * GET /import/search?q=...
+   * Search MusicBrainz for a recording.
+   */
+  app.get("/search", async (req: any, reply) => {
+    const { q } = req.query;
+    if (!q) return [];
+
+    try {
+      // Logic: if 'q' has a dash, split artist - title, else search as title
+      let matches;
+      if (q.includes("-")) {
+        const [artist, title] = q.split("-").map((s: string) => s.trim());
+        matches = await musicBrainzService.searchRecording(title, artist);
+      } else {
+        matches = await musicBrainzService.searchRecording(q, ""); // artist as empty string
+      }
+      return matches;
+    } catch (err: any) {
+      return reply.status(500).send({ message: err.message });
+    }
   });
 };

@@ -23,12 +23,13 @@ import { WakeLockService } from '../../services/wake-lock.service';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SongViewerComponent } from '../../../songs/ui/song-viewer/song-viewer.component';
 import { TransposeBarComponent } from '../../../../shared/ui/transpose-bar/transpose-bar';
 import { PracticeSessionService } from '../../../../core/services/practice-session.service';
+import { AnimationService } from '../../../../core/services/animation.service';
+import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-progress-ring/practice-progress-ring';
 
 @Component({
   standalone: true,
@@ -43,21 +44,10 @@ import { PracticeSessionService } from '../../../../core/services/practice-sessi
     SongViewerComponent,
     TransposeBarComponent,
     TitleCasePipe,
+    PracticeProgressRingComponent,
   ],
   templateUrl: './practice-page.html',
   styleUrl: './practice-page.scss',
-  animations: [
-    trigger('slideSwap', [
-      transition(':increment', [
-        style({ opacity: 0, transform: 'translateX(14px)' }),
-        animate('180ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
-      ]),
-      transition(':decrement', [
-        style({ opacity: 0, transform: 'translateX(-14px)' }),
-        animate('180ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
-      ]),
-    ]),
-  ],
 })
 export class PracticePageComponent {
   readonly p = inject(PracticeStore);
@@ -71,6 +61,7 @@ export class PracticePageComponent {
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
   private readonly sessionService = inject(PracticeSessionService);
+  private readonly animation = inject(AnimationService);
 
   private destroyRef = inject(DestroyRef);
 
@@ -145,6 +136,35 @@ export class PracticePageComponent {
       const currentId = this.p.currentSongId();
       if (currentId) {
         this.sessionService.recordSongStart(currentId);
+        // Sync with SongsStore to ensure detail is loaded (sections/chords)
+        this.songs.loadDetail(currentId);
+      }
+    });
+
+    // 3) GSAP Swap Animation
+    effect(() => {
+      const idx = this.p.index();
+      // Wait for DOM to update
+      setTimeout(() => {
+        const containers = document.querySelectorAll('.p-swap-gsap');
+        if (containers.length > 0) {
+          this.animation.staggerList(Array.from(containers), 0, 0);
+        }
+      }, 50);
+    });
+
+    // 4) Celebration effect when setlist is completed (last song, no next)
+    effect(() => {
+      const idx = this.p.index();
+      const total = this.p.count();
+      // Trigger only when we reach the very last song
+      if (total > 0 && idx === total - 1) {
+        setTimeout(() => {
+          const doneCard = document.querySelector('.p-next .p-done');
+          if (doneCard) {
+            this.animation.celebrate(doneCard, 35);
+          }
+        }, 300);
       }
     });
 
@@ -276,79 +296,57 @@ export class PracticePageComponent {
     }
   }
 
+  private scrollTween: gsap.core.Tween | null = null;
+
   startScroll() {
     if (this.isScrolling()) return;
-
-    // Must have a current song to scroll
     if (!this.p.currentSong()) return;
 
     this.isScrolling.set(true);
-    this._lastTs = null;
-    this._scrollCarry = 0;
 
     // Bind interruption (wheel/touch)
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = this._bindAutoScrollInterruption(() => this.stopScroll());
 
     this.zone.runOutsideAngular(() => {
-      const step = (ts: number) => {
-        if (!this.isScrolling()) return; // stop
+      // Target the scrollable container
+      // In Stage Mode, the scrollable element is the fixed card (.p-now)
+      const container = this.isStageMode()
+        ? document.querySelector('.stage-mode-active .p-now')
+        : document.querySelector('.app-main');
 
-        if (this._lastTs === null) this._lastTs = ts;
-        const dtMs = ts - this._lastTs;
-        this._lastTs = ts;
+      if (!container) {
+        this.zone.run(() => this.stopScroll());
+        return;
+      }
 
-        // Cap dt to avoid huge jumps if tab was backgrounded
-        const dt = Math.min(dtMs, 64) / 1000;
+      const currentScroll = container.scrollTop;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      const remaining = maxScroll - currentScroll;
 
-        const speed = this.autoScrollSpeed();
-        const dyFloat = speed * dt;
+      if (remaining <= 0) {
+        this.zone.run(() => this.stopScroll());
+        return;
+      }
 
-        this._scrollCarry += dyFloat;
-        const dy = Math.trunc(this._scrollCarry);
+      const duration = remaining / this.autoScrollSpeed();
 
-        if (dy !== 0) {
-          this._scrollCarry -= dy;
-
-          // Target the scrollable container
-          // In Stage Mode, the scrollable element is the fixed card (.p-now)
-          let container = this.isStageMode()
-            ? document.querySelector('.stage-mode-active .p-now')
-            : document.querySelector('.app-main');
-
-          if (container) {
-            container.scrollBy(0, dy);
-
-            // Check end using container metrics
-            // Allow a small buffer (2px)
-            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
-              this.zone.run(() => this.stopScroll());
-              return;
-            }
-          } else {
-            // Fallback just in case layout changes
-            window.scrollBy(0, dy);
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 2) {
-              this.zone.run(() => this.stopScroll());
-              return;
-            }
-          }
-        }
-
-        this._rafId = requestAnimationFrame(step);
-      };
-
-      this._rafId = requestAnimationFrame(step);
+      this.scrollTween = gsap.to(container, {
+        scrollTo: { y: maxScroll },
+        duration,
+        ease: 'none',
+        onComplete: () => {
+          this.zone.run(() => this.stopScroll());
+        },
+      });
     });
   }
 
   stopScroll() {
-    // Cancel RAF FIRST to prevent any pending frame from continuing
-    if (this._rafId !== null) {
-      cancelAnimationFrame(this._rafId);
-      this._rafId = null;
+    if (this.scrollTween) {
+      this.scrollTween.kill();
+      this.scrollTween = null;
     }
-
     this.isScrolling.set(false);
     this._lastTs = null;
     this._autoScrollCleanup?.();

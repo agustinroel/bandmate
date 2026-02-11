@@ -33,7 +33,6 @@
           </div>
         </div>
 
-        
         <div class="bm-header__right">
           <button mat-flat-button color="primary" (click)="createMyVersion()">
             <mat-icon class="me-1">edit_note</mat-icon>
@@ -59,7 +58,7 @@
           @if (arrangements()[0]; as top) {
             <!-- Top arrangement hero -->
             <mat-card
-              class="bm-hero"
+              class="bm-hero lib-card-gsap"
               tabindex="0"
               role="button"
               (click)="openArrangement(top.id)"
@@ -132,7 +131,7 @@
               <div class="bm-grid">
                 @for (song of myVersions(); track song.id) {
                   <mat-card
-                    class="bm-card"
+                    class="bm-card lib-card-gsap"
                     tabindex="0"
                     role="button"
                     (click)="openMyVersion(song.id)"
@@ -144,7 +143,7 @@
                         {{ song.title }}
                       </div>
                     </div>
-                    
+
                     <div class="bm-card__meta">
                       @if (song.key) {
                         <span class="bm-chip bm-chip--key">
@@ -155,7 +154,9 @@
                       <span class="bm-chip">Personal copy</span>
                     </div>
 
-                    <div class="bm-card__foot">Updated: {{ song.updatedAt | date: 'MMM d, y' }}</div>
+                    <div class="bm-card__foot">
+                      Updated: {{ song.updatedAt | date: 'MMM d, y' }}
+                    </div>
                   </mat-card>
                 }
               </div>
@@ -169,7 +170,7 @@
             <div class="bm-grid">
               @for (a of arrangements(); track a.id) {
                 <mat-card
-                  class="bm-card"
+                  class="bm-card lib-card-gsap"
                   tabindex="0"
                   role="button"
                   (click)="openArrangement(a.id)"
@@ -182,7 +183,7 @@
                       } @else {
                         Arrangement v{{ a.version ?? 1 }}
                       }
-                      
+
                       @if (a.isSeed) {
                         <span class="bm-chip bm-chip--seed">Seed</span>
                       }

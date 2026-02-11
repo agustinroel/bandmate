@@ -12,6 +12,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { NgClass, DatePipe } from '@angular/common';
@@ -20,6 +21,7 @@ import { NotificationsService } from '../../../shared/ui/notifications/notificat
 import { SongPolicy } from '@bandmate/shared';
 import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
 import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-run-hero';
+import { AnimationService } from '../../../core/services/animation.service';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -108,6 +110,7 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
     MatSnackBarModule,
     MatSelectModule,
     MatDividerModule,
+    MatProgressSpinnerModule,
     NgClass,
     DatePipe,
     LibraryWorkCardComponent,
@@ -120,6 +123,7 @@ export class SongsPageComponent {
   readonly store = inject(SongsStore);
   readonly router = inject(Router);
   readonly dialog = inject(MatDialog);
+  readonly animation = inject(AnimationService);
 
   readonly notify = inject(NotificationsService);
 
@@ -291,6 +295,17 @@ export class SongsPageComponent {
     return this.isReady() && this.hasActiveFilters() && !this.hasAnythingToShow();
   });
 
+  readonly isSearchingExternal = signal(false);
+
+  searchExternal() {
+    this.isSearchingExternal.set(true);
+    this.store.searchExternal(this.query());
+  }
+
+  ingest(match: any) {
+    this.store.ingestAndOpen(match.id);
+  }
+
   readonly hasActiveFilters = computed(() => {
     const f = this.filters();
     return (
@@ -373,6 +388,39 @@ export class SongsPageComponent {
         prefs.sort === 'updatedDesc';
 
       safeWritePrefs(isDefault ? null : prefs);
+    });
+
+    // 5) Animate list on load/filter
+    effect(() => {
+      const mine = this.grouped().mine;
+      const library = this.libraryWorks();
+      const ready = this.isReady();
+
+      if (ready) {
+        // Delay to allow DOM to catch up
+        setTimeout(() => {
+          // 1. Static elements (only animate once if possible, or on every 'ready')
+          const head = document.querySelector('.songs-head');
+          const search = document.querySelector('.mt-3 mat-form-field');
+          const filters = document.querySelector('.bm-filters');
+          const sections = document.querySelectorAll('.bm-section-head');
+
+          if (head) this.animation.fadeIn(head, 0);
+          if (search) this.animation.slideUp(search, 0.05);
+          if (filters) this.animation.slideUp(filters, 0.1);
+          if (sections.length) this.animation.staggerList(Array.from(sections), 0.1, 0.15);
+
+          // 2. Dynamic cards
+          const cards = document.querySelectorAll('.song-card-item');
+          if (cards.length > 0) {
+            this.animation.staggerList(Array.from(cards), 0.04, 0.2);
+          }
+
+          // 3. Magic Promo
+          const promo = document.querySelector('.magic-search-promo');
+          if (promo) this.animation.slideUp(promo, 0.3);
+        }, 150);
+      }
     });
   }
 

@@ -13,6 +13,7 @@ export type ProfileRow = {
   sings: boolean;
   chord_default_instrument: string; // 'guitar' | 'piano' | ...
   is_public: boolean;
+  subscription_tier?: string | null; // 'free' | 'pro' | 'studio'
   updated_at?: string | null;
   created_at?: string | null;
 };
@@ -42,52 +43,52 @@ export class ProfilesService {
 
   async ensureForUser(user: User): Promise<ProfileRow> {
     const existing = await this.getById(user.id);
-    
+
     // Sync metadata from auth if missing in profile (One-time sync mechanism)
     const meta = user.user_metadata || {};
     const authAvatar = meta['avatar_url'] || meta['picture'] || null;
     const authName = meta['full_name'] || meta['name'] || null;
-    
+
     if (existing) {
-       const changes: Partial<UpsertProfileInput> = {};
-       let shouldUpdate = false;
+      const changes: Partial<UpsertProfileInput> = {};
+      let shouldUpdate = false;
 
-       // Sync if missing OR different (keep profile fresh from Auth)
-       if (authAvatar && existing.avatar_url !== authAvatar) {
-          changes.avatar_url = authAvatar;
-          shouldUpdate = true;
-       }
-       if (authName && existing.full_name !== authName) {
-          changes.full_name = authName;
-          shouldUpdate = true;
-       }
+      // Sync if missing OR different (keep profile fresh from Auth)
+      if (authAvatar && existing.avatar_url !== authAvatar) {
+        changes.avatar_url = authAvatar;
+        shouldUpdate = true;
+      }
+      if (authName && existing.full_name !== authName) {
+        changes.full_name = authName;
+        shouldUpdate = true;
+      }
 
-       if (shouldUpdate) {
-          const updates: UpsertProfileInput = {
-             ...existing,
-             ...changes,
-             // Ensure required fields for UpsertProfileInput (though we are merging)
-             // We cast to UpsertProfileInput because we know existing has the fields.
-          } as UpsertProfileInput;
-             
-          // We need to be careful with strict typing. 
-          // Let's construct a clean object.
-          const cleanUpdate: UpsertProfileInput = {
-             id: user.id,
-             username: existing.username,
-             full_name: changes.full_name ?? existing.full_name,
-             avatar_url: changes.avatar_url ?? existing.avatar_url,
-             about: existing.about,
-             instruments: existing.instruments,
-             genres: existing.genres,
-             sings: existing.sings,
-             chord_default_instrument: existing.chord_default_instrument,
-             is_public: existing.is_public
-          };
+      if (shouldUpdate) {
+        const updates: UpsertProfileInput = {
+          ...existing,
+          ...changes,
+          // Ensure required fields for UpsertProfileInput (though we are merging)
+          // We cast to UpsertProfileInput because we know existing has the fields.
+        } as UpsertProfileInput;
 
-          return this.upsert(cleanUpdate);
-       }
-       return this.normalize(existing);
+        // We need to be careful with strict typing.
+        // Let's construct a clean object.
+        const cleanUpdate: UpsertProfileInput = {
+          id: user.id,
+          username: existing.username,
+          full_name: changes.full_name ?? existing.full_name,
+          avatar_url: changes.avatar_url ?? existing.avatar_url,
+          about: existing.about,
+          instruments: existing.instruments,
+          genres: existing.genres,
+          sings: existing.sings,
+          chord_default_instrument: existing.chord_default_instrument,
+          is_public: existing.is_public,
+        };
+
+        return this.upsert(cleanUpdate);
+      }
+      return this.normalize(existing);
     }
 
     // username sugerido: parte de email si existe

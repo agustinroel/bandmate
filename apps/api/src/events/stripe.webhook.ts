@@ -3,6 +3,7 @@ import { FastifyInstance } from "fastify";
 import { createTicket } from "./ticketing.repo.js";
 import { createNotification } from "../notifications/notifications.repo.js";
 import crypto from "node:crypto";
+import { supabase } from "../lib/supabase.js";
 
 let stripeInstance: Stripe | null = null;
 
@@ -17,6 +18,81 @@ function getStripe() {
   return stripeInstance;
 }
 
+// ------------------------------------------------------------------
+// Subscription fulfillment helpers
+// ------------------------------------------------------------------
+async function activateSubscription(
+  userId: string,
+  tier: string,
+  stripeSubscriptionId: string,
+  req: any,
+) {
+  try {
+    await supabase
+      .from("profiles")
+      .update({
+        subscription_tier: tier,
+        subscription_expires_at: null, // Active subscription, no expiry
+      })
+      .eq("id", userId);
+
+    req.log.info(
+      { userId, tier, stripeSubscriptionId },
+      "Subscription activated",
+    );
+
+    await createNotification(
+      userId,
+      "subscription_activated",
+      `¡Welcome to ${tier === "pro" ? "Pro" : "Studio"}!`,
+      `Your ${tier} subscription is now active. Enjoy all your new features!`,
+      { tier },
+    );
+  } catch (err: any) {
+    req.log.error({ err }, "Error activating subscription");
+    throw err;
+  }
+}
+
+async function deactivateSubscription(stripeCustomerId: string, req: any) {
+  try {
+    // Find user by stripe_customer_id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("stripe_customer_id", stripeCustomerId)
+      .maybeSingle();
+
+    if (!profile) {
+      req.log.warn({ stripeCustomerId }, "No profile found for customer");
+      return;
+    }
+
+    await supabase
+      .from("profiles")
+      .update({
+        subscription_tier: "free",
+        subscription_expires_at: new Date().toISOString(),
+      })
+      .eq("id", profile.id);
+
+    req.log.info({ userId: profile.id }, "Subscription deactivated → free");
+
+    await createNotification(
+      profile.id,
+      "subscription_cancelled",
+      "Subscription ended",
+      "Your subscription has ended. You've been moved to the Free plan.",
+      {},
+    );
+  } catch (err: any) {
+    req.log.error({ err }, "Error deactivating subscription");
+  }
+}
+
+// ------------------------------------------------------------------
+// Webhook Routes
+// ------------------------------------------------------------------
 export async function stripeWebhookRoutes(app: FastifyInstance) {
   app.log.info("Registering Stripe Webhook routes...");
   app.post("/webhooks/stripe", {
@@ -69,7 +145,8 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
         "Stripe Event constructed successfully",
       );
 
-      // Handle the event
+      // ---- Handle event types ----
+
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
         const metadata = session.metadata;
@@ -79,7 +156,17 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
           "Processing checkout.session.completed",
         );
 
-        if (metadata?.userId && metadata?.eventId) {
+        // --- Subscription checkout ---
+        if (metadata?.bandmate_user_id && metadata?.tier) {
+          await activateSubscription(
+            metadata.bandmate_user_id,
+            metadata.tier,
+            session.subscription as string,
+            req,
+          );
+        }
+        // --- Event ticket checkout ---
+        else if (metadata?.userId && metadata?.eventId) {
           req.log.info(
             `Fulfilling order for User ${metadata.userId}, Event ${metadata.eventId}`,
           );
@@ -94,7 +181,6 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
             });
             req.log.info("Ticket created successfully");
 
-            // Notificar al usuario
             try {
               await createNotification(
                 metadata.userId,
@@ -109,18 +195,37 @@ export async function stripeWebhookRoutes(app: FastifyInstance) {
                 { notifErr },
                 "Error sending fulfillment notification",
               );
-              // No fallamos el webhook por una notificación
             }
           } catch (repoErr: any) {
             req.log.error({ repoErr }, "Error saving ticket to database");
-            // Returning 500 so Stripe retries
             return reply.code(500).send("Database error fulfilling ticket");
           }
         } else {
           req.log.warn(
-            "Webhook received but metadata (userId/eventId) is missing",
+            "Webhook received but metadata is missing required fields",
           );
         }
+      }
+
+      // --- Subscription updated (plan change) ---
+      if (event.type === "customer.subscription.updated") {
+        const subscription = event.data.object as Stripe.Subscription;
+        const meta = subscription.metadata;
+
+        if (meta?.bandmate_user_id && meta?.tier) {
+          await activateSubscription(
+            meta.bandmate_user_id,
+            meta.tier,
+            subscription.id,
+            req,
+          );
+        }
+      }
+
+      // --- Subscription cancelled/expired ---
+      if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Stripe.Subscription;
+        await deactivateSubscription(subscription.customer as string, req);
       }
 
       return reply.code(200).send({ received: true });
