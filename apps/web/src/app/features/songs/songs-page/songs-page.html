@@ -112,11 +112,13 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Futuro: genre -->
-      <mat-form-field appearance="outline" class="bm-field bm-field--disabled">
+      <mat-form-field appearance="outline" class="bm-field">
         <mat-label>Genre</mat-label>
-        <mat-select [disabled]="true">
-          <mat-option>Coming soon</mat-option>
+        <mat-select [value]="filters().genre" (selectionChange)="setGenre($event.value)">
+          <mat-option [value]="null">All genres</mat-option>
+          @for (g of genreOptions(); track g) {
+            <mat-option [value]="g">{{ g }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
@@ -191,6 +193,24 @@
 
     <div class="small opacity-75 mb-3">Try a different search, or clear filters.</div>
 
+    <!-- MAGIC IMPORT TRIGGER -->
+    @if (query().length > 2 && !isSearchingExternal()) {
+      <div class="magic-search-promo p-4 rounded-4 border mb-4 bg-light shadow-sm" #magicPromo>
+        <mat-icon color="accent" style="font-size: 32px; width: 32px; height: 32px"
+          >auto_awesome</mat-icon
+        >
+        <h4 class="mt-2">Can't find "{{ query() }}"?</h4>
+        <p class="small text-muted mb-3">
+          Use <strong>Magic Import</strong> to search the global database and generate a pro
+          arrangement with AI in seconds.
+        </p>
+        <button mat-flat-button color="accent" class="rounded-pill px-4" (click)="searchExternal()">
+          <mat-icon class="me-2">cloud_download</mat-icon>
+          Search Global Cloud
+        </button>
+      </div>
+    }
+
     <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
       <button mat-stroked-button type="button" (click)="clearAllSearchAndFilters()">
         <mat-icon class="me-1">close</mat-icon>
@@ -208,6 +228,78 @@
       </button>
     </div>
   </div>
+}
+
+<!-- EXTERNAL RESULTS (MAGIC IMPORT) -->
+@if (isSearchingExternal() && query()) {
+  <div class="external-search-block mt-4 p-4 border rounded-4 bg-white shadow animate-blur-in">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <mat-icon color="accent">auto_awesome</mat-icon>
+        <h3 class="m-0 h5 fw-bold">Magic Global Results</h3>
+      </div>
+      <button mat-icon-button (click)="isSearchingExternal.set(false)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    @if (store.externalState() === 'loading') {
+      <div class="text-center py-5">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="32"
+          class="mx-auto"
+          color="accent"
+        ></mat-progress-spinner>
+        <div class="mt-3 small opacity-50">Searching the global database...</div>
+      </div>
+    }
+
+    @if (store.externalState() === 'ingesting') {
+      <div class="text-center py-5">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="32"
+          class="mx-auto"
+          color="primary"
+        ></mat-progress-spinner>
+        <div class="mt-3">
+          <div class="fw-bold">Generating Arrangement...</div>
+          <div class="small opacity-50">
+            AI is analyzing the song structure and chords. This takes about 10s.
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
+      <div class="text-center py-4 opacity-50">
+        No matches found in the cloud for "{{ query() }}".
+      </div>
+    }
+
+    <div class="ext-results-list">
+      @for (res of store.externalResults(); track res.id) {
+        <div
+          class="ext-match-item d-flex align-items-center justify-content-between p-3 border-bottom hover-bg-light"
+        >
+          <div class="me-3 overflow-hidden">
+            <div class="fw-bold truncate">{{ res.title }}</div>
+            <div class="small opacity-75 truncate">{{ res.artist }}</div>
+          </div>
+          <button
+            mat-flat-button
+            color="primary"
+            class="rounded-pill flex-shrink-0"
+            (click)="ingest(res)"
+          >
+            <mat-icon class="me-1">auto_fix_high</mat-icon>
+            Generate
+          </button>
+        </div>
+      }
+    </div>
+  </div>
 } @else if (!isLoading() && hasAnythingToShow()) {
   <!-- ========================= -->
   <!-- YOUR SONGS -->
@@ -221,7 +313,7 @@
     <div class="songs-grid">
       @for (s of grouped().mine; track s.id) {
         <mat-card
-          class="song-card"
+          class="song-card song-card-item"
           [attr.aria-label]="'Open song ' + s.title + ' by ' + s.artist"
           tabindex="0"
           role="button"
@@ -236,6 +328,23 @@
                 @if (s.key) {
                   <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
                     Key {{ s.key }}
+                  </span>
+                }
+
+                @if (s.ratingAvg) {
+                  <span
+                    class="bm-pill bm-pill--mastery-mini"
+                    [class.mastery-low]="s.ratingAvg <= 2"
+                    [class.mastery-mid]="s.ratingAvg > 2 && s.ratingAvg < 5"
+                    [class.mastery-high]="s.ratingAvg === 5"
+                  >
+                    @if (s.ratingAvg === 5) {
+                      <mat-icon>star</mat-icon>
+                    } @else if (s.ratingAvg > 2) {
+                      <mat-icon>verified</mat-icon>
+                    } @else {
+                      <mat-icon>school</mat-icon>
+                    }
                   </span>
                 }
               </div>
@@ -340,6 +449,7 @@
     <div class="songs-grid">
       @for (w of libraryWorks(); track w.id) {
         <bm-library-work-card
+          class="song-card-item"
           (click)="router.navigate(['/library', w.id])"
           [work]="w"
         ></bm-library-work-card>

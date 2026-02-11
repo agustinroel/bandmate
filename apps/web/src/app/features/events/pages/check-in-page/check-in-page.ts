@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ZXingScannerModule, ZXingScannerComponent } from '@zxing/ngx-scanner';
 import { BarcodeFormat } from '@zxing/library';
 import { TicketingService } from '../../services/ticketing.service';
@@ -20,6 +21,7 @@ import { TicketingService } from '../../services/ticketing.service';
     MatCardModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatTooltipModule,
     ZXingScannerModule,
   ],
   template: `
@@ -95,48 +97,53 @@ import { TicketingService } from '../../services/ticketing.service';
 
         <!-- Result Sidebar (Optional but helpful) -->
         <div class="col-md-4">
-          <div class="last-result-card animate-up" *ngIf="lastResult()">
-            <mat-card
-              class="border-0 shadow-sm rounded-4"
-              [ngClass]="{
-                'border-success': lastResult()?.success,
-                'border-danger': !lastResult()?.success,
-              }"
-            >
-              <div class="p-4 text-center">
-                <div
-                  class="result-icon-wrapper mx-auto mb-3"
-                  [ngClass]="{
-                    'bg-success-subtle text-success': lastResult()?.success,
-                    'bg-danger-subtle text-danger': !lastResult()?.success,
-                  }"
-                >
-                  <mat-icon>{{ lastResult()?.success ? 'check_circle' : 'error' }}</mat-icon>
-                </div>
-                <h3 class="fw-bold h5 mb-1">
-                  {{ lastResult()?.success ? 'VALID TICKET' : 'INVALID TICKET' }}
-                </h3>
-                <p class="small text-secondary mb-3">{{ lastResult()?.message }}</p>
-
-                <div
-                  class="ticket-info-mini p-2 bg-light rounded text-start"
-                  *ngIf="lastResult()?.ticket"
-                >
-                  <div class="small fw-bold">{{ lastResult()?.ticket.profiles?.full_name }}</div>
-                  <div class="xs-text text-muted">
-                    {{ lastResult()?.ticket.qr_hash.slice(0, 8) }}
+          @if (lastResult()) {
+            <div class="last-result-card animate-up">
+              <mat-card
+                class="border-0 shadow-sm rounded-4"
+                [ngClass]="{
+                  'border-success': lastResult()?.success,
+                  'border-danger': !lastResult()?.success,
+                }"
+              >
+                <div class="p-4 text-center">
+                  <div
+                    class="result-icon-wrapper mx-auto mb-3"
+                    [ngClass]="{
+                      'bg-success-subtle text-success': lastResult()?.success,
+                      'bg-danger-subtle text-danger': !lastResult()?.success,
+                    }"
+                  >
+                    <mat-icon>{{ lastResult()?.success ? 'check_circle' : 'error' }}</mat-icon>
                   </div>
+                  <h3 class="fw-bold h5 mb-1">
+                    {{ lastResult()?.success ? 'VALID TICKET' : 'INVALID TICKET' }}
+                  </h3>
+                  <p class="small text-secondary mb-3">{{ lastResult()?.message }}</p>
+
+                  @if (lastResult()?.ticket) {
+                    <div class="ticket-info-mini p-2 bg-light rounded text-start">
+                      <div class="small fw-bold">
+                        {{ lastResult()?.ticket.profiles?.full_name }}
+                      </div>
+                      <div class="xs-text text-muted">
+                        {{ lastResult()?.ticket.qr_hash.slice(0, 8) }}
+                      </div>
+                    </div>
+                  }
+
+                  <button mat-button class="w-100 mt-3" (click)="clearResult()">DISMISS</button>
                 </div>
-
-                <button mat-button class="w-100 mt-3" (click)="clearResult()">DISMISS</button>
-              </div>
-            </mat-card>
-          </div>
-
-          <div *ngIf="!lastResult()" class="text-center p-5 opacity-25">
-            <mat-icon style="font-size: 3rem; width: 3rem; height: 3rem;">qr_code_scanner</mat-icon>
-            <p class="small mt-2">No scans yet</p>
-          </div>
+              </mat-card>
+            </div>
+          } @else {
+            <div class="text-center p-5 opacity-25">
+              <mat-icon style="font-size: 3rem; width: 3rem; height: 3rem;"
+                >qr_code_scanner</mat-icon
+              >
+              <p class="small mt-2">No scans yet</p>
+            </div>
+          }
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { Injectable, signal, effect, untracked } from '@angular/core';
 export class MetronomeService {
   readonly isPlaying = signal(false);
   readonly bpm = signal(100);
+  readonly beat = signal(0);
 
   private audioCtx: AudioContext | null = null;
   private nextNoteTime = 0;
@@ -39,7 +40,7 @@ export class MetronomeService {
 
     this.isPlaying.set(true);
     this.nextNoteTime = this.audioCtx!.currentTime;
-    
+
     this.timerId = window.setInterval(() => this.scheduler(), this.lookahead);
   }
 
@@ -85,5 +86,15 @@ export class MetronomeService {
 
     osc.start(time);
     osc.stop(time + 0.03);
+
+    // Sync UI beat signal exactly when note plays
+    const now = this.audioCtx!.currentTime;
+    const msToNote = Math.max(0, (time - now) * 1000);
+
+    setTimeout(() => {
+      if (this.isPlaying()) {
+        this.beat.update((v) => v + 1);
+      }
+    }, msToNote);
   }
 }

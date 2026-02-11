@@ -200,6 +200,11 @@ import { DatePipe } from '@angular/common';
                   My Tickets
                 </button>
 
+                <button mat-menu-item type="button" routerLink="/settings">
+                  <mat-icon>settings</mat-icon>
+                  Settings
+                </button>
+
                 <button mat-menu-item type="button" (click)="signOut()">
                   <mat-icon>logout</mat-icon>
                   Sign out

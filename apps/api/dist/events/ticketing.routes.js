@@ -1,4 +1,4 @@
-import { listUserTickets, getTicket } from "./ticketing.repo.js";
+import { listUserTickets, getTicket, validateTicket, } from "./ticketing.repo.js";
 import { createStripeConnectAccount, createOnboardingLink, createTicketCheckoutSession, } from "./ticketing.service.js";
 import { getEvent } from "./events.repo.js";
 import { getBandPayoutSettings } from "./payouts.repo.js";
@@ -59,6 +59,7 @@ export async function ticketingRoutes(app) {
         if (!user)
             return reply.code(401).send({ message: "Unauthorized" });
         const { eventId } = req.params;
+        const { quantity } = req.body || {};
         try {
             const event = await getEvent(eventId);
             if (!event)
@@ -69,7 +70,7 @@ export async function ticketingRoutes(app) {
                     .code(400)
                     .send({ message: "Band has not set up payments yet" });
             }
-            const session = await createTicketCheckoutSession(eventId, event.title, event.ticket_price, event.currency, payoutSettings.stripe_connect_id, user.id);
+            const session = await createTicketCheckoutSession(eventId, event.title, event.ticket_price, event.currency, payoutSettings.stripe_connect_id, user.id, quantity || 1);
             return { checkoutUrl: session.url };
         }
         catch (e) {
@@ -77,6 +78,25 @@ export async function ticketingRoutes(app) {
             return reply
                 .code(500)
                 .send({ message: e.message || "Error creating checkout session" });
+        }
+    });
+    // Ticket Validation (Check-in)
+    app.post("/tickets/validate", async (req, reply) => {
+        const user = req.user;
+        if (!user)
+            return reply.code(401).send({ message: "Unauthorized" });
+        const { qrHash, bandId } = req.body;
+        if (!qrHash || !bandId) {
+            return reply.code(400).send({ message: "Missing qrHash or bandId" });
+        }
+        try {
+            const result = await validateTicket(qrHash, bandId);
+            return result;
+        }
+        catch (e) {
+            req.log.error(e);
+            const status = e.message.includes("Unauthorized") ? 403 : 404;
+            return reply.code(status).send({ message: e.message });
         }
     });
 }

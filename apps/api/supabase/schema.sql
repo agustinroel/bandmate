@@ -15,6 +15,7 @@ create extension if not exists pgcrypto;
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -46,6 +47,8 @@ create table if not exists public.songs (
   updated_at timestamptz not null default now()
 );
 
+alter table public.arrangements enable row level security;
+
 -- Additive (safe) columns for current front + rating + “library/community/public-domain”
 alter table public.songs
   add column if not exists version int not null default 1;
@@ -66,6 +69,25 @@ alter table public.songs
 
 alter table public.songs
   add column if not exists rating_count int not null default 0;
+
+alter table public.songs
+  add column if not exists is_imported boolean not null default false;
+
+alter table public.songs
+  add column if not exists spotify_id text;
+
+alter table public.songs
+  add column if not exists musicbrainz_id text;
+
+alter table public.songs
+  add column if not exists work_id uuid references public.song_works(id) on delete set null;
+
+alter table public.songs
+  add column if not exists origin_arrangement_id uuid references public.arrangements(id) on delete set null;
+
+create index if not exists idx_songs_musicbrainz on public.songs(musicbrainz_id);
+create index if not exists idx_songs_spotify on public.songs(spotify_id);
+create index if not exists idx_songs_work_id on public.songs(work_id);
 
   alter table public.song_ratings
   alter column user_id type uuid using user_id::uuid;
@@ -101,6 +123,8 @@ create table if not exists public.song_ratings (
   primary key (song_id, user_id)
 );
 
+alter table public.song_ratings enable row level security;
+
 create index if not exists song_ratings_song_id_idx on public.song_ratings(song_id);
 
 do $$
@@ -121,6 +145,7 @@ create or replace function public.rate_song(p_song_id uuid, p_value int)
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   if p_value < 1 or p_value > 5 then
@@ -160,6 +185,8 @@ create table if not exists public.setlists (
   updated_at timestamptz not null default now()
 );
 
+alter table public.arrangements enable row level security;
+
 create index if not exists setlists_owner_id_idx on public.setlists(owner_id);
 
 do $$
@@ -187,6 +214,8 @@ create table if not exists public.setlist_items (
   unique (setlist_id, song_id),
   unique (setlist_id, position)
 );
+
+alter table public.setlist_items enable row level security;
 
 create index if not exists setlist_items_setlist_id_idx on public.setlist_items(setlist_id);
 create index if not exists setlist_items_song_id_idx on public.setlist_items(song_id);
@@ -226,6 +255,8 @@ create table if not exists public.song_works (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.arrangements enable row level security;
 
 create index if not exists idx_song_works_title_artist on public.song_works(title, artist);
 
@@ -271,6 +302,8 @@ create table if not exists public.arrangements (
   updated_at timestamptz not null default now()
 );
 
+alter table public.arrangements enable row level security;
+
 create index if not exists idx_arrangements_work on public.arrangements(work_id);
 create index if not exists idx_arrangements_seed on public.arrangements(is_seed);
 
@@ -295,6 +328,8 @@ create table if not exists public.arrangement_ratings (
   primary key (arrangement_id, user_id)
 );
 
+alter table public.arrangement_ratings enable row level security;
+
 create index if not exists idx_arrangement_ratings_arrangement on public.arrangement_ratings(arrangement_id);
 
 do $$
@@ -314,6 +349,7 @@ create or replace function public.rate_arrangement(p_arrangement_id uuid, p_valu
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   if p_value < 1 or p_value > 5 then
@@ -352,6 +388,7 @@ create extension if not exists pgcrypto;
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -380,6 +417,8 @@ create table if not exists public.song_works (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.arrangements enable row level security;
 
 create index if not exists idx_song_works_title_artist on public.song_works(title, artist);
 
@@ -425,6 +464,8 @@ create table if not exists public.arrangements (
   updated_at timestamptz not null default now()
 );
 
+alter table public.arrangements enable row level security;
+
 create index if not exists idx_arrangements_work on public.arrangements(work_id);
 create index if not exists idx_arrangements_seed on public.arrangements(is_seed);
 
@@ -449,6 +490,8 @@ create table if not exists public.arrangement_ratings (
   primary key (arrangement_id, user_id)
 );
 
+alter table public.arrangement_ratings enable row level security;
+
 create index if not exists idx_arrangement_ratings_arrangement
 on public.arrangement_ratings(arrangement_id);
 
@@ -468,6 +511,7 @@ create or replace function public.rate_arrangement(p_arrangement_id uuid, p_valu
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   if p_value < 1 or p_value > 5 then
@@ -545,6 +589,7 @@ create or replace function public.record_song_practice(
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   insert into public.practice_session_songs (session_id, song_id, duration_sec)
@@ -560,6 +605,7 @@ create or replace function public.get_most_practiced_songs(
 returns json
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   return (
@@ -596,6 +642,8 @@ create table if not exists public.user_achievements (
   unique (user_id, achievement_id)
 );
 
+alter table public.user_achievements enable row level security;
+
 create index if not exists idx_user_achievements_user on public.user_achievements(user_id);
 
 -- RPC: Unlock an achievement safely (idempotent)
@@ -606,6 +654,7 @@ create or replace function public.unlock_achievement(
 returns boolean -- returns true if it was newly unlocked
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   if exists (
@@ -627,6 +676,7 @@ create or replace function public.get_user_achievements(p_user_id uuid)
 returns text[]
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
   return array(
@@ -642,6 +692,7 @@ create or replace function public.get_practice_streak(p_user_id uuid)
 returns int
 language plpgsql
 security definer
+set search_path = public
 as $$
 declare
   v_streak int := 0;
@@ -676,3 +727,21 @@ begin
   return v_streak;
 end;
 $$;
+
+
+-- =========================
+-- Final Security: Enable RLS
+-- =========================
+-- Enabling RLS on all tables to satisfy security lints and best practices.
+-- Note: Existing policies will now be enforced.
+ALTER TABLE public.songs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.setlists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.setlist_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.song_works ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.song_ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.arrangements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.arrangement_ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.practice_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.practice_session_songs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;

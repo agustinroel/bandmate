@@ -1,6 +1,7 @@
+import "./env.js";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import "dotenv/config";
+import rateLimit from "@fastify/rate-limit";
 import { Readable } from "node:stream";
 
 import { registerAuth } from "./plugins/auth.js";
@@ -18,7 +19,9 @@ import { notificationsRoutes } from "./notifications/notifications.routes.js";
 import { eventsRoutes } from "./events/events.routes.js";
 import { ticketingRoutes } from "./events/ticketing.routes.js";
 import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
+import { subscriptionRoutes } from "./subscriptions/subscriptions.routes.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
+import { subscriptionHook } from "./services/subscription.middleware.js";
 
 if (process.env.SEED_LIBRARY === "true") {
   // ... existing seed logic ...
@@ -27,6 +30,12 @@ if (process.env.SEED_LIBRARY === "true") {
 const app = Fastify({
   logger: true,
   ignoreTrailingSlash: true,
+});
+
+// Rate limiting: 100 requests per minute per IP
+await app.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute",
 });
 
 // Hook onRequest para CORS "Total Freedom": Inyectar antes de que nadie pueda bloquear
@@ -149,6 +158,7 @@ await app.register(registerAuth, {
   ],
 });
 app.addHook("preHandler", app.authGuardHook);
+app.addHook("preHandler", subscriptionHook);
 
 // Diagnostic Routes
 app.get("/health", async () => ({ status: "ok" }));
@@ -175,6 +185,7 @@ await app.register(eventsRoutes);
 await app.register(ticketingRoutes);
 await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
+await app.register(subscriptionRoutes);
 
 app.setErrorHandler((err, req, reply) => {
   const status = (err as any).statusCode ?? 500;

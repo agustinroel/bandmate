@@ -37,6 +37,12 @@ export type Song = {
     title: string;
     artist: string;
     /**
+     * External Identifiers for Library Scaling
+     */
+    spotifyId?: string;
+    musicbrainzId?: string;
+    isImported?: boolean;
+    /**
      * Legacy / compact representation of key. Example: "Gm", "C", "Am"
      * We'll keep it for now for compatibility.
      */

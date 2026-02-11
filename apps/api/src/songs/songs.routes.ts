@@ -53,6 +53,24 @@ export async function songsRoutes(app: FastifyInstance) {
       return reply.code(400).send({ message: "title and artist are required" });
     }
 
+    // Subscription limit check
+    const { checkResourceLimit } =
+      await import("../services/subscription.middleware.js");
+    const atLimit = await checkResourceLimit(
+      userId,
+      "songs",
+      req.subscriptionTier,
+    );
+    if (atLimit) {
+      return reply.code(403).send({
+        statusCode: 403,
+        error: "LimitReached",
+        message: "You have reached the maximum number of songs for your plan.",
+        requiredTier: "pro",
+        currentTier: req.subscriptionTier,
+      });
+    }
+
     const created = await createSongForUser(userId, dto as CreateSongInput);
     return reply.code(201).send(created);
   });
@@ -137,7 +155,7 @@ export async function songsRoutes(app: FastifyInstance) {
     if (!userId) return reply.code(401).send({ message: "Unauthorized" });
 
     const { id } = req.params as { id: string };
-    
+
     // 1. Get song
 
     const { supabase } = await import("../lib/supabase.js");
@@ -151,11 +169,14 @@ export async function songsRoutes(app: FastifyInstance) {
     if (!song) return reply.code(404).send({ message: "Song not found" });
 
     // 2. Validate ownership & work link
-    if (song.owner_id !== userId) return reply.code(403).send({ message: "Forbidden" });
-    if (!song.work_id) return reply.code(400).send({ message: "Song is not linked to a work" });
+    if (song.owner_id !== userId)
+      return reply.code(403).send({ message: "Forbidden" });
+    if (!song.work_id)
+      return reply.code(400).send({ message: "Song is not linked to a work" });
 
     // 3. Publish
-    const { createArrangementFromSong } = await import("../works/works.repo.js");
+    const { createArrangementFromSong } =
+      await import("../works/works.repo.js");
     const arrangement = await createArrangementFromSong(userId, song);
 
     return reply.code(201).send(arrangement);

@@ -11,6 +11,168 @@
   </div>
 } @else if (detail(); as d) {
   <div class="sv-container">
+    @if (!hideHeader()) {
+      <div class="sv-header mb-4">
+        <h1 class="sv-title m-0">{{ d.title }}</h1>
+        <div class="d-flex align-items-center gap-3">
+          <div class="sv-artist fs-5 opacity-75">{{ d.artist }}</div>
+
+          @if (d.ratingAvg) {
+            <span
+              class="bm-pill bm-pill--mastery"
+              [class.mastery-low]="d.ratingAvg <= 2"
+              [class.mastery-mid]="d.ratingAvg > 2 && d.ratingAvg < 5"
+              [class.mastery-high]="d.ratingAvg === 5"
+            >
+              @if (d.ratingAvg <= 2) {
+                <mat-icon>school</mat-icon> <span>Aprendiendo</span>
+              } @else if (d.ratingAvg < 5) {
+                <mat-icon>verified</mat-icon> <span>Dominado</span>
+              } @else {
+                <mat-icon>star</mat-icon> <span>Pro Mastery</span>
+              }
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- LIVE CONTROLS TOOLBAR -->
+    @if (!hideToolbar()) {
+      <div
+        class="sv-toolbar shadow-sm border rounded-4 mb-4 p-2 d-flex align-items-center justify-content-between flex-wrap gap-2"
+      >
+        <div class="d-flex align-items-center gap-2 px-2">
+          <!-- Transpose -->
+          <div class="d-flex align-items-center bg-light rounded-pill px-1 border">
+            <button
+              mat-icon-button
+              (click)="adjTranspose(-1)"
+              matTooltip="Transpose Down"
+              class="btn-sm-icon"
+            >
+              <mat-icon>remove</mat-icon>
+            </button>
+            <div class="px-2 fw-bold text-primary" style="min-width: 32px; text-align: center">
+              {{ internalTranspose() > 0 ? '+' : '' }}{{ internalTranspose() }}
+            </div>
+            <button
+              mat-icon-button
+              (click)="adjTranspose(1)"
+              matTooltip="Transpose Up"
+              class="btn-sm-icon"
+            >
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          <button
+            mat-stroked-button
+            color="primary"
+            class="rounded-pill bm-btn-mini"
+            (click)="resetTranspose()"
+            [disabled]="internalTranspose() === 0"
+          >
+            Reset
+          </button>
+
+          <div class="vr mx-2 bg-secondary opacity-25" style="height: 24px"></div>
+
+          <!-- Metronome -->
+          <div class="d-flex align-items-center gap-1">
+            <button
+              mat-icon-button
+              [color]="metronome.isPlaying() ? 'accent' : ''"
+              (click)="toggleMetronome()"
+              matTooltip="Toggle Metronome"
+            >
+              <mat-icon>{{ metronome.isPlaying() ? 'metronome' : 'timer' }}</mat-icon>
+            </button>
+
+            <button
+              mat-button
+              class="bm-bpm-btn-mini"
+              [matMenuTriggerFor]="bpmMenu"
+              matTooltip="Adjust BPM"
+            >
+              {{ metronome.bpm() }}
+            </button>
+            <mat-menu #bpmMenu="matMenu">
+              <div class="p-3" style="min-width: 200px" (click)="$event.stopPropagation()">
+                <div class="small opacity-75 mb-2">Tempo (BPM)</div>
+                <div class="d-flex align-items-center gap-2">
+                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() - 5)">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  <span class="fw-bold fs-5 flex-grow-1 text-center">{{ metronome.bpm() }}</span>
+                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() + 5)">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                <mat-slider min="40" max="240" step="1" class="w-100 mt-2">
+                  <input
+                    matSliderThumb
+                    [value]="metronome.bpm()"
+                    (valueChange)="metronome.setBpm($event)"
+                  />
+                </mat-slider>
+              </div>
+            </mat-menu>
+          </div>
+
+          @if (metronome.isPlaying()) {
+            <bm-metronome-pulse />
+          }
+
+          <!-- Tuner Toggle -->
+          <button
+            mat-icon-button
+            [color]="showTuner() ? 'accent' : ''"
+            (click)="toggleTuner()"
+            matTooltip="Guitar Tuner"
+          >
+            <mat-icon>music_note</mat-icon>
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 px-2 flex-grow-1 justify-content-end">
+          <!-- Speed Slider -->
+          <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 200px">
+            <mat-icon class="text-muted" style="font-size: 18px; width: 18px; height: 18px"
+              >speed</mat-icon
+            >
+            <mat-slider min="10" max="150" step="2" class="flex-grow-1">
+              <input
+                matSliderThumb
+                [value]="scrollSpeed()"
+                (input)="updateScrollSpeed($any($event.target).value)"
+              />
+            </mat-slider>
+          </div>
+
+          <!-- Scroll Toggle -->
+          <button
+            mat-flat-button
+            [color]="isScrolling() ? 'accent' : 'primary'"
+            (click)="toggleScroll()"
+            class="rounded-pill px-4 shadow-sm"
+          >
+            <mat-icon class="me-2">{{ isScrolling() ? 'pause' : 'play_arrow' }}</mat-icon>
+            {{ isScrolling() ? 'Stopping' : 'Auto-Scroll' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- FLOATING TOOLS OVERLAY -->
+    @if (showTuner()) {
+      <div class="sv-floating-tool tuner-overlay">
+        <bm-tuner-compact />
+        <button mat-mini-fab color="warn" class="close-tool" (click)="toggleTuner()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+
     @if (!d.sections || d.sections.length === 0) {
       <div class="sv-empty">
         <mat-icon class="sv-empty-ic">queue_music</mat-icon>
@@ -31,10 +193,16 @@
                 @if (line.kind === 'lyrics') {
                   <bm-chord-line-view
                     [source]="line.source ?? ''"
-                    [transpose]="transpose()"
+                    [transpose]="internalTranspose()"
                     mode="auto"
                     [interactive]="true"
                   />
+                } @else if (line.kind === 'comment') {
+                  <div
+                    class="sv-comment p-2 opacity-75 small font-monospace bg-light rounded mb-2 border-start border-4 border-primary"
+                  >
+                    {{ line.text }}
+                  </div>
                 }
               }
             </div>

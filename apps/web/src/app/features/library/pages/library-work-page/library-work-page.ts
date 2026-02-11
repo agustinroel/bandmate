@@ -8,6 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SongsStore } from '../../../songs/state/songs-store';
+import { AnimationService } from '../../../../core/services/animation.service';
 
 import { environment } from '../../../../../environments/environment';
 
@@ -62,7 +63,7 @@ export class LibraryWorkPageComponent {
 
   private readonly http = inject(HttpClient);
   private readonly songsStore = inject(SongsStore);
-
+  private readonly animation = inject(AnimationService);
 
   readonly workId = signal<string>('');
 
@@ -71,7 +72,7 @@ export class LibraryWorkPageComponent {
 
   readonly work = signal<WorkDto | null>(null);
   readonly arrangements = signal<ArrangementDto[]>([]);
-  
+
   readonly myVersions = computed(() => {
     const wId = this.workId();
     if (!wId) return [];
@@ -86,6 +87,20 @@ export class LibraryWorkPageComponent {
       this.workId.set(id);
 
       if (id) this.load();
+    });
+
+    effect(() => {
+      const isReady = this.state() === 'ready';
+      const arrangements = this.arrangements();
+
+      if (isReady && arrangements.length > 0) {
+        setTimeout(() => {
+          const els = document.querySelectorAll('.lib-card-gsap');
+          if (els.length > 0) {
+            this.animation.staggerList(Array.from(els), 0.05, 0.1);
+          }
+        }, 150);
+      }
     });
   }
 
@@ -127,12 +142,12 @@ export class LibraryWorkPageComponent {
     this.songsStore.createFromWork(w, sourceArrangement).subscribe({
       next: (newSong) => {
         // Navigate to the editor for the new song
-        this.router.navigate(['/songs', newSong.id]); 
+        this.router.navigate(['/songs', newSong.id]);
       },
       error: (err) => {
         console.error('Failed to create version', err);
         // Could show a notification here
-      }
+      },
     });
   }
 

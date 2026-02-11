@@ -42,6 +42,16 @@
   </div>
 
   <div class="d-flex align-items-center gap-2">
+    <!-- Progress Ring -->
+    @if (p.count() > 0) {
+      <bm-practice-progress-ring
+        [current]="p.index() + 1"
+        [total]="p.count()"
+        [size]="52"
+        [strokeWidth]="4"
+      />
+    }
+
     <!-- Metronome -->
     <div class="p-metronome">
       <button
@@ -149,7 +159,7 @@
 
       <div class="p-kicker">NOW PLAYING</div>
 
-      <div class="p-swap" [@slideSwap]="p.index()">
+      <div class="p-swap p-swap-gsap">
         @if (p.currentSong()) {
           <div class="p-title">{{ p.currentSong()!.title }}</div>
           <div class="p-sub opacity-75">{{ p.currentSong()!.artist }}</div>
@@ -182,7 +192,12 @@
           }
 
           <div class="mt-4">
-            <app-song-viewer [songId]="p.currentSong()!.id" [transpose]="transpose()" />
+            <app-song-viewer
+              [songId]="p.currentSong()!.id"
+              [transpose]="transpose()"
+              [hideToolbar]="true"
+              [hideHeader]="true"
+            />
           </div>
         }
       </div>
@@ -191,7 +206,7 @@
     <!-- NEXT -->
     <mat-card class="p-card p-next">
       <div class="p-kicker">UP NEXT</div>
-      <div class="p-swap" [@slideSwap]="p.index()">
+      <div class="p-swap p-swap-gsap">
         @if (p.nextSong()) {
           <div class="p-title-sm">{{ p.nextSong()!.title }}</div>
           <div class="small opacity-75">{{ p.nextSong()!.artist }}</div>
@@ -267,28 +282,6 @@
         <mat-icon>skip_next</mat-icon>
       </button>
     </div>
-
-    <!-- Quick Section Jump Rail (Floating Right) -->
-    @if (currentSections().length > 0) {
-      <div
-        class="p-section-rail d-none d-lg-flex flex-column position-fixed"
-        [style.right.px]="isStageMode() ? 32 : 24"
-        style="z-index: 100; gap: 8px"
-      >
-        @for (sec of currentSections(); track sec.id) {
-          <button
-            mat-mini-fab
-            color="basic"
-            class="section-jump-btn shadow-sm"
-            style="opacity: 0.85; font-weight: 700; font-size: 0.75rem"
-            (click)="scrollToSection(sec.id)"
-            [matTooltip]="sec.name || (sec.type | titlecase)"
-          >
-            {{ (sec.name || sec.type).substring(0, 2).toUpperCase() }}
-          </button>
-        }
-      </div>
-    }
 
     <!-- Group 3: Sections & Restart -->
     <div class="p-tb-group justify-content-end">

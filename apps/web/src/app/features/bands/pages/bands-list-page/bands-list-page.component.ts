@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CreateBandDialogComponent } from '../../ui/create-band-dialog/create-band-dialog.component';
 import { BandRow, BandsService } from '../../services/bands.service';
+import { AnimationService } from '../../../../core/services/animation.service';
 
 @Component({
   standalone: true,
@@ -57,7 +58,7 @@ import { BandRow, BandsService } from '../../services/bands.service';
       <!-- Content -->
       @if (!loading() && bands().length > 0) {
         <!-- Hero Card (First Band) -->
-        <div class="mb-5">
+        <div class="mb-5 hero-card-container">
           <mat-card
             class="hero-card cursor-pointer overflow-hidden"
             [routerLink]="['/bands', bands()[0].id]"
@@ -114,7 +115,7 @@ import { BandRow, BandsService } from '../../services/bands.service';
           <h3 class="h5 text-muted mb-3">Other Bands</h3>
           <div class="row g-3">
             @for (band of bands().slice(1); track band.id) {
-              <div class="col-12 col-md-6 col-lg-4">
+              <div class="col-12 col-md-6 col-lg-4 band-grid-item">
                 <mat-card class="h-100 cursor-pointer band-card" [routerLink]="['/bands', band.id]">
                   <div
                     class="card-cover bg-secondary text-white d-flex align-items-center justify-content-center"
@@ -204,12 +205,23 @@ import { BandRow, BandsService } from '../../services/bands.service';
 export class BandsListPageComponent {
   private bandsService = inject(BandsService);
   private dialog = inject(MatDialog);
+  private animation = inject(AnimationService);
 
   bands = signal<(BandRow & { my_roles: string[] })[]>([]);
   loading = signal(true);
 
   constructor() {
     this.load();
+    // effect(() => {
+    //   if (!this.loading() && this.bands().length > 0) {
+    //     // Trigger animation when bands are loaded
+    //     setTimeout(() => {
+    //        const cards = document.querySelectorAll('.band-card-item'); // We need to add this class
+    //        this.animation.staggerList(Array.from(cards));
+    //     }, 50);
+    //   }
+    // });
+    // Better approach: use AfterViewChecked or just run it in the subscription for now
   }
 
   load() {
@@ -218,6 +230,14 @@ export class BandsListPageComponent {
       next: (data) => {
         this.bands.set(data || []);
         this.loading.set(false);
+        // Animate after render
+        setTimeout(() => {
+          const hero = document.querySelector('.hero-card-container');
+          const cards = document.querySelectorAll('.band-grid-item');
+
+          if (hero) this.animation.fadeIn(hero);
+          if (cards.length) this.animation.staggerList(Array.from(cards), 0.1, 0.2);
+        }, 100);
       },
       error: (err) => {
         console.error(err);

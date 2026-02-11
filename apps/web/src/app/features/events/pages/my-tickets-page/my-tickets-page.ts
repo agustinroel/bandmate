@@ -19,13 +19,13 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
   ],
   template: `
     <div class="tickets-container container py-5">
-      <header class="d-flex align-items-center gap-4 mb-5 animate-fade-in">
-        <div class="header-icon-container">
+      <header class="d-flex align-items-start gap-3 mb-5 animate-fade-in">
+        <div class="bm-mark" aria-hidden="true">
           <mat-icon>confirmation_number</mat-icon>
         </div>
-        <div>
-          <h1 class="page-title mb-0">My Tickets</h1>
-          <p class="page-subtitle mb-0">
+        <div class="flex-grow-1">
+          <h2 class="m-0">My Tickets</h2>
+          <div class="small opacity-75">
             @if (loading()) {
               Checking your reservations...
             } @else {
@@ -36,7 +36,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
                 tickets
               }
             }
-          </p>
+          </div>
         </div>
       </header>
 
@@ -147,39 +147,9 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
         background-color: var(--bm-bg);
       }
 
-      .page-title {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        color: var(--bm-text-main);
-      }
-
-      .page-subtitle {
-        color: var(--bm-text-muted);
-        font-size: 1.1rem;
-      }
-
       .highlight {
         color: var(--bm-primary);
         font-weight: 700;
-      }
-
-      .header-icon-container {
-        width: 64px;
-        height: 64px;
-        background: linear-gradient(135deg, var(--bm-primary), #1a4d52);
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 10px 20px rgba(13, 169, 185, 0.2);
-        color: white;
-
-        mat-icon {
-          font-size: 32px;
-          width: 32px;
-          height: 32px;
-        }
       }
 
       /* TICKET STYLES */

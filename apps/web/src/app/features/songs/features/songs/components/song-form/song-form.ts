@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, Input, effect, signal } from '@angular/core';
-import { Field, form, required, validate } from '@angular/forms/signals';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  effect,
+  signal,
+  inject,
+} from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,33 +17,19 @@ import { MatIconModule } from '@angular/material/icon';
 
 import type { CreateSongDto } from '@bandmate/shared';
 
-type NumericInput = number | string | '';
-
-type SongDraft = {
-  title: string;
-  artist: string;
-  key: string;
-  bpm: NumericInput;
-  durationSec: NumericInput;
-  notes: string;
-};
-
-const emptySongDraft = (): SongDraft => ({
-  title: '',
-  artist: '',
-  key: '',
-  bpm: '',
-  durationSec: '',
-  notes: '',
-});
-
 @Component({
   selector: 'app-song-form',
   standalone: true,
-  imports: [Field, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <form (submit)="submit($event)" class="bm-form">
+    <form [formGroup]="songForm" (ngSubmit)="submit()" class="bm-form">
       <div class="bm-form-section">
         <div class="bm-section-title">
           <mat-icon class="bm-sec-ic">library_music</mat-icon>
@@ -49,42 +44,42 @@ const emptySongDraft = (): SongDraft => ({
           <!-- Row 1 -->
           <mat-form-field appearance="outline" class="bm-span-6">
             <mat-label>Title</mat-label>
-            <input matInput [field]="songForm.title" placeholder="e.g. Something" />
-            @if (showError(songForm.title)) {
-              <mat-error>{{ firstError(songForm.title().errors()) }}</mat-error>
+            <input matInput formControlName="title" placeholder="e.g. Something" />
+            @if (songForm.get('title')?.invalid && songForm.get('title')?.touched) {
+              <mat-error>Title is required</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="bm-span-6">
             <mat-label>Artist</mat-label>
-            <input matInput [field]="songForm.artist" placeholder="e.g. The Beatles" />
-            @if (showError(songForm.artist)) {
-              <mat-error>{{ firstError(songForm.artist().errors()) }}</mat-error>
+            <input matInput formControlName="artist" placeholder="e.g. The Beatles" />
+            @if (songForm.get('artist')?.invalid && songForm.get('artist')?.touched) {
+              <mat-error>Artist is required</mat-error>
             }
           </mat-form-field>
 
           <!-- Row 2 (Key + BPM + Duration) -->
           <mat-form-field appearance="outline" class="bm-span-4">
             <mat-label>Key</mat-label>
-            <input matInput [field]="songForm.key" placeholder="e.g. Gm, C, Am" />
+            <input matInput formControlName="key" placeholder="e.g. Gm, C, Am" />
             <mat-hint>Optional</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="bm-span-4">
             <mat-label>BPM</mat-label>
-            <input matInput type="number" [field]="songForm.bpm" placeholder="e.g. 120" />
+            <input matInput type="number" formControlName="bpm" placeholder="e.g. 120" />
             <mat-hint>Optional</mat-hint>
-            @if (showError(songForm.bpm)) {
-              <mat-error>{{ firstError(songForm.bpm().errors()) }}</mat-error>
+            @if (songForm.get('bpm')?.invalid && songForm.get('bpm')?.touched) {
+              <mat-error>BPM must be >= 1</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="bm-span-4">
             <mat-label>Duration</mat-label>
-            <input matInput type="number" [field]="songForm.durationSec" placeholder="e.g. 185" />
+            <input matInput type="number" formControlName="durationSec" placeholder="e.g. 185" />
             <mat-hint>Seconds (optional)</mat-hint>
-            @if (showError(songForm.durationSec)) {
-              <mat-error>{{ firstError(songForm.durationSec().errors()) }}</mat-error>
+            @if (songForm.get('durationSec')?.invalid && songForm.get('durationSec')?.touched) {
+              <mat-error>Duration must be >= 1 sec</mat-error>
             }
           </mat-form-field>
         </div>
@@ -104,7 +99,7 @@ const emptySongDraft = (): SongDraft => ({
           <textarea
             matInput
             rows="6"
-            [field]="songForm.notes"
+            formControlName="notes"
             placeholder="e.g. Start on the bridge, watch the ritardando, vocal harmony on chorus…"
           ></textarea>
           <mat-hint>Optional — keep it short and actionable.</mat-hint>
@@ -114,7 +109,7 @@ const emptySongDraft = (): SongDraft => ({
       <div class="bm-actions">
         <button mat-button type="button" (click)="onCancel()">Cancel</button>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="!songForm().valid()">
+        <button mat-raised-button color="primary" type="submit" [disabled]="songForm.invalid">
           <mat-icon class="me-1">save</mat-icon>
           Save
         </button>
@@ -196,106 +191,62 @@ const emptySongDraft = (): SongDraft => ({
     `,
   ],
 })
-export class SongFormComponent {
+export class SongFormComponent implements OnChanges {
   @Input() initial?: Partial<CreateSongDto>;
   @Input({ required: true }) onSubmit!: (dto: CreateSongDto) => void;
   @Input({ required: true }) onCancel!: () => void;
   @Input() onDraftChange?: (patch: Partial<CreateSongDto>) => void;
 
-  private _hydrating = false;
+  private fb = inject(FormBuilder);
   private _draftTimer: any = null;
   private _lastDraftKey = '';
+  private _hydrating = false;
 
-  readonly model = signal<SongDraft>(emptySongDraft());
-
-  readonly songForm = form(this.model, (p) => {
-    required(p.title, { message: 'Title is required' });
-    required(p.artist, { message: 'Artist is required' });
-
-    const toNumberOrNull = (v: NumericInput): number | null => {
-      if (v === '') return null;
-      if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-
-      const trimmed = v.trim();
-      if (!trimmed) return null;
-
-      const n = Number(trimmed);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    validate(p.bpm, ({ value }) => {
-      const raw = value();
-      if (raw === '') return undefined;
-      const n = toNumberOrNull(raw);
-      if (n === null) return { kind: 'type', message: 'BPM must be a number' };
-      if (n < 1) return { kind: 'min', message: 'BPM must be >= 1' };
-      return undefined;
-    });
-
-    validate(p.durationSec, ({ value }) => {
-      const raw = value();
-      if (raw === '') return undefined;
-      const n = toNumberOrNull(raw);
-      if (n === null) return { kind: 'type', message: 'Duration must be a number' };
-      if (n < 1) return { kind: 'min', message: 'Duration must be >= 1 sec' };
-      return undefined;
-    });
+  songForm: FormGroup = this.fb.group({
+    title: ['', Validators.required],
+    artist: ['', Validators.required],
+    key: [''],
+    bpm: [null, Validators.min(1)],
+    durationSec: [null, Validators.min(1)],
+    notes: [''],
   });
 
-  constructor() {
-    effect(() => {
-      const init = this.initial;
-      if (!init) return;
-
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['initial'] && this.initial) {
       this._hydrating = true;
-
-      this.model.set({
-        title: init.title ?? '',
-        artist: init.artist ?? '',
-        key: init.key ?? '',
-        bpm: (init.bpm ?? '') as any,
-        durationSec: (init.durationSec ?? '') as any,
-        notes: init.notes ?? '',
+      this.songForm.patchValue({
+        title: this.initial.title ?? '',
+        artist: this.initial.artist ?? '',
+        key: this.initial.key ?? '',
+        bpm: this.initial.bpm ?? null,
+        durationSec: this.initial.durationSec ?? null,
+        notes: this.initial.notes ?? '',
       });
+      this._hydrating = false;
+    }
+  }
 
-      // soltamos hydrating en el próximo tick (evita que el autosave se dispare por el set inicial)
-      queueMicrotask(() => (this._hydrating = false));
-    });
-
-    // ✅ Emit draft changes (debounced + distinct)
-    effect(() => {
-      // IMPORTANTE: leer model() acá hace que reaccione a cada cambio
-      const v = this.model();
-
+  constructor() {
+    // Emit draft changes (debounced + distinct)
+    this.songForm.valueChanges.subscribe((v) => {
       if (this._hydrating) return;
       if (!this.onDraftChange) return;
 
-      const numOrUndef = (raw: NumericInput): number | undefined => {
-        if (raw === '') return undefined;
-        if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
-        const t = raw.trim();
-        if (!t) return undefined;
-        const n = Number(t);
-        return Number.isFinite(n) ? n : undefined;
-      };
-
       const draft: Partial<CreateSongDto> = {
-        title: v.title.trim(),
-        artist: v.artist.trim(),
-        key: v.key.trim() || undefined,
-        bpm: numOrUndef(v.bpm),
-        durationSec: numOrUndef(v.durationSec),
-        notes: v.notes.trim() || undefined,
-        // links: no lo toco acá (si querés, sumalo después)
+        title: v.title?.trim() ?? '',
+        artist: v.artist?.trim() ?? '',
+        key: v.key?.trim() || undefined,
+        bpm: v.bpm ?? undefined,
+        durationSec: v.durationSec ?? undefined,
+        notes: v.notes?.trim() || undefined,
       };
 
-      // distinct con key estable
+      // distinct with stable key
       const key = JSON.stringify(draft);
       if (key === this._lastDraftKey) return;
 
       if (this._draftTimer) clearTimeout(this._draftTimer);
       this._draftTimer = setTimeout(() => {
-        // re-check por si cambió mientras tanto
         const k2 = JSON.stringify(draft);
         if (k2 === this._lastDraftKey) return;
 
@@ -305,45 +256,21 @@ export class SongFormComponent {
     });
   }
 
-  submit(ev: Event) {
-    ev.preventDefault();
-    if (!this.songForm().valid()) return;
+  submit() {
+    if (this.songForm.invalid) return;
 
-    const v = this.model();
-
-    const numOrUndef = (raw: NumericInput): number | undefined => {
-      if (raw === '') return undefined;
-      if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
-
-      const t = raw.trim();
-      if (!t) return undefined;
-
-      const n = Number(t);
-      return Number.isFinite(n) ? n : undefined;
-    };
+    const v = this.songForm.value;
 
     const dto: CreateSongDto = {
-      title: v.title.trim(),
-      artist: v.artist.trim(),
-      key: v.key.trim() || undefined,
-      bpm: numOrUndef(v.bpm),
-      durationSec: numOrUndef(v.durationSec),
-      notes: v.notes.trim() || undefined,
+      title: v.title?.trim() ?? '',
+      artist: v.artist?.trim() ?? '',
+      key: v.key?.trim() || undefined,
+      bpm: v.bpm ?? undefined,
+      durationSec: v.durationSec ?? undefined,
+      notes: v.notes?.trim() || undefined,
       links: [],
     };
 
     this.onSubmit(dto);
-  }
-
-  showError(field: any) {
-    return field().touched() && !field().valid();
-  }
-
-  firstError(errors: unknown): string {
-    if (Array.isArray(errors) && errors.length) {
-      const e: any = errors[0];
-      return e?.message ?? 'Invalid value';
-    }
-    return 'Invalid value';
   }
 }

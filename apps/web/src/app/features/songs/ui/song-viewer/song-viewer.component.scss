@@ -90,3 +90,129 @@
     color: var(--bm-wood);
     letter-spacing: -0.02em;
 }
+
+/* Live Controls Toolbar */
+.sv-toolbar {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 8px;
+    z-index: 100;
+    border-color: rgba(38, 70, 83, 0.1) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sv-toolbar:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-sm-icon {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.bm-btn-mini {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 12px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+}
+
+/* Slider Customization */
+::ng-deep .sv-toolbar .mat-mdc-slider {
+    min-width: 100px;
+}
+
+@media (max-width: 576px) {
+    .sv-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        padding: 12px !important;
+    }
+    
+    .justify-content-end {
+        justify-content: center !important;
+    }
+}
+
+/* Floating Tools */
+.sv-floating-tool {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+    animation: bmScaleIn 0.3s var(--bm-ease-out) both;
+}
+
+.tuner-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.close-tool {
+    box-shadow: 0 8px 16px rgba(231, 111, 81, 0.3) !important;
+}
+
+.sv-header {
+    margin-bottom: 2rem;
+}
+
+.sv-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--bm-wood);
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.sv-artist {
+    font-weight: 500;
+    color: var(--bm-brown);
+}
+
+.bm-bpm-btn-mini {
+    min-width: 44px;
+    padding: 0 8px;
+    font-weight: 700;
+    color: var(--bm-brown);
+    border-radius: 8px;
+}
+
+.bm-pill--mastery {
+    background: #e9ecef;
+    color: #495057;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+
+    &.mastery-low { background: #fee2e2; color: #991b1b; }
+    &.mastery-mid { background: #dcfce7; color: #166534; }
+    &.mastery-high { background: #fef9c3; color: #854d0e; border: 1px solid #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.2); }
+}

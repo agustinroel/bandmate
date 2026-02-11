@@ -12,6 +12,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { NgClass, DatePipe } from '@angular/common';
@@ -20,6 +21,7 @@ import { NotificationsService } from '../../../shared/ui/notifications/notificat
 import { SongPolicy } from '@bandmate/shared';
 import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
 import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-run-hero';
+import { AnimationService } from '../../../core/services/animation.service';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -108,6 +110,7 @@ function safeWritePrefs(prefs: SongsListPrefs | null) {
     MatSnackBarModule,
     MatSelectModule,
     MatDividerModule,
+    MatProgressSpinnerModule,
     NgClass,
     DatePipe,
     LibraryWorkCardComponent,
@@ -120,6 +123,7 @@ export class SongsPageComponent {
   readonly store = inject(SongsStore);
   readonly router = inject(Router);
   readonly dialog = inject(MatDialog);
+  readonly animation = inject(AnimationService);
 
   readonly notify = inject(NotificationsService);
 
@@ -175,12 +179,32 @@ export class SongsPageComponent {
   readonly libraryWorks = computed(() => {
     if (this.store.libraryState() !== 'ready') return [];
 
-    return this.store
-      .library()
-      .slice()
-      .sort((a, b) => {
-        return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
-      });
+    const q = this.query().trim().toLowerCase();
+    const f = this.filters();
+
+    let list = this.store.library();
+
+    if (q) {
+      list = list.filter((w) => `${w.title} ${w.artist}`.toLowerCase().includes(q));
+    }
+
+    if (f.artist) {
+      list = list.filter((w) => (w.artist ?? '').trim() === f.artist);
+    }
+
+    // library works usually dont have 'key' at the top level in the store yet,
+    // but if they do, we filter it.
+    if (f.key) {
+      list = list.filter((w) => ((w as any).key ?? '').trim() === f.key);
+    }
+
+    if (f.genre) {
+      list = list.filter((w) => ((w as any).genre ?? '').trim() === f.genre);
+    }
+
+    return list.slice().sort((a, b) => {
+      return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
+    });
   });
 
   /** Options */
@@ -198,6 +222,35 @@ export class SongsPageComponent {
     for (const s of this.store.songs()) {
       const k = (s.key ?? '').toString().trim();
       if (k) set.add(k);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
+
+  readonly genreOptions = computed(() => {
+    const predefined = [
+      'Rock',
+      'Pop',
+      'Jazz',
+      'Blues',
+      'Metal',
+      'Country',
+      'Folk',
+      'Electronic',
+      'Latin',
+      'Reggae',
+      'Classic Rock',
+    ];
+    const set = new Set<string>(predefined);
+
+    // Get genres from library works
+    for (const w of this.libraryWorks()) {
+      const g = ((w as any).genre ?? '').trim();
+      if (g) set.add(g);
+    }
+    // Also from user songs
+    for (const s of this.store.songs()) {
+      const g = ((s as any).genre ?? '').trim();
+      if (g) set.add(g);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   });
@@ -221,6 +274,10 @@ export class SongsPageComponent {
       list = list.filter((s) => ((s.key ?? '') + '').trim() === f.key);
     }
 
+    if (f.genre) {
+      list = list.filter((s) => ((s as any).genre ?? '').trim() === f.genre);
+    }
+
     return list;
   });
 
@@ -235,13 +292,25 @@ export class SongsPageComponent {
   });
 
   readonly isNoResults = computed(() => {
-    const q = this.query().trim();
-    return this.isReady() && !!q && !this.hasAnythingToShow();
+    return this.isReady() && this.hasActiveFilters() && !this.hasAnythingToShow();
   });
+
+  readonly isSearchingExternal = signal(false);
+
+  searchExternal() {
+    this.isSearchingExternal.set(true);
+    this.store.searchExternal(this.query());
+  }
+
+  ingest(match: any) {
+    this.store.ingestAndOpen(match.id);
+  }
 
   readonly hasActiveFilters = computed(() => {
     const f = this.filters();
-    return !!this.query().trim() || !!f.artist || !!f.key || this.sort() !== 'updatedDesc';
+    return (
+      !!this.query().trim() || !!f.artist || !!f.key || !!f.genre || this.sort() !== 'updatedDesc'
+    );
   });
 
   readonly showFirstRun = computed(() => {
@@ -320,6 +389,39 @@ export class SongsPageComponent {
 
       safeWritePrefs(isDefault ? null : prefs);
     });
+
+    // 5) Animate list on load/filter
+    effect(() => {
+      const mine = this.grouped().mine;
+      const library = this.libraryWorks();
+      const ready = this.isReady();
+
+      if (ready) {
+        // Delay to allow DOM to catch up
+        setTimeout(() => {
+          // 1. Static elements (only animate once if possible, or on every 'ready')
+          const head = document.querySelector('.songs-head');
+          const search = document.querySelector('.mt-3 mat-form-field');
+          const filters = document.querySelector('.bm-filters');
+          const sections = document.querySelectorAll('.bm-section-head');
+
+          if (head) this.animation.fadeIn(head, 0);
+          if (search) this.animation.slideUp(search, 0.05);
+          if (filters) this.animation.slideUp(filters, 0.1);
+          if (sections.length) this.animation.staggerList(Array.from(sections), 0.1, 0.15);
+
+          // 2. Dynamic cards
+          const cards = document.querySelectorAll('.song-card-item');
+          if (cards.length > 0) {
+            this.animation.staggerList(Array.from(cards), 0.04, 0.2);
+          }
+
+          // 3. Magic Promo
+          const promo = document.querySelector('.magic-search-promo');
+          if (promo) this.animation.slideUp(promo, 0.3);
+        }, 150);
+      }
+    });
   }
 
   /** Filter setters */
@@ -329,6 +431,10 @@ export class SongsPageComponent {
 
   setKey(value: string | null) {
     this.filters.update((f) => ({ ...f, key: value || null }));
+  }
+
+  setGenre(value: string | null) {
+    this.filters.update((f) => ({ ...f, genre: value || null }));
   }
 
   clearFilters() {
