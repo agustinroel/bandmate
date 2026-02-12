@@ -390,16 +390,18 @@ export class SongsPageComponent {
       safeWritePrefs(isDefault ? null : prefs);
     });
 
-    // 5) Animate list on load/filter
+    // 5) Animate list on first load only (avoid re-triggering on filter/sort changes)
+    let songsAnimated = false;
     effect(() => {
       const mine = this.grouped().mine;
       const library = this.libraryWorks();
       const ready = this.isReady();
 
-      if (ready) {
+      if (ready && !songsAnimated) {
+        songsAnimated = true;
         // Delay to allow DOM to catch up
         setTimeout(() => {
-          // 1. Static elements (only animate once if possible, or on every 'ready')
+          // 1. Static elements
           const head = document.querySelector('.songs-head');
           const search = document.querySelector('.mt-3 mat-form-field');
           const filters = document.querySelector('.bm-filters');

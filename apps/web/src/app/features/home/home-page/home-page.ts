@@ -19,6 +19,9 @@ export class HomePageComponent implements OnInit {
     started_at: string;
   } | null>(null);
 
+  /** Stable signal — computed once in ngOnInit, never recalculated during CD */
+  readonly relativeTimeLabel = signal('');
+
   async ngOnInit() {
     // Load practice stats
     this.practiceStats.loadStats();
@@ -27,6 +30,7 @@ export class HomePageComponent implements OnInit {
     const last = await this.practiceStats.getLastPracticedSong();
     if (last) {
       this.lastSong.set(last);
+      this.relativeTimeLabel.set(this.formatRelativeTime(last.started_at));
     }
   }
 
@@ -37,12 +41,8 @@ export class HomePageComponent implements OnInit {
     }
   }
 
-  get relativeTime(): string {
-    const s = this.lastSong();
-    if (!s) return '';
-
-    // Simple relative time
-    const date = new Date(s.started_at);
+  private formatRelativeTime(dateStr: string): string {
+    const date = new Date(dateStr);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 

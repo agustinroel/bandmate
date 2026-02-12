@@ -89,11 +89,13 @@ export class LibraryWorkPageComponent {
       if (id) this.load();
     });
 
+    let cardsAnimated = false;
     effect(() => {
       const isReady = this.state() === 'ready';
       const arrangements = this.arrangements();
 
-      if (isReady && arrangements.length > 0) {
+      if (isReady && arrangements.length > 0 && !cardsAnimated) {
+        cardsAnimated = true;
         setTimeout(() => {
           const els = document.querySelectorAll('.lib-card-gsap');
           if (els.length > 0) {

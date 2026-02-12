@@ -12,7 +12,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ErrorBoundaryComponent } from '../../shared/errors/error-boundary.component';
 import { TopbarComponent } from '../topbar/topbar';
 import { AchievementToastComponent } from '../../shared/ui/achievement-toast/achievement-toast.component';
 import { AchievementService } from '../../core/services/achievement.service';
@@ -36,7 +35,6 @@ import { UpgradeDialogComponent } from '../../core/subscription/upgrade-dialog/u
     MatMenuModule,
     MatDividerModule,
     MatTooltipModule,
-    ErrorBoundaryComponent,
     TopbarComponent,
     AchievementToastComponent,
     MatDialogModule,

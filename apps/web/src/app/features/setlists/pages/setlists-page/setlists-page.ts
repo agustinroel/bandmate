@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -24,6 +24,8 @@ import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/con
 import { take } from 'rxjs';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { AnimationService } from '../../../../core/services/animation.service';
+import { SubscriptionStore } from '../../../../core/subscription/subscription.store';
+import { TIER_LIMITS } from '@bandmate/shared';
 
 @Component({
   standalone: true,
@@ -48,6 +50,7 @@ export class SetlistsPageComponent {
   readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
   readonly animation = inject(AnimationService);
+  readonly subscriptionStore = inject(SubscriptionStore);
 
   readonly route = inject(ActivatedRoute);
 
@@ -55,6 +58,28 @@ export class SetlistsPageComponent {
 
   readonly songQuery = signal('');
   readonly lastMovedId = signal<string | null>(null);
+
+  /* --- Subscription helpers --- */
+  readonly isPro = computed(() => this.subscriptionStore.hasAtLeast('pro'));
+  readonly canCreateMore = computed(
+    () => this.isPro() || this.store.items().length < TIER_LIMITS['free'].maxSetlists,
+  );
+  readonly freeSetlistLimit = TIER_LIMITS['free'].maxSetlists;
+
+  /* --- "Last edited" label for selected setlist --- */
+  readonly lastEditedLabel = computed(() => {
+    const sel = this.store.selected();
+    if (!sel?.updatedAt) return '';
+    const diff = Date.now() - new Date(sel.updatedAt).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Edited just now';
+    if (mins < 60) return `Edited ${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Edited ${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Edited yesterday';
+    return `Edited ${days} days ago`;
+  });
 
   readonly filteredSongs = computed(() => {
     const q = this.songQuery().trim().toLowerCase();
@@ -138,10 +163,12 @@ export class SetlistsPageComponent {
       });
     });
 
-    // 1) Animate Sidebar Items
+    // 1) Animate Sidebar Items — only on first load
+    let sidebarAnimated = false;
     effect(() => {
       const items = this.store.items();
-      if (items.length > 0) {
+      if (items.length > 0 && !sidebarAnimated) {
+        sidebarAnimated = true;
         setTimeout(() => {
           const els = document.querySelectorAll('.sl-item-gsap');
           if (els.length > 0) {
@@ -151,10 +178,12 @@ export class SetlistsPageComponent {
       }
     });
 
-    // 2) Animate Editor List when setlist changes
+    // 2) Animate Editor List — only when switching to a DIFFERENT setlist
+    let lastAnimatedId: string | null = null;
     effect(() => {
       const selected = this.store.selected();
-      if (selected) {
+      if (selected && selected.id !== lastAnimatedId) {
+        lastAnimatedId = selected.id;
         setTimeout(() => {
           const els = document.querySelectorAll('.drag-row-gsap');
           if (els.length > 0) {
@@ -171,6 +200,12 @@ export class SetlistsPageComponent {
   }
 
   createSetlist() {
+    // Guard: free limit
+    if (!this.canCreateMore()) {
+      this.subscriptionStore.requireTierOrUpgrade('setlists');
+      return;
+    }
+
     const ref = this.dialog.open(NewSetlistDialogComponent, {
       width: '520px',
       maxWidth: '92vw',
@@ -184,6 +219,16 @@ export class SetlistsPageComponent {
         error: (err) => this.toastError(err, 'Could not create setlist'),
       });
     });
+  }
+
+  shareWithBand() {
+    if (!this.subscriptionStore.requireTierOrUpgrade('setlist_share')) return;
+    this.notify.info('Coming soon — share with your bandmates', 'OK', 2000);
+  }
+
+  exportPdf() {
+    if (!this.subscriptionStore.requireTierOrUpgrade('setlist_export')) return;
+    this.notify.info('Coming soon — export setlist as PDF', 'OK', 2000);
   }
 
   // Should: rename setlist
@@ -296,7 +341,7 @@ export class SetlistsPageComponent {
   }
 
   // Must: guard empty setlist (even if user triggers click somehow)
-  startPractice() {
+  startShowMode() {
     const sel = this.store.selected();
     if (!sel) return;
     if (sel.items.length === 0) return;

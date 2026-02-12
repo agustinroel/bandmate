@@ -15,29 +15,29 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
-  height: calc(100vh - 140px); /* Fill viewport minus header */
+  height: calc(100vh - 140px);
   min-height: 600px;
 }
 
 @media (min-width: 992px) {
   .sl-layout {
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
   }
 }
 
 /* Cards */
-/* Cards */
 .card-glass {
   background: #fff;
-  border-radius: 20px; /* Softer radius */
-  border: 1px solid rgba(233, 196, 106, 0.15); /* Warm subtle border */
-  box-shadow: 0 12px 40px -8px rgba(38, 70, 83, 0.08); /* Warmer shadow */
-  overflow: hidden; /* For inner scrolling */
+  border-radius: 20px;
+  border: 1px solid rgba(233, 196, 106, 0.15);
+  box-shadow: 0 12px 40px -8px rgba(38, 70, 83, 0.08);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Sidebar List */
+/* ───── Sidebar List ───── */
 .sl-list-scroll {
   flex: 1;
   overflow-y: auto;
@@ -45,27 +45,27 @@
 
 .sl-item {
   padding: 12px;
-  border-radius: 14px; /* Softer */
-  margin-bottom: 6px; /* slightly more space */
+  border-radius: 14px;
+  margin-bottom: 6px;
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   border: 1px solid transparent;
   cursor: pointer;
 }
 .sl-item:hover {
-  background: #fffbf5; /* Warm hover */
+  background: #fffbf5;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(233, 196, 106, 0.1);
 }
 .sl-item.active {
-  background: rgba(42, 157, 143, 0.08); /* Accent tint using brand secondary if available, or keep existing but softer */
-  border-color: rgba(42, 157, 143, 0.2);
+  background: rgba(201, 162, 39, 0.08);
+  border-color: rgba(201, 162, 39, 0.22);
 }
 .sl-item.active .sl-item-icon mat-icon {
-  color: var(--bm-primary);
+  color: var(--bm-accent, #c9a227);
 }
 
 .sl-item-icon {
-  width: 44px; /* Slightly larger targets */
+  width: 44px;
   height: 44px;
   border-radius: 12px;
   background: white;
@@ -77,7 +77,7 @@
   transition: all 0.2s;
 }
 .sl-item:hover .sl-item-icon {
-  color: var(--bm-primary);
+  color: var(--bm-accent, #c9a227);
   transform: scale(1.05);
 }
 
@@ -91,10 +91,130 @@
   transform: translateX(0);
 }
 
-/* Editor Columns */
+/* ───── Free-tier Limit Card ───── */
+.sl-limit-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fffbf0 0%, #fff7e6 100%);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 14px;
+}
+.sl-limit-icon {
+  color: var(--bm-accent, #c9a227);
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+.sl-limit-text {
+  flex: 1;
+  min-width: 0;
+}
+.sl-upgrade-btn {
+  font-size: 12px !important;
+  border-radius: 99px !important;
+  padding: 0 14px !important;
+  height: 30px !important;
+  border-color: var(--bm-accent, #c9a227) !important;
+  color: var(--bm-accent, #c9a227) !important;
+  white-space: nowrap;
+}
+
+/* ───── Active Setlist Name ───── */
+.sl-active-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ───── Metadata ───── */
+.sl-meta {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* ───── Long Performance Warning ───── */
+.sl-duration-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #b8860b;
+  background: rgba(201, 162, 39, 0.08);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 500;
+}
+
+/* ───── Show Mode Button (Golden CTA) ───── */
+.show-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 28px;
+  height: 44px;
+  border: none;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+
+  background: linear-gradient(135deg, #d4a829 0%, #b8941f 100%);
+  color: #fff;
+  box-shadow:
+    0 4px 16px rgba(201, 162, 39, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 24px rgba(201, 162, 39, 0.45),
+      0 0 0 3px rgba(201, 162, 39, 0.12);
+    background: linear-gradient(135deg, #ddb02e 0%, #c9a227 100%);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(201, 162, 39, 0.25);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Subtle pulse animation when idle */
+  animation: showModePulse 3s ease-in-out infinite;
+}
+
+@keyframes showModePulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(201, 162, 39, 0.35), 0 1px 3px rgba(0, 0, 0, 0.1); }
+  50%      { box-shadow: 0 4px 24px rgba(201, 162, 39, 0.5),  0 1px 3px rgba(0, 0, 0, 0.1); }
+}
+
+.show-mode-btn:disabled {
+  animation: none;
+}
+
+/* ───── PRO Action Buttons ───── */
+.sl-pro-action {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+/* ───── Editor Columns ───── */
 .picker-col {
   width: 100%;
-  max-height: 40vh; /* Mobile split */
+  max-height: 40vh;
   background: #fafaf9;
 }
 .drag-col {
@@ -108,12 +228,11 @@
   }
 }
 
-/* Picker Items */
+/* ───── Picker Items ───── */
 .picker-item {
-  display: flex; /* Changed to flex for better alignment control */
+  display: flex;
   align-items: center;
   gap: 12px;
-  
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
@@ -124,49 +243,60 @@
 .picker-item:hover {
   background: white;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transform: translateX(4px); /* Playful nudge */
+  transform: translateX(4px);
 }
 .picker-item:hover .add-icon {
   transform: scale(1.1);
 }
 
 .add-icon {
-  color: var(--bm-primary); /* Brand color */
+  color: var(--bm-accent, #c9a227);
   opacity: 0.8;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* bouncy */
-  justify-self: center; /* Center in the grid 40px col */
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  justify-self: center;
 }
 
 .xsmall { font-size: 0.75rem; }
 
-
-/* Drag List */
+/* ───── Drag List ───── */
 .drag-row {
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
-  border: 1px solid rgba(0,0,0,0.02);
-  border-radius: 12px !important; /* Ensure rounded */
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.25s ease,
+              background 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.03);
+  border-radius: 14px !important;
 }
 .drag-row:hover {
-  box-shadow: 0 8px 20px -4px rgba(38, 70, 83, 0.12) !important;
+  box-shadow: 0 8px 24px -4px rgba(38, 70, 83, 0.14) !important;
   transform: translateY(-2px);
   z-index: 10;
-  border-color: rgba(0,0,0,0.05);
+  border-color: rgba(201, 162, 39, 0.12);
 }
 .drag-row.moved {
-  background: rgba(233, 196, 106, 0.2) !important;
+  background: rgba(233, 196, 106, 0.18) !important;
 }
 
+/* ── Drag Handle ── */
 .drag-handle {
   cursor: grab;
+  color: #bbb;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
 }
 .drag-handle:active {
   cursor: grabbing;
 }
+.drag-row:hover .drag-handle {
+  color: var(--bm-accent, #c9a227);
+}
+
 .index-badge {
   font-family: monospace;
-  width: 20px;
+  width: 22px;
   text-align: center;
-  color: #adb5bd;
+  color: #bbb;
+  font-weight: 700;
 }
 
 .remove-btn:hover {
@@ -174,7 +304,35 @@
   background: rgba(244, 67, 54, 0.1);
 }
 
-/* Utils */
+/* ── Drag preview (floating card while dragging) ── */
+.drag-preview {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18),
+              0 0 0 2px rgba(201, 162, 39, 0.2) !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+}
+
+/* ── CDK Drag placeholder (the gap left behind) ── */
+.cdk-drag-placeholder {
+  background: rgba(201, 162, 39, 0.06) !important;
+  border: 2px dashed rgba(201, 162, 39, 0.3) !important;
+  border-radius: 14px !important;
+  opacity: 0.7;
+}
+
+/* ── Other items while dragging ── */
+.cdk-drop-list-dragging .drag-row:not(.cdk-drag-placeholder) {
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* ── CDK active drag state ── */
+.drag-row.cdk-drag-animating {
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* ───── Utils ───── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -188,11 +346,3 @@
 
 .icon-xs { font-size: 16px; width: 16px; height: 16px; }
 .tracking-wider { letter-spacing: 0.05em; }
-
-@media (min-width: 992px) {
-  .sl-layout {
-    margin-top: 0;
-    grid-template-columns: 340px 1fr;
-    gap: 24px;
-  }
-}

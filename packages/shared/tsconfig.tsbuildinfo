@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/setlists.ts","./src/songs.ts","./src/adapters/song.adapters.ts","./src/lib/songs/song.dto.ts","./src/lib/songs/song.factories.ts","./src/lib/songs/song.model.ts","./src/lib/songs/policies/song.policy.ts","./src/lib/subscriptions/subscription.model.ts"],"version":"5.9.3"}

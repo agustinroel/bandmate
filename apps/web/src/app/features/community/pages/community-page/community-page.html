@@ -170,8 +170,10 @@
       <mat-spinner diameter="50"></mat-spinner>
     </div>
   } @else if (error()) {
-    <div class="mt-5">
-      <bm-error-boundary />
+    <div class="mt-5 text-center opacity-50">
+      <mat-icon class="display-4 text-danger mb-3">error_outline</mat-icon>
+      <div class="h5 text-danger">{{ error() }}</div>
+      <button mat-stroked-button (click)="load()">Try again</button>
     </div>
   } @else {
     <div class="row g-4 mt-2">

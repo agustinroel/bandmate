@@ -1,28 +1,38 @@
 import { ErrorHandler, Injectable, NgZone, inject } from '@angular/core';
-import { ErrorStateService } from './error-state.service';
 import { NotificationsService } from '../ui/notifications/notifications.service';
+
+// Errors to silently suppress (Angular dev-mode noise, not user-facing)
+const SUPPRESSED_PATTERNS = [
+  'NG0100', // ExpressionChangedAfterItHasBeenCheckedError (dev-only)
+  'NG0506', // Signal equality check warning
+  'ResizeObserver', // Benign browser warning
+];
 
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
   private readonly zone = inject(NgZone);
-  private readonly errors = inject(ErrorStateService);
   private readonly toast = inject(NotificationsService);
 
   handleError(error: any) {
     const normalized = this.normalize(error);
 
-    this.zone.run(() => {
-      this.errors.set({
-        message: normalized.message,
-        stack: normalized.stack,
-        source: 'errorHandler',
-        time: Date.now(),
-      });
-    });
-
-    // Log (luego lo conectamos a backend / Sentry)
+    // Always log for debugging
     // eslint-disable-next-line no-console
     console.error('[GlobalErrorHandler]', error);
+
+    // Suppress known non-actionable dev errors
+    if (SUPPRESSED_PATTERNS.some((p) => normalized.message.includes(p))) {
+      return;
+    }
+
+    // Show a subtle, humanized toast instead of an intrusive panel
+    this.zone.run(() => {
+      this.toast.error(
+        'Something unexpected happened. If this keeps occurring, try refreshing.',
+        'Dismiss',
+        5000,
+      );
+    });
   }
 
   private normalize(err: any): { message: string; stack?: string } {

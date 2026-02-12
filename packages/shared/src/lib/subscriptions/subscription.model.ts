@@ -52,6 +52,25 @@ export const FEATURE_GATES: FeatureGate[] = [
     description: "Sugerencias inteligentes de progresiones y acordes",
   },
   {
+    feature: "setlists",
+    requiredTier: "pro",
+    label: "Unlimited Setlists",
+    description: "Create unlimited performance sets to prepare for any show",
+  },
+  {
+    feature: "setlist_share",
+    requiredTier: "pro",
+    label: "Share with Band",
+    description:
+      "Share your setlists with bandmates for rehearsal coordination",
+  },
+  {
+    feature: "setlist_export",
+    requiredTier: "pro",
+    label: "Export as PDF",
+    description: "Export your setlist as a printable PDF for stage use",
+  },
+  {
     feature: "bands",
     requiredTier: "studio",
     label: "Bandas",
