@@ -212,6 +212,44 @@ export class PracticeSessionService {
   }
 
   /**
+   * Get the last song practiced by the user
+   */
+  async getLastPracticedSong(): Promise<{
+    song: { id: string; title: string; artist: string; key?: string; bpm?: number };
+    started_at: string;
+  } | null> {
+    const userId = this.auth.user()?.id;
+    if (!userId) return null;
+
+    // Query practice_session_songs joined with practice_sessions (filter by user) and songs (get details)
+    const { data, error } = await this.supabase
+      .from('practice_session_songs')
+      .select(
+        `
+        started_at,
+        session:practice_sessions!inner(user_id),
+        song:songs(id, title, artist, key, bpm)
+      `,
+      )
+      .eq('session.user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to get last practiced song:', error);
+      return null;
+    }
+
+    if (!data || !data.song) return null;
+
+    return {
+      song: Array.isArray(data.song) ? data.song[0] : data.song,
+      started_at: data.started_at,
+    };
+  }
+
+  /**
    * Format seconds to human-readable duration
    */
   formatDuration(totalSeconds: number): string {
