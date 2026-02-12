@@ -52,42 +52,9 @@ type ProfileDto = {
         background-color: var(--bm-bg);
       }
 
-      /* Hero Section */
-      .community-hero {
-        position: relative;
-        background: radial-gradient(circle at top right, #2a9d8f 0%, #264653 60%);
-        padding: 4rem 0 6rem; /* Extra padding bottom for overlap */
-        color: white;
-        text-align: center;
-      }
-      .hero-overlay {
-        position: absolute;
-        inset: 0;
-        opacity: 0.1;
-        background-image: radial-gradient(#fff 1px, transparent 1px);
-        background-size: 20px 20px;
-      }
-      .hero-icon {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 1.5rem;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      }
-      .text-accent {
-        color: var(--bm-accent);
-      }
-
-      /* Filters Section */
+      /* Content Layout */
       .main-content {
         padding-bottom: 80px;
-        margin-top: -3rem; /* Partial Overlap */
         position: relative;
         z-index: 10;
       }
@@ -95,8 +62,9 @@ type ProfileDto = {
         background: white;
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
         border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
       }
 
       /* Premium Card */
@@ -115,25 +83,24 @@ type ProfileDto = {
       .card-hover-wrapper:hover .premium-card {
         transform: translateY(-5px);
         box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+        border-color: rgba(233, 196, 106, 0.2);
       }
 
       .card-gradient {
-        height: 80px;
-        background: linear-gradient(
-          135deg,
-          rgba(38, 70, 83, 0.08) 0%,
-          rgba(233, 196, 106, 0.15) 100%
-        );
+        height: 60px;
+        background: var(--bm-gradient-dark);
+        border-bottom: 1px solid rgba(233, 196, 106, 0.1);
       }
 
       .card-avatar-wrapper {
-        width: 90px;
-        height: 90px;
-        margin: -45px auto 0;
+        width: 80px;
+        height: 80px;
+        margin: -40px auto 0;
         border-radius: 50%;
         background: white;
         padding: 4px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        z-index: 2;
       }
       .card-avatar-wrapper img {
         width: 100%;

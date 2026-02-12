@@ -57,7 +57,6 @@ export class AnimationService {
           stagger,
           delay,
           ease: 'power2.out',
-          clearProps: 'all', // Clean up after animation to avoid style conflicts
         },
       );
     });

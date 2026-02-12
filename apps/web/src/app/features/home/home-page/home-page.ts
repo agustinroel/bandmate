@@ -35,6 +35,9 @@ export class HomePageComponent implements OnInit {
 
   readonly showOnboarding = signal(false);
 
+  // Animation guards to prevent redundant triggers
+  private animatedSections = new Set<string>();
+
   constructor() {
     // Check localStorage on init
     const dismissed = localStorage.getItem('bm_hero_dismissed_v2');
@@ -42,51 +45,45 @@ export class HomePageComponent implements OnInit {
       this.showOnboarding.set(true);
     }
 
-    // 1) Animate Onboarding
+    // Consolidated Animation Trigger
     effect(() => {
-      if (this.showOnboarding()) {
+      const statsLoading = this.practiceStats.isLoading();
+      const achievementsList = this.achievements.userAchievements();
+
+      // Core sequence (Run once)
+      if (!this.animatedSections.has('core')) {
+        this.animatedSections.add('core');
         setTimeout(() => {
-          const el = document.querySelector('.bm-fr');
-          if (el) this.animation.fadeIn(el, 0.1);
-        }, 120);
+          const onboardingEl = document.querySelector('.bm-fr');
+          const header = document.querySelector('.bm-page-header');
+          const cards = document.querySelectorAll('.bm-card-gsap');
+
+          if (onboardingEl) this.animation.fadeIn(onboardingEl, 0);
+          if (header) this.animation.fadeIn(header, 0.1);
+          if (cards.length > 0) this.animation.staggerList(Array.from(cards), 0.05, 0.2);
+        }, 300);
       }
-    });
 
-    // 2) Animate Home Grid
-    effect(() => {
-      setTimeout(() => {
-        const header = document.querySelector('.bm-page-header');
-        const cards = document.querySelectorAll('.bm-card-gsap');
-        if (header) this.animation.fadeIn(header, 0);
-        if (cards.length > 0) {
-          this.animation.staggerList(Array.from(cards), 0.05, 0.1);
-        }
-      }, 150);
-    });
-
-    // 3) Animate Stats when ready
-    effect(() => {
-      const loading = this.practiceStats.isLoading();
-      if (!loading) {
+      // Stats sequence (Run once when data is ready)
+      if (!statsLoading && !this.animatedSections.has('stats')) {
+        this.animatedSections.add('stats');
         setTimeout(() => {
           const section = document.querySelector('.bm-stats-section');
-          const cards = document.querySelectorAll('.bm-stat-card-gsap');
-          const songs = document.querySelectorAll('.bm-top-song-gsap');
-          if (section) this.animation.fadeIn(section, 0);
-          if (cards.length > 0) this.animation.staggerList(Array.from(cards), 0.04, 0.1);
-          if (songs.length > 0) this.animation.staggerList(Array.from(songs), 0.03, 0.2);
-        }, 200);
+          const statCards = document.querySelectorAll('.bm-stat-card-gsap');
+          const topSongs = document.querySelectorAll('.bm-top-song-gsap');
+          if (section) this.animation.fadeIn(section, 0.1); // Slightly lower delay since we are already triggered late
+          if (statCards.length > 0) this.animation.staggerList(Array.from(statCards), 0.04, 0.2);
+          if (topSongs.length > 0) this.animation.staggerList(Array.from(topSongs), 0.03, 0.3);
+        }, 100);
       }
-    });
 
-    // 4) Animate Achievements
-    effect(() => {
-      const list = this.achievements.userAchievements();
-      if (list.length > 0) {
+      // Achievements sequence (Run once when data is ready)
+      if (achievementsList.length > 0 && !this.animatedSections.has('achievements')) {
+        this.animatedSections.add('achievements');
         setTimeout(() => {
           const els = document.querySelectorAll('.bm-achievement-gsap');
-          if (els.length > 0) this.animation.staggerList(Array.from(els), 0.05, 0.2);
-        }, 250);
+          if (els.length > 0) this.animation.staggerList(Array.from(els), 0.05, 0.1);
+        }, 100);
       }
     });
   }

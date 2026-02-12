@@ -1,1 +1,144 @@
-<p>settings-page works!</p>
+<div class="bm-page">
+  <div class="container">
+    <header class="bm-page-header">
+      <div class="bm-mark" aria-hidden="true">
+        <mat-icon>settings</mat-icon>
+      </div>
+      <div class="flex-grow-1">
+        <h2 class="bm-page-title">Settings</h2>
+        <div class="small opacity-75">Manage your account, subscription, and preferences.</div>
+      </div>
+    </header>
+
+    <div class="settings-grid">
+      <!-- Profile Section -->
+      <section class="settings-section">
+        <mat-card class="bm-card glass">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>person</mat-icon>
+            <mat-card-title>Profile</mat-card-title>
+            <mat-card-subtitle>Public information and identity</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="profile-row mt-3">
+              <div class="avatar-large">
+                <img
+                  [src]="user()?.user_metadata?.['avatar_url'] || 'assets/ui/default-avatar.png'"
+                  alt="Avatar"
+                />
+              </div>
+              <div class="profile-info">
+                <h3>{{ user()?.user_metadata?.['full_name'] || user()?.email }}</h3>
+                <p>{{ user()?.email }}</p>
+              </div>
+            </div>
+
+            <div class="form-grid mt-4">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Display Name</mat-label>
+                <input matInput [value]="user()?.user_metadata?.['full_name']" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Username</mat-label>
+                <input
+                  matInput
+                  [value]="user()?.user_metadata?.['user_name'] || user()?.email?.split('@')?.[0]"
+                />
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button color="primary" (click)="saveProfile()">Save Changes</button>
+          </mat-card-actions>
+        </mat-card>
+      </section>
+
+      <!-- Subscription Section -->
+      <section class="settings-section">
+        <mat-card class="bm-card glass highlight-card" [class.pro-border]="tier() !== 'free'">
+          <mat-card-header>
+            <mat-icon mat-card-avatar [class.text-warning]="tier() !== 'free'"
+              >workspace_premium</mat-icon
+            >
+            <mat-card-title>Subscription</mat-card-title>
+            <mat-card-subtitle
+              >Current Plan:
+              <span class="badge" [class.badge-gold]="tier() !== 'free'">{{
+                tier() | uppercase
+              }}</span></mat-card-subtitle
+            >
+          </mat-card-header>
+          <mat-card-content>
+            <div class="subscription-status mt-3">
+              @if (tier() === 'free') {
+                <div class="limit-status">
+                  <p>
+                    You are currently on the <strong>Free plan</strong>. Upgrade to unlock unlimited
+                    songs, bands, and advanced tools.
+                  </p>
+                </div>
+              } @else {
+                <div class="premium-status">
+                  <p>
+                    Thanks for being a <strong>{{ tier() }}</strong> member! You have full access to
+                    all premium features.
+                  </p>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            @if (tier() === 'free') {
+              <button
+                mat-flat-button
+                class="upgrade-btn"
+                (click)="
+                  onUpgrade({
+                    feature: 'Premium Access',
+                    description: 'Unlock unlimited songs, bands and advanced tools.',
+                    requiredTier: 'pro',
+                    currentTier: 'free',
+                  })
+                "
+              >
+                <mat-icon class="me-2">rocket_launch</mat-icon>
+                Explore Plans
+              </button>
+            } @else {
+              <button
+                mat-stroked-button
+                (click)="manageSubscription()"
+                [disabled]="loadingPortal()"
+              >
+                <mat-icon class="me-2">payments</mat-icon>
+                Manage Billing
+              </button>
+            }
+          </mat-card-actions>
+        </mat-card>
+      </section>
+
+      <!-- Account Actions -->
+      <section class="settings-section">
+        <mat-card class="bm-card glass">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>security</mat-icon>
+            <mat-card-title>Account</mat-card-title>
+            <mat-card-subtitle>Security and management</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-divider class="mb-3"></mat-divider>
+            <div class="danger-zone">
+              <button mat-stroked-button color="warn" class="w-100 mb-2" (click)="onLogout()">
+                <mat-icon class="me-2">logout</mat-icon>
+                Sign Out
+              </button>
+              <button mat-button color="warn" class="w-100 op-50">Delete Account</button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </div>
+  </div>
+</div>

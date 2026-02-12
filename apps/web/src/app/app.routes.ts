@@ -36,7 +36,7 @@ export const routes: Routes = [
     canActivateChild: [authGuard],
     children: [
       {
-        path: 'home',
+        path: 'dashboard',
         loadComponent: () =>
           import('./features/home/home-page/home-page').then((m) => m.HomePageComponent),
       },
@@ -171,7 +171,7 @@ export const routes: Routes = [
         loadChildren: () => import('./features/bands/bands.routes').then((m) => m.bandsRoutes),
       },
 
-      { path: '', pathMatch: 'full', redirectTo: 'home' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],
   },
 

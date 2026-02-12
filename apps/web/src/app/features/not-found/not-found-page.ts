@@ -20,9 +20,9 @@ import { MatIconModule } from '@angular/material/icon';
         <p class="subtitle">This page doesn't exist... yet 🎸</p>
         <p class="desc">Looks like this track hasn't been recorded. Let's get you back on stage.</p>
 
-        <a mat-flat-button routerLink="/home" class="home-btn">
-          <mat-icon>home</mat-icon>
-          Back to Home
+        <a mat-flat-button routerLink="/dashboard" class="home-btn">
+          <mat-icon>grid_view</mat-icon>
+          Back to Dashboard
         </a>
       </div>
     </div>

@@ -108,11 +108,15 @@ import { DatePipe } from '@angular/common';
 
               <mat-menu #notifMenu="matMenu" xPosition="before" class="bm-notif-menu-panel">
                 <div
-                  class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom overflow-hidden"
+                  class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom overflow-hidden bg-dark text-white"
                 >
-                  <span class="fw-bold small">Notifications</span>
+                  <span class="fw-bold small opacity-75">Notifications</span>
                   @if (notifService.unreadCount() > 0) {
-                    <button mat-button class="small-btn" (click)="notifService.markAllRead()">
+                    <button
+                      mat-button
+                      class="small-btn text-accent"
+                      (click)="notifService.markAllRead()"
+                    >
                       Mark all read
                     </button>
                   }
@@ -120,37 +124,50 @@ import { DatePipe } from '@angular/common';
 
                 <div
                   class="bm-notif-list"
-                  style="max-height: 400px; overflow-y: auto; width: 400px;"
+                  style="max-height: 480px; overflow-y: auto; width: 400px; background: #1a1a1a;"
                 >
                   @if (notifService.notifications().length === 0) {
-                    <div class="p-4 text-center opacity-50 small">No notifications</div>
+                    <div class="p-4 text-center opacity-50 small text-white">No notifications</div>
                   } @else {
                     @for (n of notifService.notifications(); track n.id) {
-                      <div class="bm-notif-item p-3 border-bottom" [class.bg-light]="!n.is_read">
-                        <div class="d-flex align-items-start gap-2 mb-1">
-                          <mat-icon class="text-primary icon-sm mt-1">
-                            {{ n.type === 'band_invite' ? 'mail' : 'info' }}
-                          </mat-icon>
+                      <div class="bm-notif-item p-3 border-bottom" [class.unread]="!n.is_read">
+                        <div class="d-flex align-items-start gap-3">
+                          <div class="bm-notif-icon-wrapper">
+                            <mat-icon>
+                              {{ n.type === 'band_invite' ? 'mail' : 'info' }}
+                            </mat-icon>
+                          </div>
+
                           <div class="flex-grow-1">
-                            <div class="fw-semibold text-dark" style="font-size: 0.9rem">
-                              {{ n.title }}
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                              <div
+                                class="fw-bold text-white mb-0"
+                                style="font-size: 0.95rem; letter-spacing: -0.01em;"
+                              >
+                                {{ n.title }}
+                              </div>
+                              @if (!n.is_read) {
+                                <div class="bm-notif-unread-dot"></div>
+                              }
                             </div>
-                            <div class="text-secondary small mb-2">{{ n.message }}</div>
+
+                            <div class="text-white opacity-60 small mb-2" style="line-height: 1.3;">
+                              {{ n.message }}
+                            </div>
 
                             @if (n.type === 'band_invite' && n.data?.inviteId) {
                               <div class="d-flex gap-2">
                                 <button
-                                  mat-stroked-button
+                                  mat-flat-button
                                   color="primary"
-                                  class="small-btn"
+                                  class="small-btn py-1"
                                   (click)="accept(n); $event.stopPropagation()"
                                 >
                                   Accept
                                 </button>
                                 <button
                                   mat-stroked-button
-                                  color="warn"
-                                  class="small-btn"
+                                  class="small-btn py-1 border-white opacity-75 text-white"
                                   (click)="reject(n); $event.stopPropagation()"
                                 >
                                   Reject
@@ -158,11 +175,8 @@ import { DatePipe } from '@angular/common';
                               </div>
                             }
                           </div>
-                          @if (!n.is_read) {
-                            <div class="p-1 rounded-circle bg-primary"></div>
-                          }
                         </div>
-                        <div class="text-end opacity-50" style="font-size: 0.7rem">
+                        <div class="text-end opacity-40 mt-2 text-white" style="font-size: 0.65rem">
                           {{ n.created_at | date: 'short' }}
                         </div>
                       </div>
@@ -223,48 +237,85 @@ import { DatePipe } from '@angular/common';
   `,
   styles: [
     `
-      /* ... existing styles ... */
+      .text-accent {
+        color: var(--bm-accent) !important;
+      }
+
       .bm-topbar {
         position: sticky;
         top: 0;
         z-index: 20;
         padding: 12px 14px;
-        background: linear-gradient(180deg, rgba(38, 70, 83, 0.98), rgba(28, 52, 62, 0.95));
+        background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
         color: rgba(255, 255, 255, 0.92);
-        border-bottom: 1px solid rgba(233, 196, 106, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(233, 196, 106, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
       }
 
       ::ng-deep .bm-notif-menu-panel {
-        min-width: 360px !important;
-        max-width: 90vw !important;
+        min-width: 400px !important;
+        max-width: 95vw !important;
+        border: 1px solid rgba(233, 196, 106, 0.2) !important;
+        border-radius: 12px !important;
+        background: #1a1a1a !important;
         overflow: hidden !important;
 
-        &.mat-mdc-menu-panel {
-          max-width: none !important;
-          overflow: hidden !important;
+        .mat-mdc-menu-content {
+          padding: 0 !important;
+          background: #1a1a1a !important;
+        }
+      }
+
+      .bm-notif-item {
+        transition: all 0.2s;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background: #1a1a1a;
+
+        &.unread {
+          background: rgba(233, 196, 106, 0.03);
         }
 
-        .mat-mdc-menu-content {
-          overflow: hidden !important;
+        &:hover {
+          background: rgba(255, 255, 255, 0.03);
         }
+      }
+
+      .bm-notif-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #222 0%, #444 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(233, 196, 106, 0.1);
+
+        mat-icon {
+          color: #e9c46a;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .bm-notif-unread-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e9c46a;
+        box-shadow: 0 0 8px rgba(233, 196, 106, 0.5);
       }
 
       .small-btn {
         line-height: 24px;
         padding: 0 12px;
-        font-size: 12px;
-        min-height: 24px;
+        font-size: 11px;
+        font-weight: 700;
+        min-height: 28px;
+        border-radius: 6px;
       }
-      .bm-notif-item {
-        transition: background 0.2s;
-        cursor: default;
-      }
-      .bm-notif-item:hover {
-        background: rgba(0, 0, 0, 0.02);
-      }
-      /* Reuse existing */
+
       .bm-topbar-inner {
         display: grid;
         grid-template-columns: 1fr auto 1fr;

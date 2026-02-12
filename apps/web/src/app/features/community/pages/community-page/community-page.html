@@ -1,25 +1,25 @@
-<!-- Premium Header -->
-<div class="community-hero">
-  <div class="hero-overlay"></div>
-  <div class="container position-relative z-1">
-    <div class="hero-icon">
-      <mat-icon class="icon-lg text-accent">groups</mat-icon>
-    </div>
-    <h1 class="display-4 fw-bold mb-2 text-shadow">Community</h1>
-    <p class="h5 opacity-75 fw-light mb-0">Connect with {{ profiles().length }} musicians</p>
+<!-- Header (Standardized) -->
+<header class="bm-page-header">
+  <div class="bm-mark" aria-hidden="true">
+    <mat-icon>groups</mat-icon>
   </div>
-</div>
 
-<div class="container main-content mt-3">
+  <div class="flex-grow-1">
+    <h2 class="bm-page-title">Community</h2>
+    <div class="small opacity-75">Connect with {{ profiles().length }} musicians</div>
+  </div>
+</header>
+
+<div class="main-content mt-3">
   <!-- Shows Near You Section -->
-  <div class="bm-section-head d-flex align-items-center justify-content-between mb-3">
+  <div class="bm-section-head mb-3">
     <div>
       <div class="bm-section-title">Shows Near You</div>
       <div class="bm-section-sub small opacity-75">
         Discover live music in your area: {{ eventsStore.discoveryEvents().length }} events
       </div>
     </div>
-    <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"
+    <mat-icon class="opacity-25" style="font-size: 28px; width: 28px; height: 28px"
       >celebration</mat-icon
     >
   </div>
@@ -48,8 +48,9 @@
               style="
                 width: 56px;
                 height: 56px;
-                background: linear-gradient(135deg, var(--bm-primary), var(--bm-accent));
-                color: white;
+                background: var(--bm-gradient-dark);
+                border: 1px solid rgba(233, 196, 106, 0.2);
+                color: var(--bm-accent);
               "
             >
               @if ($any(ev).bands?.avatar_url) {

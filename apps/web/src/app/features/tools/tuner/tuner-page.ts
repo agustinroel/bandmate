@@ -10,9 +10,14 @@ import { AchievementService } from '../../../core/services/achievement.service';
   imports: [CommonModule, MatIconModule, MatButtonModule],
   template: `
     <div class="tuner-container">
-      <header class="tuner-header">
-        <h1>Tuner</h1>
-        <p class="subtitle">Standard Tuning (E A D G B E)</p>
+      <header class="bm-page-header">
+        <div class="bm-mark" aria-hidden="true">
+          <mat-icon>graphic_eq</mat-icon>
+        </div>
+        <div class="flex-grow-1">
+          <h2 class="bm-page-title">Tuner</h2>
+          <div class="small opacity-75">Standard Tuning (E A D G B E)</div>
+        </div>
       </header>
 
       <div class="tuner-card">
@@ -91,8 +96,8 @@ import { AchievementService } from '../../../core/services/achievement.service';
         display: block;
         padding: 24px;
         height: 100%;
-        /* Background IS the Hero Gradient now */
-        background: linear-gradient(135deg, var(--bm-wood) 0%, var(--bm-teal) 100%);
+        /* Background IS the Premium Dark Gradient now */
+        background: var(--bm-gradient-dark);
         color: white; /* Default text for outside card */
         border-radius: 32px;
       }
@@ -180,8 +185,8 @@ import { AchievementService } from '../../../core/services/achievement.service';
       }
 
       .note-val.in-tune {
-        color: var(--bm-teal);
-        text-shadow: 0 0 0; /* Remove glow for cleaner look on white, or subtle */
+        color: var(--bm-accent);
+        text-shadow: 0 0 15px rgba(233, 196, 106, 0.4);
       }
 
       .cents-val {
@@ -525,7 +530,7 @@ export class TunerPageComponent implements OnDestroy {
 
   getCentsColor() {
     const c = Math.abs(this.currentCents());
-    if (c < 5) return 'var(--bm-teal)'; // In tune
+    if (c < 5) return 'var(--bm-accent)'; // In tune (Gold)
     if (c < 20) return '#E9C46A'; // Close (Gold)
     return '#E76F51'; // Far (Burnt)
   }

@@ -10,15 +10,14 @@
 
 /* ---------- 2) Brand tokens (CSS vars) ---------- */
 :root {
-  /* Brand (Indie Rehearsal Room Identity) */
   --bm-primary: #264653;
   /* Deep Wood (Primary) */
   --bm-accent: #E9C46A;
   /* Gold (Accent) */
-  --bm-warn: #E76F51;
-  /* Burnt Orange (Warn) */
   --bm-teal: #2A9D8F;
   /* Teal (Secondary/Success) */
+  --bm-gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+  --bm-gold-glow: 0 0 20px rgba(233, 196, 106, 0.2);
 
   /* Surfaces */
   --bm-bg: #F9F7F0;
@@ -55,11 +54,37 @@
   --bm-orange: #F4A261;
   --bm-burnt: #E76F51;
 
+
   /* Animation Tokens */
   --bm-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --bm-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --bm-transition-fast: 150ms var(--bm-ease-out);
   --bm-transition-base: 250ms var(--bm-ease-out);
+}
+
+/* Ambient Surface Mixin (Chiaroscuro) */
+@mixin bm-ambient-surface {
+  background: var(--bm-surface);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: 
+      radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.9) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(38, 70, 83, 0.04) 0%, transparent 40%);
+    opacity: 0.8;
+    z-index: 0;
+  }
+  
+  // Ensure content sits above the ambient layer
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* Global Entrance Keyframes */
@@ -123,7 +148,7 @@ header .bm-mark,
   width: 44px !important;
   height: 44px !important;
   border-radius: 14px !important;
-  background: linear-gradient(135deg, #264653 0%, #163c40 100%) !important;
+  background: var(--bm-gradient-dark) !important;
   color: #E9C46A !important;
   /* Gold Icon */
   display: grid !important;
@@ -201,7 +226,8 @@ body.bm-no-scroll {
 
 /* ---------- 5) Shell layout (global, sin estilos de páginas) ---------- */
 mat-sidenav {
-  background: var(--bm-surface);
+  // background: var(--bm-surface); -> Replaced by ambient mixin
+  @include bm-ambient-surface;
   border-right: 1px solid var(--bm-border);
 }
 
@@ -214,7 +240,8 @@ mat-sidenav {
 
 /* Footer */
 .app-footer {
-  background: var(--bm-surface);
+  // background: var(--bm-surface);
+  @include bm-ambient-surface;
   border-top: 1px solid var(--bm-border);
 }
 
@@ -236,11 +263,21 @@ mat-form-field {
 }
 
 /* ---------- 7) Brand button overrides (global y seguros) ---------- */
-.mat-mdc-raised-button.mat-primary {
-  background: var(--bm-primary) !important;
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-flat-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary {
+  background: var(--bm-gradient-dark) !important;
+  color: var(--bm-accent) !important;
+  border: 1px solid rgba(233, 196, 106, 0.2) !important;
+  
+  mat-icon {
+    color: var(--bm-accent) !important;
+  }
 }
 
-.mat-mdc-raised-button.mat-warn {
+.mat-mdc-raised-button.mat-warn,
+.mat-mdc-flat-button.mat-warn,
+.mat-mdc-unelevated-button.mat-warn {
   background: var(--bm-warn) !important;
 }
 
@@ -355,12 +392,49 @@ mat-form-field {
 
 /* Un contenedor de página consistente */
 .bm-page {
-  padding: 18px 0 24px;
+  padding: 24px 0;
+  min-height: calc(100vh - 64px); // Subtract topbar height
+}
+
+.bm-page-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  margin-bottom: 32px !important;
+  padding: 0 !important;
+}
+
+.bm-page-title {
+  font-size: 2.2rem !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.04em !important;
+  margin: 0 !important;
+  color: var(--bm-primary) !important;
+  line-height: 1.1 !important;
 }
 
 @media (max-width: 640px) {
   .bm-page {
-    padding: 14px 0 18px;
+    padding: 16px 0;
+  }
+  .bm-page-title {
+    font-size: 1.8rem !important;
+  }
+}
+
+/* Premium Dialog Overrides */
+.bm-upgrade-dialog-container {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 28px !important;
+    overflow: hidden !important;
+  }
+  
+  .mat-mdc-dialog-content {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 

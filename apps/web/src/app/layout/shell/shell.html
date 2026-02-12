@@ -6,7 +6,7 @@
     class="bm-sidenav"
   >
     <div class="bm-sidenav-header">
-      <a class="bm-brand" routerLink="/home" aria-label="Bandmate home">
+      <a class="bm-brand" routerLink="/dashboard" aria-label="Bandmate dashboard">
         <img
           class="bm-brand-logo"
           src="assets/brand/transparent-gold.png"
@@ -23,9 +23,9 @@
     <div class="bm-sidenav-section">
       <div class="bm-sidenav-section-title">Main</div>
       <mat-nav-list class="bm-nav">
-        <a mat-list-item routerLink="/home" routerLinkActive="active">
-          <mat-icon matListItemIcon class="me-2">home</mat-icon>
-          <span>Home</span>
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+          <mat-icon matListItemIcon class="me-2">grid_view</mat-icon>
+          <span>Dashboard</span>
         </a>
       </mat-nav-list>
     </div>
@@ -55,7 +55,7 @@
           <span>Community</span>
         </a>
 
-        <a mat-list-item routerLink="/bands" routerLinkActive="active">
+        <a mat-list-item (click)="onBandsClick($event)" style="cursor: pointer">
           <mat-icon matListItemIcon class="me-2">diversity_3</mat-icon>
           <span class="d-flex align-items-center gap-2">
             Bands
@@ -89,7 +89,12 @@
       </div>
 
       <ng-container>
-        <button mat-stroked-button color="primary" class="w-100 bm-upgrade-btn">
+        <button
+          mat-stroked-button
+          color="primary"
+          class="w-100 bm-upgrade-btn"
+          (click)="onUpgrade()"
+        >
           <mat-icon class="me-2">workspace_premium</mat-icon>
           Upgrade
         </button>
@@ -108,7 +113,7 @@
     <footer class="app-footer" role="contentinfo">
       <div class="footer-inner content-wrap">
         <div class="footer-left">
-          <a class="bm-brand" routerLink="/songs" aria-label="Bandmate home">
+          <a class="bm-brand" routerLink="/songs" aria-label="Bandmate dashboard">
             <img
               class="bm-brand-logo-xs"
               src="assets/brand/transparent-gold.png"
@@ -124,9 +129,9 @@
         </div>
 
         <nav class="footer-links" aria-label="Footer links">
-          <a class="footer-link" href="#" (click)="$event.preventDefault()">Privacy</a>
+          <a class="footer-link" routerLink="/privacy">Privacy</a>
           <span class="footer-dot" aria-hidden="true">•</span>
-          <a class="footer-link" href="#" (click)="$event.preventDefault()">Terms</a>
+          <a class="footer-link" routerLink="/terms">Terms</a>
         </nav>
       </div>
     </footer>

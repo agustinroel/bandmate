@@ -1,12 +1,12 @@
 <div class="bm-page position-relative">
   <div class="container main-content position-relative z-2">
     <!-- Header (Standardized) -->
-    <div class="d-flex align-items-start gap-3 mb-4">
+    <header class="bm-page-header">
       <div class="bm-mark" aria-hidden="true">
         <mat-icon>queue_music</mat-icon>
       </div>
       <div class="flex-grow-1">
-        <h2 class="m-0 fw-bold">Setlists</h2>
+        <h2 class="bm-page-title">Setlists</h2>
         <div class="small opacity-75">Curate the perfect flow for your show.</div>
       </div>
       <div>
@@ -15,7 +15,7 @@
           New Setlist
         </button>
       </div>
-    </div>
+    </header>
 
     @if (store.error()) {
       <div class="alert alert-danger shadow-sm border-0 mb-4">{{ store.error() }}</div>

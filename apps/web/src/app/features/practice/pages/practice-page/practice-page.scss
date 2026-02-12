@@ -171,26 +171,26 @@
   gap: 8px;
   
   // Premium styling - make it stand out as a metronome
-  background: linear-gradient(135deg, rgba(42, 157, 143, 0.08) 0%, rgba(233, 196, 106, 0.08) 100%);
-  border: 1px solid rgba(42, 157, 143, 0.2);
+  background: var(--bm-gradient-dark);
+  border: 1px solid rgba(233, 196, 106, 0.2);
   border-radius: 16px;
   padding: 8px 12px;
   
   // Subtle shadow for depth
-  box-shadow: 0 2px 8px rgba(38, 70, 83, 0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 
   button[mat-icon-button] {
     width: 40px;
     height: 40px;
-    background: rgba(42, 157, 143, 0.15);
+    background: rgba(233, 196, 106, 0.15);
     border-radius: 50%;
     
     &:hover {
-      background: rgba(42, 157, 143, 0.25);
+      background: rgba(233, 196, 106, 0.25);
     }
     
     mat-icon {
-      color: var(--bm-teal, #2A9D8F);
+      color: var(--bm-accent);
     }
   }
 
@@ -210,12 +210,12 @@
     font-size: 1em;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(42, 157, 143, 0.25);
-    color: var(--bm-wood, #264653);
+    border: 1px solid rgba(233, 196, 106, 0.25);
+    color: var(--bm-accent);
     
     &:hover {
       background: rgba(255, 255, 255, 1);
-      border-color: var(--bm-teal);
+      border-color: var(--bm-accent);
     }
   }
 }
@@ -224,7 +224,7 @@
 .p-metronome::before {
     content: '♩';
     font-size: 1.4rem;
-    color: var(--bm-teal, #2A9D8F);
+    color: var(--bm-accent);
     margin-right: 4px;
     opacity: 0.8;
 }

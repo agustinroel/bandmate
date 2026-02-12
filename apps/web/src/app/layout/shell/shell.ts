@@ -17,6 +17,9 @@ import { TopbarComponent } from '../topbar/topbar';
 import { AchievementToastComponent } from '../../shared/ui/achievement-toast/achievement-toast.component';
 import { AchievementService } from '../../core/services/achievement.service';
 import { environment } from '../../../environments/environment';
+import { SubscriptionStore } from '../../core/subscription/subscription.store';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { UpgradeDialogComponent } from '../../core/subscription/upgrade-dialog/upgrade-dialog.component';
 
 @Component({
   standalone: true,
@@ -36,6 +39,7 @@ import { environment } from '../../../environments/environment';
     ErrorBoundaryComponent,
     TopbarComponent,
     AchievementToastComponent,
+    MatDialogModule,
   ],
   selector: 'app-shell',
   templateUrl: './shell.html',
@@ -47,6 +51,8 @@ export class ShellComponent implements AfterViewInit {
 
   readonly bo = inject(BreakpointObserver);
   readonly achievementService = inject(AchievementService);
+  readonly subscriptionStore = inject(SubscriptionStore);
+  private readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
 
   readonly isHandset$ = this.bo.observe(Breakpoints.Handset).pipe(
@@ -81,6 +87,33 @@ export class ShellComponent implements AfterViewInit {
     console.log('logout');
   }
   onUpgrade() {
-    console.log('upgrade');
+    this.dialog.open(UpgradeDialogComponent, {
+      maxWidth: '90vw',
+      panelClass: 'bm-upgrade-dialog-container',
+      data: {
+        feature: 'Premium Access',
+        description: 'Scale your music to the next level.',
+        requiredTier: 'pro',
+        currentTier: this.subscriptionStore.tier(),
+      },
+    });
+  }
+
+  onBandsClick(event: Event) {
+    if (this.subscriptionStore.tier() === 'free') {
+      event.preventDefault();
+      this.dialog.open(UpgradeDialogComponent, {
+        maxWidth: '90vw',
+        panelClass: 'bm-upgrade-dialog-container',
+        data: {
+          feature: 'Band Management',
+          description: 'Rehearse and perform together with your band members.',
+          requiredTier: 'pro',
+          currentTier: 'free',
+        },
+      });
+    } else {
+      this.router.navigate(['/bands']);
+    }
   }
 }

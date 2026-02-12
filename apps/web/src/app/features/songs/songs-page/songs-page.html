@@ -1,459 +1,471 @@
-<div class="songs-head">
-  <div class="d-flex align-items-start gap-3 mb-3">
-    <div class="bm-mark" aria-hidden="true">
-      <mat-icon>library_music</mat-icon>
+<div class="bm-page position-relative">
+  <div class="container main-content position-relative z-2">
+    <!-- Header (Standardized) -->
+    <header class="bm-page-header">
+      <div class="bm-mark" aria-hidden="true">
+        <mat-icon>library_music</mat-icon>
+      </div>
+
+      <div class="flex-grow-1">
+        <h2 class="bm-page-title">Songs</h2>
+        <div class="small opacity-75">
+          Your: {{ grouped().mine.length }} · Library: {{ libraryWorks().length }}
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button
+          mat-flat-button
+          class="spotify-sync-btn d-none d-sm-inline-flex"
+          (click)="goSpotify()"
+        >
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg"
+            alt=""
+            class="spotify-logo-mini me-1"
+          />
+          Sync Spotify
+        </button>
+        <button mat-raised-button color="primary" (click)="goNew()">
+          <mat-icon class="me-1">add</mat-icon>
+          Add song
+        </button>
+      </div>
+    </header>
+
+    <!-- Search -->
+    <div class="mt-3">
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Search</mat-label>
+        <mat-icon matPrefix class="me-2">search</mat-icon>
+
+        <input
+          matInput
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+          placeholder="Title, artist or key"
+        />
+
+        @if (query()) {
+          <button mat-icon-button matSuffix (click)="query.set('')" aria-label="Clear">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
     </div>
 
-    <div class="flex-grow-1">
-      <h2 class="m-0">Songs</h2>
-      <div class="small opacity-75">
-        Your: {{ grouped().mine.length }}
+    <div class="bm-filters" [class.is-open]="filtersOpen()">
+      <div class="bm-filters-head">
+        <button
+          mat-button
+          type="button"
+          class="bm-filters-toggle"
+          (click)="filtersOpen.set(!filtersOpen())"
+          aria-label="Toggle filters"
+        >
+          <span class="bm-filters-title">Filters</span>
 
-        Library: {{ libraryWorks().length }}
+          @if (activeFiltersCount() > 0) {
+            <span class="bm-filters-badge">{{ activeFiltersCount() }}</span>
+          }
+
+          <mat-icon class="bm-filters-caret">{{
+            filtersOpen() ? 'expand_less' : 'expand_more'
+          }}</mat-icon>
+        </button>
+
+        @if (hasActiveFilters()) {
+          <button mat-stroked-button type="button" class="bm-clear" (click)="clearFilters()">
+            <mat-icon class="me-1">close</mat-icon>
+            Clear
+          </button>
+        }
+      </div>
+
+      <div class="bm-filters-body" [class.is-hidden]="!filtersOpen()">
+        <div class="bm-filters-row">
+          <mat-form-field appearance="outline" class="bm-field">
+            <mat-label>Artist</mat-label>
+            <mat-select [value]="filters().artist" (selectionChange)="setArtist($event.value)">
+              <mat-option [value]="null">All artists</mat-option>
+              @for (a of artistOptions(); track a) {
+                <mat-option [value]="a">{{ a }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="bm-field">
+            <mat-label>Key</mat-label>
+            <mat-select [value]="filters().key" (selectionChange)="setKey($event.value)">
+              <mat-option [value]="null">All keys</mat-option>
+              @for (k of keyOptions(); track k) {
+                <mat-option [value]="k">{{ k }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Sort</mat-label>
+            <mat-select [value]="sort()" (selectionChange)="sort.set($event.value)">
+              <mat-option value="updatedDesc">Recently updated</mat-option>
+              <mat-option value="updatedAsc">Oldest updated</mat-option>
+              <mat-option value="titleAsc">Title A–Z</mat-option>
+              <mat-option value="titleDesc">Title Z–A</mat-option>
+              <mat-option value="artistAsc">Artist A–Z</mat-option>
+              <mat-option value="artistDesc">Artist Z–A</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="bm-field">
+            <mat-label>Genre</mat-label>
+            <mat-select [value]="filters().genre" (selectionChange)="setGenre($event.value)">
+              <mat-option [value]="null">All genres</mat-option>
+              @for (g of genreOptions(); track g) {
+                <mat-option [value]="g">{{ g }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
     </div>
-    <div class="songs-head-actions d-flex gap-2">
-      <button mat-flat-button class="spotify-sync-btn" (click)="goSpotify()">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg"
-          alt=""
-          class="spotify-logo-mini me-1"
-        />
-        Sync Spotify
-      </button>
-      <button mat-raised-button color="primary" class="songs-add" (click)="goNew()">
-        <mat-icon class="me-1">add</mat-icon>
-        Add song
-      </button>
-    </div>
-  </div>
-</div>
 
-<!-- Search -->
-<div class="mt-3">
-  <mat-form-field appearance="outline" class="w-100">
-    <mat-label>Search</mat-label>
-    <mat-icon matPrefix class="me-2">search</mat-icon>
-
-    <input
-      matInput
-      [value]="query()"
-      (input)="query.set($any($event.target).value)"
-      placeholder="Title, artist or key"
-    />
-
-    @if (query()) {
-      <button mat-icon-button matSuffix (click)="query.set('')" aria-label="Clear">
-        <mat-icon>close</mat-icon>
-      </button>
+    @if (!isLoading() && showFirstRun()) {
+      <bm-first-run-hero
+        class="mt-3"
+        [libraryCount]="libraryWorks().length"
+        (createSong)="goNew()"
+        (browseLibrary)="scrollToLibrary()"
+      />
     }
-  </mat-form-field>
-</div>
 
-<div class="bm-filters" [class.is-open]="filtersOpen()">
-  <div class="bm-filters-head">
-    <button
-      mat-button
-      type="button"
-      class="bm-filters-toggle"
-      (click)="filtersOpen.set(!filtersOpen())"
-      aria-label="Toggle filters"
-    >
-      <span class="bm-filters-title">Filters</span>
-
-      @if (activeFiltersCount() > 0) {
-        <span class="bm-filters-badge">{{ activeFiltersCount() }}</span>
-      }
-
-      <mat-icon class="bm-filters-caret">{{
-        filtersOpen() ? 'expand_less' : 'expand_more'
-      }}</mat-icon>
-    </button>
-
-    @if (hasActiveFilters()) {
-      <button mat-stroked-button type="button" class="bm-clear" (click)="clearFilters()">
-        <mat-icon class="me-1">close</mat-icon>
-        Clear
-      </button>
+    @if (isLoading()) {
+      <div class="songs-grid">
+        @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+          <mat-card class="song-card song-card--skeleton">
+            <div class="sk-title"></div>
+            <div class="sk-artist"></div>
+            <div class="sk-row">
+              <span class="sk-pill"></span>
+              <span class="sk-pill"></span>
+            </div>
+            <div class="sk-updated"></div>
+          </mat-card>
+        }
+      </div>
     }
-  </div>
 
-  <div class="bm-filters-body" [class.is-hidden]="!filtersOpen()">
-    <div class="bm-filters-row">
-      <mat-form-field appearance="outline" class="bm-field">
-        <mat-label>Artist</mat-label>
-        <mat-select [value]="filters().artist" (selectionChange)="setArtist($event.value)">
-          <mat-option [value]="null">All artists</mat-option>
-          @for (a of artistOptions(); track a) {
-            <mat-option [value]="a">{{ a }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="bm-field">
-        <mat-label>Key</mat-label>
-        <mat-select [value]="filters().key" (selectionChange)="setKey($event.value)">
-          <mat-option [value]="null">All keys</mat-option>
-          @for (k of keyOptions(); track k) {
-            <mat-option [value]="k">{{ k }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Sort</mat-label>
-        <mat-select [value]="sort()" (selectionChange)="sort.set($event.value)">
-          <mat-option value="updatedDesc">Recently updated</mat-option>
-          <mat-option value="updatedAsc">Oldest updated</mat-option>
-          <mat-option value="titleAsc">Title A–Z</mat-option>
-          <mat-option value="titleDesc">Title Z–A</mat-option>
-          <mat-option value="artistAsc">Artist A–Z</mat-option>
-          <mat-option value="artistDesc">Artist Z–A</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="bm-field">
-        <mat-label>Genre</mat-label>
-        <mat-select [value]="filters().genre" (selectionChange)="setGenre($event.value)">
-          <mat-option [value]="null">All genres</mat-option>
-          @for (g of genreOptions(); track g) {
-            <mat-option [value]="g">{{ g }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </div>
-</div>
-
-@if (!isLoading() && showFirstRun()) {
-  <bm-first-run-hero
-    class="mt-3"
-    [libraryCount]="libraryWorks().length"
-    (createSong)="goNew()"
-    (browseLibrary)="scrollToLibrary()"
-  />
-}
-
-@if (isLoading()) {
-  <div class="songs-grid">
-    @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
-      <mat-card class="song-card song-card--skeleton">
-        <div class="sk-title"></div>
-        <div class="sk-artist"></div>
-        <div class="sk-row">
-          <span class="sk-pill"></span>
-          <span class="sk-pill"></span>
-        </div>
-        <div class="sk-updated"></div>
-      </mat-card>
-    }
-  </div>
-}
-
-@if (isError()) {
-  <div class="alert alert-danger mt-2 d-flex align-items-center justify-content-between gap-2">
-    <span>{{ store.error() }}</span>
-    <button mat-stroked-button (click)="store.load()">
-      <mat-icon class="me-1">refresh</mat-icon>
-      Retry
-    </button>
-  </div>
-}
-
-@if (!isLoading() && isTotallyEmpty()) {
-  <div class="text-center py-5">
-    <mat-icon style="font-size: 48px; height: 48px; width: 48px" class="opacity-50">
-      queue_music
-    </mat-icon>
-
-    <div class="mt-2 fw-semibold">No songs yet</div>
-
-    <div class="small opacity-75 mb-3">
-      Add your first song and start building your rehearsal library.
-    </div>
-
-    <div class="d-flex gap-2 justify-content-center">
-      <button mat-stroked-button color="primary" (click)="goNew()">
-        <mat-icon class="me-1">add</mat-icon>
-        Add your first song
-      </button>
-      <button mat-stroked-button (click)="scrollToLibrary()">
-        <mat-icon class="me-1">explore</mat-icon>
-        Browse Library
-      </button>
-    </div>
-  </div>
-} @else if (!isLoading() && isNoResults()) {
-  <div class="text-center py-5">
-    <mat-icon style="font-size: 48px; height: 48px; width: 48px" class="opacity-50">
-      search_off
-    </mat-icon>
-
-    <div class="mt-2 fw-semibold">No results</div>
-
-    <div class="small opacity-75 mb-3">Try a different search, or clear filters.</div>
-
-    <!-- MAGIC IMPORT TRIGGER -->
-    @if (query().length > 2 && !isSearchingExternal()) {
-      <div class="magic-search-promo p-4 rounded-4 border mb-4 bg-light shadow-sm" #magicPromo>
-        <mat-icon color="accent" style="font-size: 32px; width: 32px; height: 32px"
-          >auto_awesome</mat-icon
-        >
-        <h4 class="mt-2">Can't find "{{ query() }}"?</h4>
-        <p class="small text-muted mb-3">
-          Use <strong>Magic Import</strong> to search the global database and generate a pro
-          arrangement with AI in seconds.
-        </p>
-        <button mat-flat-button color="accent" class="rounded-pill px-4" (click)="searchExternal()">
-          <mat-icon class="me-2">cloud_download</mat-icon>
-          Search Global Cloud
+    @if (isError()) {
+      <div class="alert alert-danger mt-2 d-flex align-items-center justify-content-between gap-2">
+        <span>{{ store.error() }}</span>
+        <button mat-stroked-button (click)="store.load()">
+          <mat-icon class="me-1">refresh</mat-icon>
+          Retry
         </button>
       </div>
     }
 
-    <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
-      <button mat-stroked-button type="button" (click)="clearAllSearchAndFilters()">
-        <mat-icon class="me-1">close</mat-icon>
-        Clear all
-      </button>
-
-      <button mat-flat-button color="primary" (click)="goNew()">
-        <mat-icon class="me-1">add</mat-icon>
-        Add song
-      </button>
-
-      <button mat-stroked-button (click)="scrollToLibrary()">
-        <mat-icon class="me-1">explore</mat-icon>
-        Browse Library
-      </button>
-    </div>
-  </div>
-}
-
-<!-- EXTERNAL RESULTS (MAGIC IMPORT) -->
-@if (isSearchingExternal() && query()) {
-  <div class="external-search-block mt-4 p-4 border rounded-4 bg-white shadow animate-blur-in">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div class="d-flex align-items-center gap-2">
-        <mat-icon color="accent">auto_awesome</mat-icon>
-        <h3 class="m-0 h5 fw-bold">Magic Global Results</h3>
-      </div>
-      <button mat-icon-button (click)="isSearchingExternal.set(false)">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-
-    @if (store.externalState() === 'loading') {
+    @if (!isLoading() && isTotallyEmpty()) {
       <div class="text-center py-5">
-        <mat-progress-spinner
-          mode="indeterminate"
-          diameter="32"
-          class="mx-auto"
-          color="accent"
-        ></mat-progress-spinner>
-        <div class="mt-3 small opacity-50">Searching the global database...</div>
-      </div>
-    }
+        <mat-icon style="font-size: 48px; height: 48px; width: 48px" class="opacity-50">
+          queue_music
+        </mat-icon>
 
-    @if (store.externalState() === 'ingesting') {
+        <div class="mt-2 fw-semibold">No songs yet</div>
+
+        <div class="small opacity-75 mb-3">
+          Add your first song and start building your rehearsal library.
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+          <button mat-stroked-button color="primary" (click)="goNew()">
+            <mat-icon class="me-1">add</mat-icon>
+            Add your first song
+          </button>
+          <button mat-stroked-button (click)="scrollToLibrary()">
+            <mat-icon class="me-1">explore</mat-icon>
+            Browse Library
+          </button>
+        </div>
+      </div>
+    } @else if (!isLoading() && isNoResults()) {
       <div class="text-center py-5">
-        <mat-progress-spinner
-          mode="indeterminate"
-          diameter="32"
-          class="mx-auto"
-          color="primary"
-        ></mat-progress-spinner>
-        <div class="mt-3">
-          <div class="fw-bold">Generating Arrangement...</div>
-          <div class="small opacity-50">
-            AI is analyzing the song structure and chords. This takes about 10s.
+        <mat-icon style="font-size: 48px; height: 48px; width: 48px" class="opacity-50">
+          search_off
+        </mat-icon>
+
+        <div class="mt-2 fw-semibold">No results</div>
+
+        <div class="small opacity-75 mb-3">Try a different search, or clear filters.</div>
+
+        <!-- MAGIC IMPORT TRIGGER -->
+        @if (query().length > 2 && !isSearchingExternal()) {
+          <div class="magic-search-promo p-4 rounded-4 border mb-4 bg-light shadow-sm" #magicPromo>
+            <mat-icon color="accent" style="font-size: 32px; width: 32px; height: 32px"
+              >auto_awesome</mat-icon
+            >
+            <h4 class="mt-2">Can't find "{{ query() }}"?</h4>
+            <p class="small text-muted mb-3">
+              Use <strong>Magic Import</strong> to search the global database and generate a pro
+              arrangement with AI in seconds.
+            </p>
+            <button
+              mat-flat-button
+              color="accent"
+              class="rounded-pill px-4"
+              (click)="searchExternal()"
+            >
+              <mat-icon class="me-2">cloud_download</mat-icon>
+              Search Global Cloud
+            </button>
           </div>
+        }
+
+        <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
+          <button mat-stroked-button type="button" (click)="clearAllSearchAndFilters()">
+            <mat-icon class="me-1">close</mat-icon>
+            Clear all
+          </button>
+
+          <button mat-flat-button color="primary" (click)="goNew()">
+            <mat-icon class="me-1">add</mat-icon>
+            Add song
+          </button>
+
+          <button mat-stroked-button (click)="scrollToLibrary()">
+            <mat-icon class="me-1">explore</mat-icon>
+            Browse Library
+          </button>
         </div>
       </div>
     }
 
-    @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
-      <div class="text-center py-4 opacity-50">
-        No matches found in the cloud for "{{ query() }}".
-      </div>
-    }
-
-    <div class="ext-results-list">
-      @for (res of store.externalResults(); track res.id) {
-        <div
-          class="ext-match-item d-flex align-items-center justify-content-between p-3 border-bottom hover-bg-light"
-        >
-          <div class="me-3 overflow-hidden">
-            <div class="fw-bold truncate">{{ res.title }}</div>
-            <div class="small opacity-75 truncate">{{ res.artist }}</div>
+    <!-- EXTERNAL RESULTS (MAGIC IMPORT) -->
+    @if (isSearchingExternal() && query()) {
+      <div class="external-search-block mt-4 p-4 border rounded-4 bg-white shadow animate-blur-in">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <mat-icon color="accent">auto_awesome</mat-icon>
+            <h3 class="m-0 h5 fw-bold">Magic Global Results</h3>
           </div>
-          <button
-            mat-flat-button
-            color="primary"
-            class="rounded-pill flex-shrink-0"
-            (click)="ingest(res)"
-          >
-            <mat-icon class="me-1">auto_fix_high</mat-icon>
-            Generate
+          <button mat-icon-button (click)="isSearchingExternal.set(false)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        @if (store.externalState() === 'loading') {
+          <div class="text-center py-5">
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="32"
+              class="mx-auto"
+              color="accent"
+            ></mat-progress-spinner>
+            <div class="mt-3 small opacity-50">Searching the global database...</div>
+          </div>
+        }
+
+        @if (store.externalState() === 'ingesting') {
+          <div class="text-center py-5">
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="32"
+              class="mx-auto"
+              color="primary"
+            ></mat-progress-spinner>
+            <div class="mt-3">
+              <div class="fw-bold">Generating Arrangement...</div>
+              <div class="small opacity-50">
+                AI is analyzing the song structure and chords. This takes about 10s.
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
+          <div class="text-center py-4 opacity-50">
+            No matches found in the cloud for "{{ query() }}".
+          </div>
+        }
+
+        <div class="ext-results-list">
+          @for (res of store.externalResults(); track res.id) {
+            <div
+              class="ext-match-item d-flex align-items-center justify-content-between p-3 border-bottom hover-bg-light"
+            >
+              <div class="me-3 overflow-hidden">
+                <div class="fw-bold truncate">{{ res.title }}</div>
+                <div class="small opacity-75 truncate">{{ res.artist }}</div>
+              </div>
+              <button
+                mat-flat-button
+                color="primary"
+                class="rounded-pill flex-shrink-0"
+                (click)="ingest(res)"
+              >
+                <mat-icon class="me-1">auto_fix_high</mat-icon>
+                Generate
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    } @else if (!isLoading() && hasAnythingToShow()) {
+      <!-- ========================= -->
+      <!-- YOUR SONGS -->
+      <!-- ========================= -->
+      @if (grouped().mine.length > 0) {
+        <div class="bm-section-head" id="bm-library-section">
+          <div class="bm-section-title">Your songs</div>
+          <div class="bm-section-sub small opacity-75">{{ grouped().mine.length }} songs</div>
+        </div>
+
+        <div class="songs-grid">
+          @for (s of grouped().mine; track s.id) {
+            <mat-card
+              class="song-card song-card-item"
+              [attr.aria-label]="'Open song ' + s.title + ' by ' + s.artist"
+              tabindex="0"
+              role="button"
+              (keydown)="onCardKeyDown($event, s.id)"
+              (click)="goEdit(s.id)"
+            >
+              <div class="song-top">
+                <div class="song-main">
+                  <div class="song-title-row">
+                    <div class="song-title" [title]="s.title">{{ s.title }}</div>
+
+                    @if (s.key) {
+                      <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
+                        Key {{ s.key }}
+                      </span>
+                    }
+
+                    @if (s.ratingAvg) {
+                      <span
+                        class="bm-pill bm-pill--mastery-mini"
+                        [class.mastery-low]="s.ratingAvg <= 2"
+                        [class.mastery-mid]="s.ratingAvg > 2 && s.ratingAvg < 5"
+                        [class.mastery-high]="s.ratingAvg === 5"
+                      >
+                        @if (s.ratingAvg === 5) {
+                          <mat-icon>star</mat-icon>
+                        } @else if (s.ratingAvg > 2) {
+                          <mat-icon>verified</mat-icon>
+                        } @else {
+                          <mat-icon>school</mat-icon>
+                        }
+                      </span>
+                    }
+                  </div>
+
+                  <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
+                </div>
+
+                <div class="song-actions">
+                  @if (SongPolicy.canDelete(s)) {
+                    <button
+                      class="song-del"
+                      mat-icon-button
+                      (click)="askDelete(s.id, s.title); $event.stopPropagation()"
+                      matTooltip="Delete"
+                      aria-label="Delete"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (s.bpm || durationLabel(s.durationSec)) {
+                <div class="song-meta">
+                  @if (s.bpm) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">speed</mat-icon>
+                      <span>{{ s.bpm }} BPM</span>
+                    </span>
+                  }
+
+                  @if (durationLabel(s.durationSec)) {
+                    <span class="bm-pill">
+                      <mat-icon class="pill-ic">schedule</mat-icon>
+                      <span>{{ durationLabel(s.durationSec) }}</span>
+                    </span>
+                  }
+
+                  @if (s.workId) {
+                    <span class="bm-pill" matTooltip="You created this from a Library Work">
+                      <mat-icon class="pill-ic">link</mat-icon>
+                      <span>Linked work</span>
+                    </span>
+                  }
+                </div>
+              }
+
+              <div class="song-updated opacity-75">
+                <mat-icon class="updated-ic">history</mat-icon>
+                Updated: {{ s.updatedAt | date: 'MMM d, y' }}
+              </div>
+            </mat-card>
+          }
+        </div>
+      }
+
+      <!-- Divider -->
+      @if (grouped().mine.length > 0 && libraryWorks().length > 0) {
+        <div class="bm-section-sep"></div>
+      }
+
+      <!-- ========================= -->
+      <!-- LIBRARY (SEED SONGS) -->
+      <!-- ========================= -->
+
+      @if (store.libraryState() === 'loading') {
+        <div class="mt-3 small opacity-75">Loading Library…</div>
+      }
+
+      @if (store.libraryState() === 'error') {
+        <div
+          class="alert alert-danger mt-2 d-flex align-items-center justify-content-between gap-2"
+        >
+          <span>{{ store.libraryError() }}</span>
+          <button mat-stroked-button (click)="store.loadLibrary()">
+            <mat-icon class="me-1">refresh</mat-icon>
+            Retry
           </button>
         </div>
       }
-    </div>
-  </div>
-} @else if (!isLoading() && hasAnythingToShow()) {
-  <!-- ========================= -->
-  <!-- YOUR SONGS -->
-  <!-- ========================= -->
-  @if (grouped().mine.length > 0) {
-    <div class="bm-section-head" id="bm-library-section">
-      <div class="bm-section-title">Your songs</div>
-      <div class="bm-section-sub small opacity-75">{{ grouped().mine.length }} songs</div>
-    </div>
 
-    <div class="songs-grid">
-      @for (s of grouped().mine; track s.id) {
-        <mat-card
-          class="song-card song-card-item"
-          [attr.aria-label]="'Open song ' + s.title + ' by ' + s.artist"
-          tabindex="0"
-          role="button"
-          (keydown)="onCardKeyDown($event, s.id)"
-          (click)="goEdit(s.id)"
-        >
-          <div class="song-top">
-            <div class="song-main">
-              <div class="song-title-row">
-                <div class="song-title" [title]="s.title">{{ s.title }}</div>
-
-                @if (s.key) {
-                  <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
-                    Key {{ s.key }}
-                  </span>
-                }
-
-                @if (s.ratingAvg) {
-                  <span
-                    class="bm-pill bm-pill--mastery-mini"
-                    [class.mastery-low]="s.ratingAvg <= 2"
-                    [class.mastery-mid]="s.ratingAvg > 2 && s.ratingAvg < 5"
-                    [class.mastery-high]="s.ratingAvg === 5"
-                  >
-                    @if (s.ratingAvg === 5) {
-                      <mat-icon>star</mat-icon>
-                    } @else if (s.ratingAvg > 2) {
-                      <mat-icon>verified</mat-icon>
-                    } @else {
-                      <mat-icon>school</mat-icon>
-                    }
-                  </span>
-                }
-              </div>
-
-              <div class="song-artist" [title]="s.artist">{{ s.artist }}</div>
-            </div>
-
-            <div class="song-actions">
-              @if (SongPolicy.canDelete(s)) {
-                <button
-                  class="song-del"
-                  mat-icon-button
-                  (click)="askDelete(s.id, s.title); $event.stopPropagation()"
-                  matTooltip="Delete"
-                  aria-label="Delete"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              }
-            </div>
-          </div>
-
-          @if (s.bpm || durationLabel(s.durationSec)) {
-            <div class="song-meta">
-              @if (s.bpm) {
-                <span class="bm-pill">
-                  <mat-icon class="pill-ic">speed</mat-icon>
-                  <span>{{ s.bpm }} BPM</span>
-                </span>
-              }
-
-              @if (durationLabel(s.durationSec)) {
-                <span class="bm-pill">
-                  <mat-icon class="pill-ic">schedule</mat-icon>
-                  <span>{{ durationLabel(s.durationSec) }}</span>
-                </span>
-              }
-
-              @if (s.workId) {
-                <span class="bm-pill" matTooltip="You created this from a Library Work">
-                  <mat-icon class="pill-ic">link</mat-icon>
-                  <span>Linked work</span>
-                </span>
-              }
-            </div>
-          }
-
-          <div class="song-updated opacity-75">
-            <mat-icon class="updated-ic">history</mat-icon>
-            Updated: {{ s.updatedAt | date: 'MMM d, y' }}
-          </div>
-        </mat-card>
-      }
-    </div>
-  }
-
-  <!-- Divider -->
-  @if (grouped().mine.length > 0 && libraryWorks().length > 0) {
-    <div class="bm-section-sep"></div>
-  }
-
-  <!-- ========================= -->
-  <!-- LIBRARY (SEED SONGS) -->
-  <!-- ========================= -->
-
-  @if (store.libraryState() === 'loading') {
-    <div class="mt-3 small opacity-75">Loading Library…</div>
-  }
-
-  @if (store.libraryState() === 'error') {
-    <div class="alert alert-danger mt-2 d-flex align-items-center justify-content-between gap-2">
-      <span>{{ store.libraryError() }}</span>
-      <button mat-stroked-button (click)="store.loadLibrary()">
-        <mat-icon class="me-1">refresh</mat-icon>
-        Retry
-      </button>
-    </div>
-  }
-
-  @if (store.libraryState() === 'ready' && libraryWorks().length === 0) {
-    <div class="mt-4 text-center opacity-75">
-      <div class="fw-semibold">Library is empty (for now)</div>
-      <div class="small">Once you import works, they’ll show up here.</div>
-    </div>
-  }
-
-  <div id="bm-library-anchor"></div>
-
-  @if (libraryWorks().length > 0) {
-    <div class="bm-section-head d-flex align-items-center justify-content-between">
-      <div>
-        <div class="bm-section-title">Community Library</div>
-        <div class="bm-section-sub small opacity-75">
-          Curated arrangements from the community: {{ libraryWorks().length }} songs
+      @if (store.libraryState() === 'ready' && libraryWorks().length === 0) {
+        <div class="mt-4 text-center opacity-75">
+          <div class="fw-semibold">Library is empty (for now)</div>
+          <div class="small">Once you import works, they’ll show up here.</div>
         </div>
-      </div>
-      <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"
-        >auto_awesome</mat-icon
-      >
-    </div>
-
-    <div class="songs-grid">
-      @for (w of libraryWorks(); track w.id) {
-        <bm-library-work-card
-          class="song-card-item"
-          (click)="router.navigate(['/library', w.id])"
-          [work]="w"
-        ></bm-library-work-card>
       }
-    </div>
-  }
-}
+
+      <div id="bm-library-anchor"></div>
+
+      @if (libraryWorks().length > 0) {
+        <div class="bm-section-head d-flex align-items-center justify-content-between">
+          <div>
+            <div class="bm-section-title">Community Library</div>
+            <div class="bm-section-sub small opacity-75">
+              Curated arrangements from the community: {{ libraryWorks().length }} songs
+            </div>
+          </div>
+          <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"
+            >auto_awesome</mat-icon
+          >
+        </div>
+
+        <div class="songs-grid">
+          @for (w of libraryWorks(); track w.id) {
+            <bm-library-work-card
+              class="song-card-item"
+              (click)="router.navigate(['/library', w.id])"
+              [work]="w"
+            ></bm-library-work-card>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
