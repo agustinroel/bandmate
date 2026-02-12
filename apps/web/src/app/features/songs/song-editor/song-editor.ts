@@ -8,8 +8,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSliderModule } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
 import { CreateSongDto, UpdateSongDto, SongDetail, SongPolicy } from '@bandmate/shared';
-import { TitleCasePipe } from '@angular/common';
+import { TitleCasePipe, Location } from '@angular/common';
 import { GuitarChordDiagramComponent } from '../../../shared/ui/guitar-chord-diagram/guitar-chord-diagram';
 import { SongsStore } from '../../songs/state/songs-store';
 import { SongFormComponent } from '../../songs/features/songs/components/song-form/song-form';
@@ -89,6 +91,8 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
     SongFormComponent,
     TitleCasePipe,
     MatMenuModule,
+    MatSliderModule,
+    FormsModule,
     ChordLineViewComponent,
     TransposeBarComponent,
   ],
@@ -97,6 +101,8 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
 })
 export class SongEditorPageComponent {
   @ViewChild('scrollHost', { read: ElementRef }) scrollHost?: ElementRef<HTMLElement>;
+
+  private readonly el = inject(ElementRef);
 
   SongPolicy = SongPolicy;
   readonly route = inject(ActivatedRoute);
@@ -112,6 +118,16 @@ export class SongEditorPageComponent {
 
   readonly transpose = signal(0);
   readonly userRating = signal(0); // local state for UI feedback
+  readonly isPracticeMode = signal(false);
+
+  enterPracticeMode() {
+    const el = this.el.nativeElement;
+    if (el.requestFullscreen) {
+      el.requestFullscreen().catch((err: any) => {
+        console.warn('Error attempting to enable fullscreen:', err);
+      });
+    }
+  }
 
   readonly viewMode = computed<ViewMode>(() => {
     // ✅ CREATE: siempre edit
@@ -250,6 +266,17 @@ export class SongEditorPageComponent {
       };
     });
 
+    // Listen for fullscreen changes to update signal
+    effect((onCleanup) => {
+      const handleFs = () => {
+        const isFs = !!document.fullscreenElement;
+        this.isPracticeMode.set(isFs);
+      };
+
+      document.addEventListener('fullscreenchange', handleFs);
+      onCleanup(() => document.removeEventListener('fullscreenchange', handleFs));
+    });
+
     // 2) Init snapshots once detail is ready (prevents autosave without user changes)
     effect(() => {
       if (!this.isEdit()) return;
@@ -385,15 +412,14 @@ export class SongEditorPageComponent {
     });
   };
 
-
-
   publish() {
     const id = this.songId();
     if (!id) return;
 
     this.confirm({
       title: 'Publish to Community',
-      message: 'This will create a public version of your arrangement for everyone to see. You can continue editing your private copy.',
+      message:
+        'This will create a public version of your arrangement for everyone to see. You can continue editing your private copy.',
       confirmText: 'Publish',
       cancelText: 'Cancel',
     }).subscribe((ok) => {
@@ -417,18 +443,23 @@ export class SongEditorPageComponent {
     // Optimistic UI
     this.userRating.set(value);
 
-    // Call service (assume we need to add rate method later to store if not exists, 
+    // Call service (assume we need to add rate method later to store if not exists,
     // but for now let's assume direct call or add it to api service)
     // Actually songs-store doesn't have rate yet, so I should add it or call API directly.
     // Let's call store.rate() which I need to add.
     this.store.rate(id, value).subscribe({
       next: () => this.notify.success('Rated!', 'OK', 1500),
-      error: () => this.notify.error('Could not submit rating', 'OK', 3000)
+      error: () => this.notify.error('Could not submit rating', 'OK', 3000),
     });
   }
 
-
-  goBack = () => this.router.navigate(['/songs']);
+  goBack = () => {
+    if (this.isPracticeMode()) {
+      document.exitFullscreen().catch((err) => console.warn('Exit FS error:', err));
+    } else {
+      this.router.navigate(['/songs']);
+    }
+  };
 
   addSection() {
     const ref = this.dialog.open(AddSectionDialogComponent, {
@@ -572,39 +603,29 @@ export class SongEditorPageComponent {
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
-  /** Returns the element that actually scrolls in current layout.
-   *  - Desktop: the card (scrollHost) has overflow:auto + height constraint
-   *  - Mobile: the card is overflow:visible => page scrolls (window)
-   */
-  private _getScrollTarget(): { kind: 'host'; el: HTMLElement } | { kind: 'window' } {
-    const host = this.scrollHost?.nativeElement;
-    if (host && host.scrollHeight > host.clientHeight + 1) {
-      return { kind: 'host', el: host };
+  /** Returns the element that actually scrolls */
+  private _getScrollTarget(): HTMLElement {
+    if (this.isPracticeMode()) {
+      return this.el.nativeElement;
     }
-    return { kind: 'window' };
+
+    // Check if internal card is scrolling (Desktop view)
+    const card = this.scrollHost?.nativeElement;
+    if (card && card.scrollHeight > card.clientHeight + 1) {
+      return card;
+    }
+
+    // Fallback to app-main (Mobile / No internal scroll)
+    const main = document.querySelector('.app-main');
+    return (main as HTMLElement) || document.documentElement;
   }
 
-  private _scrollBy(dy: number) {
-    const target = this._getScrollTarget();
-
-    if (target.kind === 'host') {
-      target.el.scrollTop += dy;
-    } else {
-      // mobile: page scroll
-      window.scrollTo({ top: window.scrollY + dy, behavior: 'auto' });
-    }
-  }
+  // No _scrollBy helper needed
 
   private _isAtBottom(): boolean {
-    const target = this._getScrollTarget();
-
-    if (target.kind === 'host') {
-      const el = target.el;
-      return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-    }
-
-    const doc = document.scrollingElement || document.documentElement;
-    return Math.ceil(window.scrollY + window.innerHeight) >= doc.scrollHeight;
+    const el = this._getScrollTarget();
+    // Tolerance of 2px
+    return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 2;
   }
 
   toggleAutoScroll() {
@@ -623,21 +644,16 @@ export class SongEditorPageComponent {
 
   startAutoScroll() {
     if (!this.canAutoScroll()) return;
-
-    // Respeta reduced motion
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-
     if (this.autoScrollOn()) return;
-    this.autoScrollOn.set(true);
 
+    this.autoScrollOn.set(true);
     queueMicrotask(() => {
       this.scrollHost?.nativeElement?.focus?.();
     });
 
-    // Si el usuario scrollea/toca, pausamos
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = this._bindAutoScrollUserInterruption(() => this.stopAutoScroll());
-
     this._lastTs = null;
 
     const step = (ts: number) => {
@@ -647,44 +663,29 @@ export class SongEditorPageComponent {
       const dtMs = ts - this._lastTs;
       this._lastTs = ts;
 
-      // dt clamp (si tab estuvo en background)
       const dt = Math.min(dtMs, 64) / 1000;
-
-      const speed = this.autoScrollSpeed(); // px/s
+      const speed = this.autoScrollSpeed();
       const dyFloat = speed * dt;
 
-      // acumulamos scroll fraccional
       this._scrollCarry += dyFloat;
-
-      // scrolleamos cuando acumulamos >= 1px
       const dy = Math.trunc(this._scrollCarry);
       if (dy !== 0) this._scrollCarry -= dy;
 
-      // si dy es 0, seguimos acumulando
       if (dy !== 0) {
-        const beforeWin = window.scrollY;
-        const beforeHost = this.scrollHost?.nativeElement?.scrollTop ?? 0;
+        const targetEl = this._getScrollTarget();
+        const beforeTop = targetEl.scrollTop;
 
-        this._scrollBy(dy);
+        targetEl.scrollTop += dy;
 
-        const afterWin = window.scrollY;
-        const afterHost = this.scrollHost?.nativeElement?.scrollTop ?? 0;
+        const afterTop = targetEl.scrollTop;
 
-        // si no pudo scrollear (no overflow / llegó al final)
-        const noMove =
-          (this._getScrollTarget().kind === 'window' && afterWin === beforeWin) ||
-          (this._getScrollTarget().kind === 'host' && afterHost === beforeHost);
-
-        if (noMove || this._isAtBottom()) {
+        if (afterTop === beforeTop || this._isAtBottom()) {
           this.stopAutoScroll();
           return;
         }
-      } else {
-        // aunque no movamos, si ya estamos al final, frenamos
-        if (this._isAtBottom()) {
-          this.stopAutoScroll();
-          return;
-        }
+      } else if (this._isAtBottom()) {
+        this.stopAutoScroll();
+        return;
       }
 
       this._rafId = requestAnimationFrame(step);
@@ -698,48 +699,35 @@ export class SongEditorPageComponent {
     if (!this.autoScrollOn()) return;
 
     this.autoScrollOn.set(false);
-
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
     this._lastTs = null;
-
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = null;
   }
 
-  /** pausa auto-scroll ante actividad del usuario */
-  /** pausa auto-scroll ante actividad del usuario (pero permite fine-tune con Shift+Wheel) */
   private _bindAutoScrollUserInterruption(onInterrupt: () => void) {
     const onWheel = (ev: WheelEvent) => {
       if (!this.autoScrollOn()) return;
 
-      // ✅ Fine tune: Shift + wheel => ajusta velocidad, NO pausa
       if (ev.shiftKey) {
-        ev.preventDefault(); // para que no scrollee “manual” mientras ajustás
+        ev.preventDefault();
         ev.stopPropagation();
-
-        // wheel up suele ser deltaY negativo
         const dir = ev.deltaY > 0 ? -1 : 1;
-
-        // acumulador por si trackpad manda micro deltas
         this._fineTuneCarry += Math.abs(ev.deltaY);
 
-        // cada “umbral” aplica un step (tuneable)
-        const threshold = 40; // más bajo = más sensible
+        const threshold = 40;
         let steps = 0;
         while (this._fineTuneCarry >= threshold) {
           this._fineTuneCarry -= threshold;
           steps++;
         }
-
         const amount = (steps || 1) * this.autoScrollSpeedStep * dir;
         this.adjustAutoScrollSpeed(amount);
         return;
       }
-
-      // wheel normal => el usuario quiere controlar => pausamos
       onInterrupt();
     };
 
@@ -749,10 +737,7 @@ export class SongEditorPageComponent {
 
     const onKey = (ev: KeyboardEvent) => {
       if (!this.autoScrollOn()) return;
-
-      // ✅ Fine tune con teclado (opcional pero re cómodo)
       if (ev.key === '+' || ev.key === '=') {
-        // =
         ev.preventDefault();
         this.adjustAutoScrollSpeed(this.autoScrollSpeedStep);
         return;
@@ -762,26 +747,19 @@ export class SongEditorPageComponent {
         this.adjustAutoScrollSpeed(-this.autoScrollSpeedStep);
         return;
       }
-
-      // cualquier otra tecla => pausamos
       onInterrupt();
     };
 
-    // IMPORTANTE: wheel no puede ser passive si vamos a preventDefault()
     const wheelOpts: AddEventListenerOptions = { passive: false };
-
-    const target: EventTarget =
-      this._getScrollTarget().kind === 'host'
-        ? (this.scrollHost!.nativeElement as EventTarget)
-        : window;
+    const target = this._getScrollTarget();
 
     target.addEventListener('wheel', onWheel as any, wheelOpts);
-    target.addEventListener('touchstart', onTouch as any, { passive: true });
+    target.addEventListener('touchstart', onTouch, { passive: true });
     window.addEventListener('keydown', onKey);
 
     return () => {
-      target.removeEventListener('wheel', onWheel as any, wheelOpts as any);
-      target.removeEventListener('touchstart', onTouch as any);
+      target.removeEventListener('wheel', onWheel as any, wheelOpts);
+      target.removeEventListener('touchstart', onTouch);
       window.removeEventListener('keydown', onKey);
     };
   }

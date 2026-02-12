@@ -22,7 +22,7 @@
       <!-- Sticky header -->
       <div class="bm-header">
         <div class="bm-header__left">
-          <button mat-stroked-button class="bm-back" routerLink="/library/{{ workId() }}">
+          <button mat-stroked-button class="bm-back" (click)="goBack()">
             <mat-icon class="bm-ic">arrow_back</mat-icon>
             Back
           </button>
@@ -32,14 +32,55 @@
             <div class="bm-sub">
               {{ work()!.artist }}
               @if (arrangement()?.authorName; as author) {
-                 • Arranged by {{ author }}
+                • Arranged by {{ author }}
               }
             </div>
           </div>
         </div>
 
-        <div class="bm-header__right" aria-label="Rate this arrangement">
-          <div class="bm-rating">
+        <div class="bm-header__right">
+          <!-- AutoScroll -->
+          @if (canAutoScroll()) {
+            <div class="bm-auto-controls">
+              <button
+                mat-stroked-button
+                class="bm-auto-btn"
+                [class.is-active]="autoScrollOn()"
+                (click)="toggleAutoScroll()"
+              >
+                <mat-icon>{{ autoScrollOn() ? 'pause' : 'play_arrow' }}</mat-icon>
+                <span class="bm-auto-label">{{ autoScrollOn() ? 'Pause' : 'Auto-scroll' }}</span>
+              </button>
+
+              @if (autoScrollOn()) {
+                <div class="bm-slider-group">
+                  <mat-icon class="bm-slider-ic">slow_motion_video</mat-icon>
+                  <mat-slider
+                    [min]="autoScrollSpeedMin"
+                    [max]="autoScrollSpeedMax"
+                    [step]="autoScrollSpeedStep"
+                    discrete
+                    class="bm-slider"
+                  >
+                    <input
+                      matSliderThumb
+                      [ngModel]="autoScrollSpeed()"
+                      (ngModelChange)="setAutoScrollSpeed($event)"
+                    />
+                  </mat-slider>
+                  <mat-icon class="bm-slider-ic">bolt</mat-icon>
+                </div>
+              }
+            </div>
+          }
+          @if (!isPracticeMode()) {
+            <button mat-flat-button class="bm-practice-btn" (click)="enterPracticeMode()">
+              <mat-icon>play_circle</mat-icon>
+              Practice Mode
+            </button>
+          }
+
+          <div class="bm-rating" aria-label="Rate this arrangement">
             @for (n of [1, 2, 3, 4, 5]; track n) {
               <button
                 mat-icon-button

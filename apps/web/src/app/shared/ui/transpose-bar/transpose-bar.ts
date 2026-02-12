@@ -19,9 +19,13 @@ export class TransposeBarComponent {
   /** signal que vive en el padre */
   @Input({ required: true }) onChange!: WritableSignal<number>;
 
-  /** límites */
+  /** límite inferior */
   @Input() min = -12;
+  /** límite superior */
   @Input() max = 12;
+
+  /** Etiqueta a mostrar */
+  @Input() label = 'Transpose';
 
   down() {
     this.set(this.value - 1);

@@ -12,7 +12,9 @@
       @if (currentDetail(); as d) {
         @if (viewMode() === 'view') {
           <h2 class="m-0 text-truncate">{{ d.title }}</h2>
-          <div class="small opacity-75 mt-1 text-truncate">{{ d.artist }}</div>
+          <div class="small opacity-75 mt-1 text-truncate">
+            {{ d.artist }} <span class="mx-1 opacity-50">·</span> Ready to practice
+          </div>
         } @else {
           <h2 class="m-0">Edit song</h2>
           <div class="small opacity-75 mt-1 text-truncate">{{ d.title }} — {{ d.artist }}</div>
@@ -26,6 +28,7 @@
     </div>
 
     <div class="bm-header-actions d-flex align-items-center gap-2">
+      <!-- Autosave indicator -->
       @if (isEdit() && canEditBody()) {
         @if (saveUi() !== 'idle') {
           <div
@@ -49,36 +52,73 @@
       }
 
       @if (isEdit() && SongPolicy.canEdit(currentDetail())) {
-        <button mat-stroked-button type="button" class="bm-edit-top" (click)="toggleMode()">
-          <mat-icon class="bm-btn-ic">{{ viewMode() === 'view' ? 'edit' : 'visibility' }}</mat-icon>
-          {{ viewMode() === 'view' ? 'Edit' : 'View' }}
-        </button>
-
+        <!-- VIEW MODE ACTIONS -->
         @if (viewMode() === 'view') {
-          @if (currentDetail()?.workId) {
-            <div class="bm-rating-ctrl">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <mat-icon
-                  class="bm-star"
-                  [class.filled]="userRating() >= star"
-                  (click)="rate(star)"
-                  [matTooltip]="'Rate ' + star + ' stars'"
-                >
-                  {{ userRating() >= star ? 'star' : 'star_border' }}
-                </mat-icon>
+          <!-- AutoScroll -->
+          @if (canAutoScroll()) {
+            <div class="bm-auto-controls">
+              <button
+                mat-stroked-button
+                class="bm-auto-btn"
+                [class.is-active]="autoScrollOn()"
+                (click)="toggleAutoScroll()"
+              >
+                <mat-icon>{{ autoScrollOn() ? 'pause' : 'play_arrow' }}</mat-icon>
+                <span class="bm-auto-label">{{ autoScrollOn() ? 'Pause' : 'Auto-scroll' }}</span>
+              </button>
+
+              @if (autoScrollOn()) {
+                <div class="bm-slider-group">
+                  <mat-icon class="bm-slider-ic">slow_motion_video</mat-icon>
+                  <mat-slider
+                    [min]="autoScrollSpeedMin"
+                    [max]="autoScrollSpeedMax"
+                    [step]="autoScrollSpeedStep"
+                    discrete
+                    class="bm-slider"
+                  >
+                    <input
+                      matSliderThumb
+                      [ngModel]="autoScrollSpeed()"
+                      (ngModelChange)="setAutoScrollSpeed($event)"
+                    />
+                  </mat-slider>
+                  <mat-icon class="bm-slider-ic">bolt</mat-icon>
+                </div>
               }
             </div>
           }
 
-          <button
-            mat-flat-button
-            color="accent"
-            class="bm-publish-btn"
-            (click)="publish()"
-            matTooltip="Publish to community"
-          >
-            <mat-icon class="bm-btn-ic">public</mat-icon>
-            Publish
+          <!-- 3. Publish (Tertiary) -->
+          @if (currentDetail()?.workId) {
+            <button
+              mat-icon-button
+              class="bm-action-icon"
+              (click)="publish()"
+              matTooltip="Publish to community"
+            >
+              <mat-icon>public</mat-icon>
+            </button>
+          }
+
+          <!-- 2. Edit (Secondary) -->
+          <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
+            <mat-icon class="bm-btn-ic">edit</mat-icon>
+            Edit
+          </button>
+
+          <!-- 1. Practice (Primary) -->
+          @if (!isPracticeMode()) {
+            <button mat-flat-button class="bm-practice-btn" (click)="enterPracticeMode()">
+              <mat-icon>play_circle</mat-icon>
+              Practice Mode
+            </button>
+          }
+        } @else {
+          <!-- EDIT MODE ACTIONS -->
+          <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
+            <mat-icon class="bm-btn-ic">visibility</mat-icon>
+            View
           </button>
         }
       }
@@ -208,58 +248,6 @@
             </div>
 
             <div class="bm-body-actions">
-              @if (viewMode() !== 'edit') {
-                <div class="bm-auto-scroll">
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    class="bm-auto-btn"
-                    (click)="toggleAutoScroll()"
-                    [disabled]="!canAutoScroll()"
-                  >
-                    <mat-icon class="bm-btn-ic">{{
-                      autoScrollOn() ? 'pause' : 'play_arrow'
-                    }}</mat-icon>
-                    <span class="bm-auto-label">Auto-scroll</span>
-
-                    @if (autoScrollOn()) {
-                      <span class="bm-auto-speed small opacity-75">
-                        {{ autoScrollSpeed() }} px/s
-                      </span>
-                    }
-                  </button>
-
-                  <button
-                    mat-icon-button
-                    type="button"
-                    class="bm-auto-tune"
-                    [matMenuTriggerFor]="autoScrollMenu"
-                    aria-label="Auto-scroll speed"
-                  >
-                    <mat-icon>tune</mat-icon>
-                  </button>
-
-                  <mat-menu #autoScrollMenu="matMenu" overlapTrigger="false">
-                    <div class="px-3 py-2 small opacity-75">Speed</div>
-
-                    <button mat-menu-item (click)="setAutoScrollSpeed(18)">
-                      <mat-icon>slow_motion_video</mat-icon>
-                      Slow
-                    </button>
-
-                    <button mat-menu-item (click)="setAutoScrollSpeed(28)">
-                      <mat-icon>speed</mat-icon>
-                      Normal
-                    </button>
-
-                    <button mat-menu-item (click)="setAutoScrollSpeed(40)">
-                      <mat-icon>bolt</mat-icon>
-                      Fast
-                    </button>
-                  </mat-menu>
-                </div>
-              }
-
               <bm-transpose-bar [value]="transpose()" [onChange]="transpose"></bm-transpose-bar>
 
               @if (canEditBody()) {
