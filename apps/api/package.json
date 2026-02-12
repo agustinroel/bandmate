@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "seed:songs": "tsx src/seed/seed-songs.ts",
-    "test:ingestion": "tsx scripts/test-redis-ingestion.ts"
+    "test:ingestion": "tsx scripts/test-redis-ingestion.ts",
+    "test:smoke": "tsx scripts/test-smoke.ts"
   },
   "devDependencies": {
     "@types/node": "^25.0.7",

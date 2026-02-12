@@ -104,7 +104,11 @@ export interface UpgradeDialogData {
 
           <div class="stripe-badge">
             <span class="powered-by">Powered by</span>
-            <span class="stripe-logo">stripe</span>
+            <img
+              src="assets/stripe/Stripe_Logo,_revised_2016.svg.png"
+              alt="Stripe"
+              class="stripe-logo-img"
+            />
           </div>
         </div>
       </div>
@@ -331,22 +335,12 @@ export interface UpgradeDialogData {
         color: rgba(255, 255, 255, 0.7);
       }
 
-      .stripe-logo {
-        font-weight: 900;
-        font-size: 0.95rem;
-        letter-spacing: -0.02em;
-        font-family: 'Inter', sans-serif;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-
-        mat-icon {
-          font-size: 14px;
-          width: 14px;
-          height: 14px;
-          margin-left: 2px;
-        }
+      .stripe-logo-img {
+        height: 22px;
+        width: auto;
+        opacity: 0.9;
+        filter: brightness(0) invert(1); /* Make logo white to match text */
+        margin-left: 2px;
       }
     }
 

@@ -154,7 +154,7 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
       await createSongForUser(userId, {
         title: details.title,
         artist: details.artist,
-        durationSec: details.duration,
+        duration_sec: details.duration,
         musicbrainzId: mbid,
         workId: work.id,
         originArrangementId: arr.id,

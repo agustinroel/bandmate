@@ -11,9 +11,6 @@ import { AchievementService } from '../../../core/services/achievement.service';
   template: `
     <div class="tuner-container">
       <header class="bm-page-header">
-        <div class="bm-mark" aria-hidden="true">
-          <mat-icon>graphic_eq</mat-icon>
-        </div>
         <div class="flex-grow-1">
           <h2 class="bm-page-title">Tuner</h2>
           <div class="small opacity-75">Standard Tuning (E A D G B E)</div>
@@ -110,6 +107,16 @@ import { AchievementService } from '../../../core/services/achievement.service';
         flex-direction: column;
         gap: 32px;
         padding-top: 40px;
+      }
+
+      /* New gradient title style */
+      .bm-page-title {
+        background: linear-gradient(135deg, #e9c46a 0%, #d4a373 100%); /* Gold to Tan */
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent !important;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow if supported, else ignored due to transparency */
       }
 
       /* Header text on dark background needs to be white/light */
