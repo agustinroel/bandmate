@@ -93,11 +93,7 @@
                   <div class="fw-bold small">Free limit reached</div>
                   <div class="xsmall text-muted">Upgrade to create unlimited setlists.</div>
                 </div>
-                <button
-                  mat-stroked-button
-                  class="sl-upgrade-btn"
-                  (click)="subscriptionStore.requireTierOrUpgrade('setlists')"
-                >
+                <button mat-stroked-button class="sl-upgrade-btn" (click)="openUpgradeDialog()">
                   Upgrade to Pro
                 </button>
               </div>

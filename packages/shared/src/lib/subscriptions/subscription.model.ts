@@ -88,6 +88,24 @@ export const FEATURE_GATES: FeatureGate[] = [
     label: "Live Mode",
     description: "Scroll sincronizado para shows en vivo",
   },
+  {
+    feature: "create_band",
+    requiredTier: "pro",
+    label: "Create Band",
+    description: "Create bands to share setlists and rehearse together",
+  },
+  {
+    feature: "invite_to_band",
+    requiredTier: "pro",
+    label: "Invite to Band",
+    description: "Invite musicians to join your band",
+  },
+  {
+    feature: "message_musician",
+    requiredTier: "pro",
+    label: "Message Musicians",
+    description: "Send direct messages to other musicians",
+  },
 ];
 
 export function getGateForFeature(feature: string): FeatureGate | undefined {

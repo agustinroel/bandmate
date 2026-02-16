@@ -12,6 +12,7 @@ import {
   inviteUserToBand,
   listPendingInvites,
   respondToInvite,
+  listBands,
 } from "./bands.repo.js";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
@@ -102,6 +103,21 @@ export async function bandsRoutes(app: FastifyInstance) {
     } catch (e: any) {
       req.log.error(e);
       return reply.code(500).send({ message: "Could not list bands" });
+    }
+  });
+
+  // Discovery: List all bands
+  app.get("/bands", async (req, reply) => {
+    const query = (req.query ?? {}) as any;
+    const limit = query.limit ? Number(query.limit) : 20;
+    const offset = query.offset ? Number(query.offset) : 0;
+
+    try {
+      const bands = await listBands(limit, offset);
+      return bands;
+    } catch (e: any) {
+      req.log.error(e);
+      return reply.code(500).send({ message: "Error fetching discover bands" });
     }
   });
 

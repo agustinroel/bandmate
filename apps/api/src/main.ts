@@ -155,6 +155,8 @@ await app.register(registerAuth, {
     "/debug",
     "/auth/spotify",
     "/webhooks/stripe",
+    "/bands",
+    "/profiles",
   ],
 });
 app.addHook("preHandler", app.authGuardHook);

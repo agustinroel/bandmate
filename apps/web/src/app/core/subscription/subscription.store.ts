@@ -41,6 +41,32 @@ export class SubscriptionStore {
   }
 
   /**
+   * Fetches the current user's profile to sync the tier.
+   */
+  async loadCurrentTier() {
+    this.loading.set(true);
+    try {
+      // Fetch own profile from API
+      // We can use a special "me" endpoint or just get the current user session
+      this.http.get<any>(`${this.apiBaseUrl}/profiles/me`).subscribe({
+        next: (profile) => {
+          if (profile?.subscription_tier) {
+            this.setTier(profile.subscription_tier as SubscriptionTier);
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load current tier', err);
+          this.loading.set(false);
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      this.loading.set(false);
+    }
+  }
+
+  /**
    * Show the upgrade dialog. Returns true if the user already has access.
    * If the user doesn't, it opens the upgrade popup and returns false.
    */

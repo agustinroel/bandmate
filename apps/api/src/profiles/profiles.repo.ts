@@ -8,6 +8,7 @@ export type ProfileRow = {
   avatar_url?: string | null;
   instruments?: string[] | null;
   bio?: string | null;
+  subscription_tier?: string | null;
   updated_at?: string;
 };
 
@@ -28,7 +29,7 @@ export async function listPublicProfiles(
   let query = supabase
     .from("profiles")
     .select(
-      "id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public",
+      "id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public, subscription_tier",
     )
     .eq("is_public", true);
 
@@ -65,6 +66,19 @@ export async function getProfileByUsername(username: string) {
     .from("profiles")
     .select("*")
     .eq("username", username)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return data as ProfileRow;
+}
+
+export async function getProfileById(userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
     .maybeSingle();
 
   if (error) throw error;

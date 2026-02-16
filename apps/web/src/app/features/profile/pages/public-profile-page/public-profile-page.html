@@ -44,115 +44,203 @@
             <!-- Cover / Gradient -->
             <div class="profile-cover"></div>
 
-            <div class="profile-actions">
-              <button mat-icon-button (click)="copyLink()" matTooltip="Copy Link">
-                <mat-icon>content_copy</mat-icon>
-              </button>
-              @if (isOwnProfile()) {
-                <a mat-icon-button routerLink="/profile" matTooltip="Edit Profile">
-                  <mat-icon>edit</mat-icon>
-                </a>
-              } @else {
-                <button mat-icon-button (click)="openInviteDialog()" matTooltip="Invite to Band">
-                  <mat-icon>group_add</mat-icon>
-                </button>
-              }
-            </div>
-
-            <div class="profile-identity">
-              <div class="profile-avatar">
+            <div class="profile-avatar-container">
+              <div
+                class="profile-avatar"
+                [class.pro-ring]="isPro()"
+                [class.studio-ring]="isStudio()"
+              >
                 @if (profile()?.avatar_url) {
                   <img [src]="profile()?.avatar_url" (error)="handleAvatarError()" alt="Avatar" />
                 } @else {
                   <mat-icon class="icon-xl">person</mat-icon>
                 }
               </div>
-              <h1 class="profile-name">{{ profile()?.full_name || profile()?.username }}</h1>
-              <div class="profile-username">{{ '@' + profile()?.username }}</div>
-
-              @if (profile()?.sings) {
-                <div class="mt-2 text-center">
-                  <div class="badge-sings">
-                    <mat-icon class="icon-sm me-1">mic</mat-icon>
-                    Sings
-                  </div>
+              @if (isPremium()) {
+                <div
+                  class="pro-badge-floating"
+                  [class.studio]="isStudio()"
+                  [matTooltip]="
+                    isStudio()
+                      ? 'Studio member – unlimited bands & sharing'
+                      : 'Pro member – unlocks advanced collaboration tools'
+                  "
+                >
+                  <mat-icon>{{ isStudio() ? 'auto_awesome' : 'verified' }}</mat-icon>
                 </div>
               }
             </div>
+
+            <div class="profile-identity">
+              <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                <h1 class="profile-name">{{ profile()?.full_name || profile()?.username }}</h1>
+                @if (isPro()) {
+                  <span class="pro-text-badge tier-pro">PRO</span>
+                } @else if (isStudio()) {
+                  <span class="pro-text-badge tier-studio">STUDIO</span>
+                }
+              </div>
+              <div class="profile-username">{{ '@' + profile()?.username }}</div>
+
+              <div class="profile-meta-row">
+                <div class="availability-badge" [ngClass]="availabilityClass()">
+                  <span class="dot"></span>
+                  {{ availabilityLabel() }}
+                </div>
+                <div class="last-active">
+                  {{ lastActiveLabel() }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Collaboration CTA Block -->
+            @if (!isOwnProfile()) {
+              <div class="collab-cta-block">
+                @if (isViewerPro() || isViewerStudio()) {
+                  <button
+                    mat-flat-button
+                    class="cta-primary"
+                    [class.pro-glow]="isViewerPro()"
+                    [class.studio-glow]="isViewerStudio()"
+                    (click)="openInviteDialog()"
+                  >
+                    <mat-icon>group_add</mat-icon>
+                    Invite to Band
+                    <span class="btn-pro-tag" [class.studio]="isViewerStudio()">{{
+                      isViewerStudio() ? 'STUDIO' : 'PRO'
+                    }}</span>
+                  </button>
+                } @else {
+                  <button
+                    mat-flat-button
+                    class="cta-primary cta-locked"
+                    (click)="
+                      notify.info('Upgrade to PRO to invite musicians to your bands!', 'Upgrade')
+                    "
+                  >
+                    <mat-icon>lock</mat-icon>
+                    Invite to Band
+                  </button>
+                }
+
+                <button mat-stroked-button class="cta-secondary">
+                  <mat-icon>mail</mat-icon>
+                  Message
+                </button>
+
+                <button mat-button class="cta-tertiary" (click)="viewSongs()">View Songs</button>
+              </div>
+            } @else {
+              <div class="own-profile-actions">
+                <button mat-stroked-button routerLink="/profile">
+                  <mat-icon>edit</mat-icon>
+                  Edit Profile
+                </button>
+                <button mat-icon-button (click)="copyLink()" matTooltip="Copy Link">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </div>
+            }
           </div>
 
           <mat-card-content class="profile-body">
+            <!-- Bio Section -->
             @if (profile()?.about) {
               <div class="profile-bio">
                 {{ profile()?.about }}
               </div>
             }
 
-            <div class="profile-section">
-              <div class="section-title">Instruments</div>
-              @if (profile()?.instruments?.length) {
-                <div class="chip-grid">
-                  @for (inst of profile()?.instruments; track inst) {
-                    <span class="bm-chip">{{ inst }}</span>
-                  }
-                </div>
-              } @else {
-                <div class="empty-text">No instruments listed</div>
-              }
-            </div>
+            <div class="profile-main-grid">
+              <!-- Left Column: Identity -->
+              <div class="profile-main-col">
+                <div class="profile-section text-start">
+                  <div class="section-title">Musical Identity</div>
 
-            <div class="profile-section">
-              <div class="section-title">Genres</div>
-              @if (profile()?.genres?.length) {
-                <div class="chip-grid">
-                  @for (genre of profile()?.genres; track genre) {
-                    <span class="bm-chip bm-chip-outline">{{ genre }}</span>
-                  }
-                </div>
-              } @else {
-                <div class="empty-text">No genres listed</div>
-              }
-            </div>
+                  @if (profile()?.instruments?.length) {
+                    <div class="identity-group mb-3">
+                      <div class="sub-label">Primary Instrument</div>
+                      <div class="primary-instrument">
+                        <mat-icon>music_note</mat-icon>
+                        {{ profile()?.instruments![0] }}
+                      </div>
+                    </div>
 
-            <!-- Placeholder for Bands -->
-            <div class="profile-section">
-              <div class="section-title">Bands</div>
-              @if (bands().length > 0) {
-                <div class="d-flex flex-column gap-2">
-                  @for (band of bands(); track band.id) {
-                    <a
-                      [routerLink]="['/bands', band.id]"
-                      class="text-decoration-none text-reset d-block band-link"
-                    >
-                      <div
-                        class="band-item d-flex align-items-center p-2 rounded border bg-white mb-2"
-                      >
-                        <div
-                          class="band-avatar me-3 rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                          style="width: 40px; height: 40px; background: var(--bm-primary)"
-                        >
-                          @if (band.avatar_url) {
-                            <img
-                              [src]="band.avatar_url"
-                              class="w-100 h-100 rounded-circle object-fit-cover"
-                            />
-                          } @else {
-                            {{ band.name.slice(0, 1).toUpperCase() }}
+                    @if (profile()?.instruments!.length > 1) {
+                      <div class="identity-group mb-3">
+                        <div class="sub-label">Also plays</div>
+                        <div class="chip-grid justify-content-start">
+                          @for (inst of profile()?.instruments!.slice(1); track inst) {
+                            <span class="bm-chip small">{{ inst }}</span>
                           }
                         </div>
-                        <div class="flex-grow-1">
-                          <div class="fw-semibold">{{ band.name }}</div>
-                          <div class="small opacity-75">
-                            {{ band.my_roles.includes('owner') ? 'Owner' : 'Member' }}
-                          </div>
-                        </div>
                       </div>
-                    </a>
+                    }
+                  }
+
+                  @if (profile()?.genres?.length) {
+                    <div class="identity-group">
+                      <div class="sub-label">Favorite Genres</div>
+                      <div class="chip-grid justify-content-start">
+                        @for (genre of profile()?.genres; track genre) {
+                          <span class="bm-chip bm-chip-outline small">{{ genre }}</span>
+                        }
+                      </div>
+                    </div>
                   }
                 </div>
-              } @else {
-                <div class="empty-text">No bands yet</div>
-              }
+
+                <!-- Recent Activity Section -->
+                <div class="profile-section text-start">
+                  <div class="section-title">Recent Activity</div>
+                  <div class="activity-feed">
+                    @for (act of activities(); track act.id) {
+                      <div class="activity-item">
+                        <mat-icon>{{ act.icon }}</mat-icon>
+                        <span>{{ act.text }}</span>
+                      </div>
+                    } @empty {
+                      <div class="empty-text">No recent activity</div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Bands -->
+              <div class="profile-main-col">
+                <div class="profile-section text-start">
+                  <div class="section-title">Bands & Projects</div>
+                  @if (bands().length > 0) {
+                    <div class="d-flex flex-column gap-3">
+                      @for (band of bands(); track band.id) {
+                        <a [routerLink]="['/bands', band.id]" class="band-card-link">
+                          <div class="band-card">
+                            <div class="band-card-avatar">
+                              @if (band.avatar_url) {
+                                <img [src]="band.avatar_url" />
+                              } @else {
+                                {{ band.name.slice(0, 1).toUpperCase() }}
+                              }
+                            </div>
+                            <div class="band-card-info">
+                              <div class="band-name">{{ band.name }}</div>
+                              <div
+                                class="band-role"
+                                [class.is-owner]="band.my_roles.includes('owner')"
+                              >
+                                {{ band.my_roles.includes('owner') ? 'Owner' : 'Member' }}
+                              </div>
+                            </div>
+                            <mat-icon class="ms-auto opacity-25">chevron_right</mat-icon>
+                          </div>
+                        </a>
+                      }
+                    </div>
+                  } @else {
+                    <div class="empty-text">No bands yet</div>
+                  }
+                </div>
+              </div>
             </div>
           </mat-card-content>
         </mat-card>

@@ -14,6 +14,8 @@ export type ProfileRow = {
   chord_default_instrument: string; // 'guitar' | 'piano' | ...
   is_public: boolean;
   subscription_tier?: string | null; // 'free' | 'pro' | 'studio'
+  availability: 'gigs' | 'band' | 'none';
+  last_active_at?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
 };
@@ -111,13 +113,14 @@ export class ProfilesService {
       sings: false,
       chord_default_instrument: 'guitar',
       is_public: true,
-    };
+      availability: 'none' as any,
+    } as any;
 
     const created = await this.upsert(row);
     return this.normalize(created);
   }
 
-  async upsert(input: UpsertProfileInput): Promise<ProfileRow> {
+  async upsert(input: any): Promise<ProfileRow> {
     const { data, error } = await supabase
       .from('profiles')
       .upsert(input, { onConflict: 'id' })
@@ -147,6 +150,8 @@ export class ProfilesService {
       sings: !!p.sings,
       chord_default_instrument: p.chord_default_instrument || 'guitar',
       is_public: p.is_public ?? true,
+      availability: p.availability || 'none',
+      last_active_at: p.last_active_at,
     };
   }
 }

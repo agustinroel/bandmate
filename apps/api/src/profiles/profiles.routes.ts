@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { listPublicProfiles, getProfileByUsername } from "./profiles.repo.js";
+import {
+  listPublicProfiles,
+  getProfileByUsername,
+  getProfileById,
+} from "./profiles.repo.js";
 
 export async function profilesRoutes(app: FastifyInstance) {
   // LIST public profiles (discovery)
@@ -54,4 +58,18 @@ export async function profilesRoutes(app: FastifyInstance) {
 
     return profile;
   });
+
+  // GET current user's profile (authenticated)
+  app.get(
+    "/profiles/me",
+    { preHandler: [app.requireAuth] },
+    async (req, reply) => {
+      const userId = req.user!.id;
+      const profile = await getProfileById(userId);
+      if (!profile) {
+        return reply.code(404).send({ message: "Profile not found" });
+      }
+      return profile;
+    },
+  );
 }

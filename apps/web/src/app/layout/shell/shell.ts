@@ -1,6 +1,6 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, effect } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, shareReplay } from 'rxjs';
 
@@ -17,6 +17,7 @@ import { AchievementToastComponent } from '../../shared/ui/achievement-toast/ach
 import { AchievementService } from '../../core/services/achievement.service';
 import { environment } from '../../../environments/environment';
 import { SubscriptionStore } from '../../core/subscription/subscription.store';
+import { AuthStore } from '../../core/auth/auth.store';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { UpgradeDialogComponent } from '../../core/subscription/upgrade-dialog/upgrade-dialog.component';
 
@@ -50,8 +51,25 @@ export class ShellComponent implements AfterViewInit {
   readonly bo = inject(BreakpointObserver);
   readonly achievementService = inject(AchievementService);
   readonly subscriptionStore = inject(SubscriptionStore);
+  readonly authStore = inject(AuthStore);
   private readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
+
+  constructor() {
+    // Sync subscription tier on auth/init
+    effect(() => {
+      if (this.authStore.isAuthed()) {
+        this.subscriptionStore.loadCurrentTier();
+      }
+    });
+
+    // Sidebar auto-close on navigation
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        if (this.drawer?.mode === 'over') this.drawer.close();
+      });
+  }
 
   readonly isHandset$ = this.bo.observe(Breakpoints.Handset).pipe(
     map((r) => r.matches),
@@ -59,18 +77,8 @@ export class ShellComponent implements AfterViewInit {
   );
 
   nowYear = new Date().getFullYear();
-
   appName = 'Bandmate';
   version = environment.version;
-
-  constructor() {
-    this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe((e) => {
-        // si está en over (handset), cerralo después de navegar
-        if (this.drawer?.mode === 'over') this.drawer.close();
-      });
-  }
 
   ngAfterViewInit() {
     if (this.achievementToast) {

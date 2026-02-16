@@ -66,20 +66,8 @@ export class SetlistsPageComponent {
   );
   readonly freeSetlistLimit = TIER_LIMITS['free'].maxSetlists;
 
-  /* --- "Last edited" label for selected setlist --- */
-  readonly lastEditedLabel = computed(() => {
-    const sel = this.store.selected();
-    if (!sel?.updatedAt) return '';
-    const diff = Date.now() - new Date(sel.updatedAt).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Edited just now';
-    if (mins < 60) return `Edited ${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `Edited ${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    if (days === 1) return 'Edited yesterday';
-    return `Edited ${days} days ago`;
-  });
+  /* --- "Last edited" label — stable signal to avoid NG0100 --- */
+  readonly lastEditedLabel = signal('');
 
   readonly filteredSongs = computed(() => {
     const q = this.songQuery().trim().toLowerCase();
@@ -111,6 +99,12 @@ export class SetlistsPageComponent {
     effect(() => {
       if (this.songs.state() === 'idle') this.songs.load();
       if (this.store.state() === 'idle') this.store.load().subscribe();
+    });
+
+    // Update "last edited" label when selected setlist changes (stable, no NG0100)
+    effect(() => {
+      const sel = this.store.selected();
+      this.lastEditedLabel.set(this.formatEditedLabel(sel?.updatedAt));
     });
 
     // Focus on a setlist when coming back from Practice: /setlists?focus=<id>
@@ -197,6 +191,23 @@ export class SetlistsPageComponent {
   // Nice: normalize error snack
   private toastError(err: any, fallback: string, duration = 3000) {
     this.notify.error(err?.message ?? fallback, 'OK', duration);
+  }
+
+  openUpgradeDialog() {
+    this.subscriptionStore.requireTierOrUpgrade('setlists');
+  }
+
+  private formatEditedLabel(updatedAt: string | undefined | null): string {
+    if (!updatedAt) return '';
+    const diff = Date.now() - new Date(updatedAt).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Edited just now';
+    if (mins < 60) return `Edited ${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Edited ${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Edited yesterday';
+    return `Edited ${days} days ago`;
   }
 
   createSetlist() {

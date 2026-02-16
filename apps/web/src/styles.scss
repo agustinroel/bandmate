@@ -60,6 +60,10 @@
   --bm-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --bm-transition-fast: 150ms var(--bm-ease-out);
   --bm-transition-base: 250ms var(--bm-ease-out);
+
+  /* Tier Gradients */
+  --bm-gradient-pro: linear-gradient(135deg, #ffd700, #ff8c00);
+  --bm-gradient-studio: linear-gradient(135deg, #ff0080, #7928ca);
 }
 
 /* Ambient Surface Mixin (Chiaroscuro) */
@@ -282,36 +286,30 @@ mat-form-field {
 }
 
 /* ---------- 8) Disabled states (global) ---------- */
-.mat-mdc-raised-button.mat-mdc-button-disabled {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  color: rgba(0, 0, 0, 0.38) !important;
+.mat-mdc-raised-button.mat-mdc-button-disabled,
+.mat-mdc-unelevated-button.mat-mdc-button-disabled,
+.mat-mdc-flat-button.mat-mdc-button-disabled {
+  background-color: rgba(38, 70, 83, 0.12) !important;
+  color: rgba(38, 70, 83, 0.45) !important; // Increased contrast from 0.4
   box-shadow: none !important;
   cursor: not-allowed;
+  opacity: 0.7; // Increased from 0.6
 }
 
-.mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon {
-  color: rgba(0, 0, 0, 0.38) !important;
-}
-
-.mat-mdc-unelevated-button.mat-mdc-button-disabled {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  color: rgba(0, 0, 0, 0.38) !important;
-  box-shadow: none !important;
-  cursor: not-allowed;
-}
-
-.mat-mdc-unelevated-button.mat-mdc-button-disabled .mat-icon {
-  color: rgba(0, 0, 0, 0.38) !important;
+.mat-mdc-raised-button.mat-mdc-button-disabled .mat-icon,
+.mat-mdc-unelevated-button.mat-mdc-button-disabled .mat-icon,
+.mat-mdc-flat-button.mat-mdc-button-disabled .mat-icon {
+  color: rgba(38, 70, 83, 0.5) !important; // Increased from 0.45
 }
 
 .mat-mdc-outlined-button.mat-mdc-button-disabled {
-  border-color: rgba(0, 0, 0, 0.12) !important;
-  color: rgba(0, 0, 0, 0.38) !important;
+  border-color: rgba(38, 70, 83, 0.2) !important; // Increased from 0.15
+  color: rgba(38, 70, 83, 0.5) !important; // Increased from 0.35
   cursor: not-allowed;
 }
 
 .mat-mdc-outlined-button.mat-mdc-button-disabled .mat-icon {
-  color: rgba(0, 0, 0, 0.38) !important;
+  color: rgba(38, 70, 83, 0.5) !important; // Increased from 0.38
 }
 
 /* ---------- 9) Snackbars (global) ---------- */

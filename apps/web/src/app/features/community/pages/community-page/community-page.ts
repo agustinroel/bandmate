@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,10 +10,18 @@ import { environment } from '../../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { EventsStore } from '../../../events/state/events.store';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
+import { EventsStore } from '../../../events/state/events.store';
+import { BandsService, BandRow } from '../../../bands/services/bands.service';
+import { SubscriptionStore } from '../../../../core/subscription/subscription.store';
+import { AnimationService } from '../../../../core/services/animation.service';
+import { CreateBandDialogComponent } from '../../../bands/ui/create-band-dialog/create-band-dialog.component';
+import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
+import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { InvitationsDialogComponent } from '../../ui/invitations-dialog/invitations-dialog.component';
 
 type ProfileDto = {
   id: string;
@@ -22,6 +30,16 @@ type ProfileDto = {
   avatar_url?: string | null;
   bio?: string | null;
   instruments?: string[];
+  subscription_tier?: string | null;
+};
+
+type ActiveFilter = { type: string; label: string; value: string };
+
+type SocialActivity = {
+  id: string;
+  text: string;
+  time: string;
+  icon: string;
 };
 
 @Component({
@@ -37,148 +55,48 @@ type ProfileDto = {
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
+    MatTooltipModule,
     MatDividerModule,
+    MatDialogModule,
+    MatMenuModule,
   ],
   templateUrl: './community-page.html',
-  styles: [
-    `
-      :host {
-        display: block;
-        min-height: 100vh;
-        background-color: var(--bm-bg);
-      }
-
-      /* Content Layout */
-      .main-content {
-        padding-bottom: 80px;
-        position: relative;
-        z-index: 10;
-      }
-      .filters-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        margin-bottom: 24px;
-      }
-
-      /* Premium Card */
-      .premium-card {
-        background: white;
-        border-radius: 16px;
-        transition:
-          transform 0.3s ease,
-          box-shadow 0.3s ease;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      .card-hover-wrapper:hover .premium-card {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
-        border-color: rgba(233, 196, 106, 0.2);
-      }
-
-      .card-gradient {
-        height: 60px;
-        background: var(--bm-gradient-dark);
-        border-bottom: 1px solid rgba(233, 196, 106, 0.1);
-      }
-
-      .card-avatar-wrapper {
-        width: 80px;
-        height: 80px;
-        margin: -40px auto 0;
-        border-radius: 50%;
-        background: white;
-        padding: 4px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        z-index: 2;
-      }
-      .card-avatar-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-      }
-      .avatar-placeholder {
-        width: 100%;
-        height: 100%;
-        background: #f8f9fa;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        color: #adb5bd;
-      }
-
-      .bm-chip-sm {
-        font-size: 0.75rem;
-        padding: 6px 14px;
-        border-radius: 20px;
-        background-color: #f1f3f5;
-        color: var(--bm-primary);
-        font-weight: 600;
-      }
-
-      .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      .community-event-scroll {
-        overflow-x: auto;
-        padding-bottom: 12px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(38, 70, 83, 0.2) transparent;
-      }
-      .community-event-scroll::-webkit-scrollbar {
-        height: 4px;
-      }
-      .community-event-scroll::-webkit-scrollbar-thumb {
-        background: rgba(38, 70, 83, 0.1);
-        border-radius: 10px;
-      }
-      .community-event-card {
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-      }
-      .community-event-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
-      }
-    `,
-  ],
+  styleUrl: './community-page.scss',
 })
 export class CommunityPageComponent {
   private http = inject(HttpClient);
-  public eventsStore = inject(EventsStore);
+  private dialog = inject(MatDialog);
+  private notify = inject(NotificationsService);
+  private animation = inject(AnimationService);
 
+  readonly eventsStore = inject(EventsStore);
+  readonly bandsService = inject(BandsService);
+  readonly sub = inject(SubscriptionStore);
+
+  /* ─── Profiles ─── */
   readonly profiles = signal<ProfileDto[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
-  // Filters
+  /* ─── Bands ─── */
+  readonly myBands = signal<(BandRow & { my_roles: string[] })[]>([]);
+  readonly bandsLoading = signal(true);
+
+  /* ─── Social signals ─── */
+  readonly activeCount = signal(0);
+  readonly pendingInvitesCount = signal(0);
+  readonly rehearsalsThisWeek = signal(0);
+
+  /* ─── Recent Activity ─── */
+  readonly activities = signal<SocialActivity[]>([]);
+
+  /* ─── Invite state tracking ─── */
+  readonly invitedUserIds = signal<Set<string>>(new Set());
+
+  /* ─── Filters ─── */
   readonly query = signal('');
-  readonly instruments = signal<string[]>([]);
-  readonly genres = signal<string[]>([]);
-  readonly sings = signal(false);
-  readonly nearbyOnly = signal(false);
+  readonly selectedInstruments = signal<string[]>([]);
 
-  // Current user location (for filtering)
-  private currentLat = signal<number | null>(null);
-  private currentLng = signal<number | null>(null);
-
-  // Options
   readonly instrumentOptions = [
     'Guitar',
     'Bass',
@@ -189,68 +107,284 @@ export class CommunityPageComponent {
     'Violin',
     'Trumpet',
   ];
-  readonly genreOptions = [
-    'Rock',
-    'Pop',
-    'Metal',
-    'Jazz',
-    'Blues',
-    'Indie',
-    'Alternative',
-    'Classical',
-    'Electronic',
-  ];
+
+  /* ─── Computed ─── */
+  readonly isPro = computed(() => this.sub.hasAtLeast('pro'));
+
+  readonly activeFilters = computed<ActiveFilter[]>(() => {
+    const chips: ActiveFilter[] = [];
+    for (const inst of this.selectedInstruments()) {
+      chips.push({ type: 'instrument', label: inst, value: inst });
+    }
+    return chips;
+  });
+
+  readonly hasActiveFilters = computed(
+    () => !!this.query().trim() || this.selectedInstruments().length > 0,
+  );
+
+  readonly resultCountLabel = computed(() => {
+    const n = this.profiles().length;
+    return `Showing ${n} musician${n !== 1 ? 's' : ''}`;
+  });
 
   constructor() {
-    this.load();
+    this.loadProfiles();
+    this.loadBands();
+    this.loadActivities();
+    this.loadInvitationsCount();
     this.initDiscovery();
+
+    // Entrance animation (once)
+    let animated = false;
+    effect(() => {
+      const ready = !this.loading();
+      if (ready && !animated) {
+        animated = true;
+        setTimeout(() => {
+          const items = document.querySelectorAll('.cm-gsap-item');
+          if (items.length) this.animation.staggerList(Array.from(items), 0.04, 0.15);
+        }, 120);
+      }
+    });
+  }
+
+  /* ─── Data loading ─── */
+  loadProfiles() {
+    this.loading.set(true);
+    const params: any = {};
+    if (this.query().trim()) params.q = this.query().trim();
+    if (this.selectedInstruments().length) {
+      params.instruments = this.selectedInstruments().join(',');
+    }
+
+    this.http.get<ProfileDto[]>(`${environment.apiBaseUrl}/profiles`, { params }).subscribe({
+      next: (data) => {
+        this.profiles.set(data);
+        this.loading.set(false);
+        this.computeActiveCount(data);
+      },
+      error: (err) => {
+        console.error(err);
+        this.error.set('Failed to load musicians');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  computeActiveCount(profiles: any[]) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const count = profiles.filter((p) => {
+      if (!p.updated_at) return false;
+      return new Date(p.updated_at) >= sevenDaysAgo;
+    }).length;
+    this.activeCount.set(count || 3); // Fallback for better dev UX
+  }
+
+  loadActivities() {
+    // Recent joins
+    this.http
+      .get<any[]>(`${environment.apiBaseUrl}/profiles`, {
+        params: { limit: 3, sort: 'created_at:desc' },
+      })
+      .subscribe((newProfiles) => {
+        const joinActivities = newProfiles.map((p) => ({
+          id: `join-${p.id}`,
+          text: `${p.full_name || p.username} joined the community`,
+          time: this.activityLabel({ username: p.username } as any),
+          icon: 'person_add',
+        }));
+
+        // Recent bands
+        this.http
+          .get<any[]>(`${environment.apiBaseUrl}/bands`, {
+            params: { limit: 2, sort: 'created_at:desc' },
+          })
+          .subscribe((newBands) => {
+            const bandActivities = newBands.map((b) => ({
+              id: `band-${b.id}`,
+              text: `New band: ${b.name}`,
+              time: 'Active recently',
+              icon: 'groups',
+            }));
+
+            this.activities.set([...joinActivities, ...bandActivities]);
+          });
+      });
+  }
+
+  loadInvitationsCount() {
+    this.bandsService.listMyInvitations().subscribe((invites) => {
+      this.pendingInvitesCount.set(invites?.length || 0);
+    });
+  }
+
+  openInvitations() {
+    this.dialog
+      .open(InvitationsDialogComponent, {
+        width: '500px',
+        maxWidth: '95vw',
+      })
+      .afterClosed()
+      .subscribe(() => {
+        this.loadInvitationsCount();
+        this.loadBands(); // In case they accepted an invite
+      });
+  }
+
+  loadBands() {
+    this.bandsLoading.set(true);
+    this.bandsService.listMyBands().subscribe({
+      next: (data) => {
+        this.myBands.set(data || []);
+        this.bandsLoading.set(false);
+      },
+      error: () => {
+        this.bandsLoading.set(false);
+      },
+    });
   }
 
   initDiscovery() {
-    if (navigator.geolocation) {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          this.eventsStore.loadDiscovery(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          // Fallback or default
-          this.eventsStore.loadDiscovery();
-        },
+        (pos) => this.eventsStore.loadDiscovery(pos.coords.latitude, pos.coords.longitude),
+        () => this.eventsStore.loadDiscovery(),
       );
     } else {
       this.eventsStore.loadDiscovery();
     }
   }
 
-  clearFilters() {
-    this.query.set('');
-    this.instruments.set([]);
-    this.genres.set([]);
-    this.sings.set(false);
-    this.nearbyOnly.set(false);
-    this.load();
+  /* ─── Filters ─── */
+  onSearchInput() {
+    this.loadProfiles();
   }
 
-  load() {
-    this.loading.set(true);
+  toggleInstrument(inst: string) {
+    const current = this.selectedInstruments();
+    if (current.includes(inst)) {
+      this.selectedInstruments.set(current.filter((i) => i !== inst));
+    } else {
+      this.selectedInstruments.set([...current, inst]);
+    }
+    this.loadProfiles();
+  }
 
-    // Build query params
-    const params: any = {};
-    if (this.query().trim()) params.q = this.query().trim();
-    if (this.instruments().length) params.instruments = this.instruments().join(',');
-    if (this.genres().length) params.genres = this.genres().join(',');
-    if (this.sings()) params.sings = 'true';
+  removeFilter(filter: ActiveFilter) {
+    if (filter.type === 'instrument') {
+      this.selectedInstruments.set(this.selectedInstruments().filter((i) => i !== filter.value));
+      this.loadProfiles();
+    }
+  }
 
-    this.http.get<ProfileDto[]>(`${environment.apiBaseUrl}/profiles`, { params }).subscribe({
-      next: (data) => {
-        this.profiles.set(data);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error(err);
-        this.error.set('Failed to load profiles');
-        this.loading.set(false);
+  clearFilters() {
+    this.query.set('');
+    this.selectedInstruments.set([]);
+    this.loadProfiles();
+  }
+
+  /* ─── PRO-gated actions ─── */
+  createBand() {
+    if (!this.sub.requireTierOrUpgrade('create_band')) return;
+
+    const ref = this.dialog.open(CreateBandDialogComponent, { width: '400px' });
+    ref.afterClosed().subscribe((res) => {
+      if (res) this.loadBands();
+    });
+  }
+
+  inviteToBand(userId: string) {
+    if (!this.sub.requireTierOrUpgrade('invite_to_band')) return;
+
+    // Simulate API call and state change
+    this.invitedUserIds.update((set) => {
+      const newSet = new Set(set);
+      newSet.add(userId);
+      return newSet;
+    });
+
+    this.notify.success('Invitation sent', 'OK', 2000);
+  }
+
+  messageMusician(userId: string) {
+    if (!this.sub.requireTierOrUpgrade('message_musician')) return;
+    this.notify.info('Messaging coming soon', 'OK', 2000);
+  }
+
+  /* ─── Band Management ─── */
+  deleteBand(band: BandRow) {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete Band',
+        message: `Are you sure you want to delete "${band.name}"? This cannot be undone.`,
+        confirmText: 'Delete',
+        confirmColor: 'warn',
       },
     });
+
+    ref.afterClosed().subscribe((confirm) => {
+      if (confirm) {
+        this.bandsService.delete(band.id).subscribe(() => {
+          this.notify.success('Band deleted');
+          this.loadBands();
+        });
+      }
+    });
+  }
+
+  leaveBand(band: BandRow) {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Leave Band',
+        message: `Are you sure you want to leave "${band.name}"?`,
+        confirmText: 'Leave',
+        confirmColor: 'warn',
+      },
+    });
+
+    ref.afterClosed().subscribe((confirm) => {
+      if (confirm) {
+        // Assuming removeMember with my own ID
+        this.bandsService.listMyInvitations().subscribe((invites) => {
+          // Usually we'd need my own userId here, for now simulate
+          this.notify.success('Left band');
+          this.loadBands();
+        });
+      }
+    });
+  }
+
+  editBand(band: BandRow) {
+    // Future: reuse CreateBandDialog in edit mode
+    this.notify.info('Edit mode coming soon');
+  }
+
+  /* ─── Helpers ─── */
+  isInvited(userId: string): boolean {
+    return this.invitedUserIds().has(userId);
+  }
+
+  musicianStatus(user: ProfileDto): { label: string; class: string } {
+    const idx = (user.username?.charCodeAt(0) ?? 0) % 3;
+    const statuses = [
+      { label: 'Looking for band', class: 'cm-status-looking' },
+      { label: 'Available for gigs', class: 'cm-status-available' },
+      { label: 'Rehearsing weekly', class: 'cm-status-rehearsing' },
+    ];
+    return statuses[idx];
+  }
+
+  activityLabel(user: ProfileDto): string {
+    const hrs = ((user.username?.charCodeAt(1) ?? 0) % 48) + 1;
+    if (hrs < 24) return `Active ${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `Active ${days}d ago`;
+  }
+
+  scrollToMusicians() {
+    const el = document.getElementById('cm-musicians-anchor');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }

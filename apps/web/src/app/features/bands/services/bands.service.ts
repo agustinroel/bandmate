@@ -87,4 +87,12 @@ export class BandsService {
   respondToInvitation(inviteId: string, accept: boolean) {
     return this.http.post(`${environment.apiBaseUrl}/invitations/${inviteId}/respond`, { accept });
   }
+
+  delete(id: string) {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  removeMember(bandId: string, userId: string) {
+    return this.http.delete(`${this.apiUrl}/${bandId}/members/${userId}`);
+  }
 }
