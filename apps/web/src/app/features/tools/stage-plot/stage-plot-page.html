@@ -1,0 +1,301 @@
+<div class="stage-plot-wrapper container-fluid py-4">
+  <!-- Header & Actions -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 no-print">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bm-mark" aria-hidden="true">
+        <mat-icon>dashboard_customize</mat-icon>
+      </div>
+      <div>
+        <h1 class="fs-3 fw-bold m-0">Stage Plot & Tech Rider</h1>
+        <div class="text-muted small">Diseñador interactivo de escenario y lista de canales para técnicos de sonido</div>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button mat-stroked-button (click)="clearStage()" class="rounded-pill">
+        <mat-icon class="me-1">delete_sweep</mat-icon>
+        Limpiar
+      </button>
+      <button mat-flat-button color="primary" (click)="printTechRider()" class="rounded-pill px-4">
+        <mat-icon class="me-1">print</mat-icon>
+        Imprimir / Exportar Rider (PDF)
+      </button>
+    </div>
+  </div>
+
+  <!-- Presets Toolbar -->
+  <div class="presets-bar bg-white p-2 rounded-3 border mb-4 d-flex align-items-center gap-2 flex-wrap no-print">
+    <span class="small fw-bold text-muted ms-2 me-1">Plantillas rápidas:</span>
+    <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('rock4')">
+      🎸 Cuarteto Rock
+    </button>
+    <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('acoustic')">
+      🎙️ Dúo Acústico
+    </button>
+    <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('pop6')">
+      🎹 Pop / Funk (6 Músicos)
+    </button>
+  </div>
+
+  <!-- Workspace Grid: Toolbox + Canvas + Inspector -->
+  <div class="row g-4 mb-4">
+    <!-- Left: Element Toolbox -->
+    <div class="col-lg-3 no-print">
+      <div class="card shadow-sm border-0 rounded-4 p-3 mb-3">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <mat-icon class="text-primary fs-5">add_circle_outline</mat-icon>
+          Añadir Elemento
+        </h6>
+        <div class="toolbox-grid">
+          @for (tmpl of templates; track tmpl.type) {
+            <button
+              type="button"
+              class="btn btn-outline-light text-dark border d-flex align-items-center gap-2 text-start p-2 rounded-3 tool-item"
+              (click)="addElement(tmpl.type)"
+              [matTooltip]="'Añadir ' + tmpl.name + ' al escenario'"
+            >
+              <mat-icon class="text-primary">{{ tmpl.icon }}</mat-icon>
+              <div class="lh-1">
+                <div class="small fw-bold">{{ tmpl.name }}</div>
+                <small class="text-muted" style="font-size: 11px;">{{ tmpl.hasInput ? 'Entrada Audio' : 'Equipamiento' }}</small>
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Inspector Panel -->
+      @if (selectedElement(); as sel) {
+        <div class="card shadow-sm border border-primary-subtle rounded-4 p-3">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-bold m-0 d-flex align-items-center gap-2 text-primary">
+              <mat-icon>{{ getIconForType(sel.type) }}</mat-icon>
+              Propiedades
+            </h6>
+            <button mat-icon-button class="text-danger btn-sm" (click)="deleteSelectedElement()" title="Eliminar">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-bold">Nombre / Identificador</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="sel.label"
+              placeholder="Ej. Guitarra Lead - Juan"
+            />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-bold">Micrófono / Entrada</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="sel.micType"
+              placeholder="Ej. Shure SM57 / DI"
+            />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-bold">Tipo de Soporte</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="sel.standType"
+              placeholder="Ej. Trípode Boom / Corto"
+            />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-bold">Requisitos de Monitor</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="sel.monitorNeeds"
+              placeholder="Ej. Voz alta, guitarra rítmica"
+            />
+          </div>
+
+          <div class="form-check mt-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="phantomCheck"
+              [(ngModel)]="sel.phantomPower"
+            />
+            <label class="form-check-label small fw-bold" for="phantomCheck">
+              Alimentación Phantom +48V
+            </label>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Center/Right: Stage Canvas -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 rounded-4 p-3 printable-stage-card">
+        <!-- Stage Canvas Header -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+          <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 text-uppercase fw-bold">
+            FONDO DE ESCENARIO / UPSTAGE (BACKLINE)
+          </span>
+          <span class="small text-muted no-print">
+            {{ elements().length }} elementos colocados • Arrastra para recolocar
+          </span>
+        </div>
+
+        <!-- 2D Canvas Area -->
+        <div
+          class="stage-canvas position-relative rounded-4"
+          (mousemove)="onCanvasMouseMove($event)"
+          (mouseup)="endDrag()"
+          (mouseleave)="endDrag()"
+          (touchmove)="onCanvasTouchMove($event)"
+          (touchend)="endDrag()"
+          (click)="deselectAll()"
+        >
+          <!-- Stage Grid & Markings -->
+          <div class="stage-backdrop-grid" aria-hidden="true"></div>
+          <div class="stage-center-line" aria-hidden="true"></div>
+
+          <!-- Stage Left & Right Labels -->
+          <div class="stage-side-marker left">STAGE RIGHT (P.A. L)</div>
+          <div class="stage-side-marker right">STAGE LEFT (P.A. R)</div>
+
+          <!-- Placed Stage Elements -->
+          @for (el of elements(); track el.id) {
+            <div
+              class="stage-token position-absolute"
+              [class.selected]="selectedElementId() === el.id"
+              [style.left.%]="el.x"
+              [style.top.%]="el.y"
+              (mousedown)="startDrag(el.id, $event)"
+              (touchstart)="startDrag(el.id, $event)"
+              (click)="selectElement(el.id, $event)"
+            >
+              <div class="token-bubble">
+                <mat-icon>{{ getIconForType(el.type) }}</mat-icon>
+              </div>
+              <div class="token-label">
+                {{ el.label }}
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Front of Stage Indicator -->
+        <div class="text-center mt-2">
+          <span class="badge bg-primary text-white px-4 py-2 text-uppercase fw-bold shadow-sm">
+            FRENTE DE ESCENARIO / AUDIENCIA & PÚBLICO (DOWNSTAGE)
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Rider Meta & Channel List -->
+  <div class="row g-4 mt-2">
+    <!-- Band & Gig Info -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <mat-icon class="text-primary">info</mat-icon>
+          Datos de la Banda & Contacto
+        </h5>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Nombre del Grupo</label>
+          <input type="text" class="form-control" [(ngModel)]="meta().bandName" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Contacto Técnico / Manager</label>
+          <input type="text" class="form-control" [(ngModel)]="meta().contactPerson" />
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Teléfono</label>
+            <input type="text" class="form-control" [(ngModel)]="meta().contactPhone" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-bold">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="meta().contactEmail" />
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Envíos Monitor</label>
+            <input type="number" class="form-control" [(ngModel)]="meta().monitorMixes" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-bold">Puntos Corriente</label>
+            <input type="number" class="form-control" [(ngModel)]="meta().powerDrops" />
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label small fw-bold">Observaciones Generales</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="meta().notes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sound Engineer Channel Input List -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 rounded-4 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold m-0 d-flex align-items-center gap-2">
+            <mat-icon class="text-primary">format_list_numbered</mat-icon>
+            Lista de Canales (Input List)
+          </h5>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
+            {{ channelInputList().length }} Canales en Mesa
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 font-monospace small">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 60px;">CH</th>
+                <th>Instrumento / Fuente</th>
+                <th>Micrófono / Entrada</th>
+                <th>Soporte</th>
+                <th style="width: 70px;">+48V</th>
+                <th>Mezcla Monitor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ch of channelInputList(); track ch.id) {
+                <tr>
+                  <td class="fw-bold text-primary">{{ ch.channel < 10 ? '0' + ch.channel : ch.channel }}</td>
+                  <td class="fw-bold">{{ ch.label }}</td>
+                  <td>{{ ch.mic }}</td>
+                  <td>{{ ch.stand }}</td>
+                  <td>
+                    @if (ch.phantom) {
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle">SÍ</span>
+                    } @else {
+                      <span class="text-muted">-</span>
+                    }
+                  </td>
+                  <td>{{ ch.monitorNeeds }}</td>
+                </tr>
+              }
+              @if (channelInputList().length === 0) {
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">
+                    No hay instrumentos añadidos al escenario. Añade elementos desde la barra lateral.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

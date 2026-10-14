@@ -116,6 +116,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/tools/tuner/tuner-page').then((m) => m.TunerPageComponent),
           },
+          {
+            path: 'stage-plot',
+            loadComponent: () =>
+              import('./features/tools/stage-plot/stage-plot-page').then(
+                (m) => m.StagePlotPageComponent,
+              ),
+          },
           { path: '', redirectTo: 'tuner', pathMatch: 'full' },
         ],
       },

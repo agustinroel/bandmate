@@ -1,0 +1,210 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: var(--bm-bg, #f8f9fa);
+}
+
+.stage-plot-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.toolbox-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.tool-item {
+  transition: all 0.2s ease;
+  &:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1 !important;
+    transform: translateX(4px);
+  }
+}
+
+/* ───── Stage Canvas ───── */
+.stage-canvas {
+  width: 100%;
+  height: 480px;
+  background: radial-gradient(circle at 50% 100%, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #334155;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.stage-backdrop-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.stage-center-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.stage-side-marker {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.2);
+  writing-mode: vertical-rl;
+  pointer-events: none;
+
+  &.left {
+    left: 12px;
+  }
+  &.right {
+    right: 12px;
+  }
+}
+
+/* ───── Stage Placed Tokens ───── */
+.stage-token {
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.1s ease, filter 0.2s ease;
+
+  &:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.1);
+    z-index: 50;
+  }
+
+  &.selected {
+    z-index: 30;
+    .token-bubble {
+      border-color: #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), inset 0 0 10px rgba(56, 189, 248, 0.4);
+      background: #0284c7;
+      color: #fff;
+    }
+    .token-label {
+      background: #0284c7;
+      color: #fff;
+      font-weight: 700;
+    }
+  }
+}
+
+.token-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #334155;
+  border: 2px solid #94a3b8;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.token-label {
+  margin-top: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  color: #f1f5f9;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ───── PRINT MEDIA STYLES ───── */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .no-print,
+  mat-sidenav,
+  .bm-sidenav,
+  button,
+  .presets-bar {
+    display: none !important;
+  }
+
+  .stage-plot-wrapper {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .printable-stage-card,
+  .card {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    page-break-inside: avoid;
+  }
+
+  .stage-canvas {
+    background: #fff !important;
+    border: 2px solid #000 !important;
+    box-shadow: none !important;
+    height: 380px !important;
+  }
+
+  .stage-backdrop-grid {
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px) !important;
+  }
+
+  .token-bubble {
+    background: #fff !important;
+    border: 2px solid #000 !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+
+  .token-label {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+
+  .table {
+    border-color: #000 !important;
+    color: #000 !important;
+  }
+
+  .table-light {
+    background-color: #eee !important;
+    color: #000 !important;
+  }
+}

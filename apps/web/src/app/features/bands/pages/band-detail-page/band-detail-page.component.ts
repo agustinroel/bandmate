@@ -17,8 +17,8 @@ import { StorageService } from '../../../../core/storage/storage.service';
 import { BandEditDialogComponent } from '../../ui/band-edit-dialog/band-edit-dialog.component';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { EventsStore } from '../../../events/state/events.store';
-import { EventRow } from '../../../events/services/events.service';
 import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-create-dialog.component';
+import { StagePlotComponent } from '../../ui/stage-plot/stage-plot.component';
 
 @Component({
   standalone: true,
@@ -34,6 +34,7 @@ import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-c
     MatProgressSpinnerModule,
     MatMenuModule,
     MatTooltipModule,
+    StagePlotComponent,
   ],
   template: `
     @if (loading() && !band()) {
@@ -536,6 +537,16 @@ import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-c
                       }
                     </div>
                   }
+                </div>
+              </mat-tab>
+
+              <!-- Stage Plot & Tech Rider Tab -->
+              <mat-tab label="Stage Plot & Rider">
+                <div class="py-4 px-2">
+                  <app-stage-plot
+                    [bandId]="b.id"
+                    [bandName]="b.name"
+                  ></app-stage-plot>
                 </div>
               </mat-tab>
             }
