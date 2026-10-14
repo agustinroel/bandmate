@@ -1,10 +1,10 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +23,24 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { InvitationsDialogComponent } from '../../ui/invitations-dialog/invitations-dialog.component';
 import { SongsStore } from '../../../songs/state/songs-store';
+
+export type FeedComment = {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar?: string | null;
+  content: string;
+  createdAt: string;
+};
+
+export type FeedResponse = {
+  posts: FeedPost[];
+  page: number;
+  total: number;
+  hasMore: boolean;
+};
 
 export type FeedPost = {
   id: string;
@@ -89,11 +107,12 @@ type SocialActivity = {
   templateUrl: './community-page.html',
   styleUrl: './community-page.scss',
 })
-export class CommunityPageComponent {
+export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   private http = inject(HttpClient);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationsService);
   private animation = inject(AnimationService);
+  private router = inject(Router);
 
   readonly eventsStore = inject(EventsStore);
   readonly bandsService = inject(BandsService);
@@ -105,10 +124,23 @@ export class CommunityPageComponent {
   readonly feedFilter = signal<'for_you' | 'following'>('for_you');
   readonly feedPosts = signal<FeedPost[]>([]);
   readonly feedLoading = signal(false);
+  readonly feedPage = signal(1);
+  readonly feedHasMore = signal(true);
+  readonly feedLoadingMore = signal(false);
+
   readonly postContent = signal('');
   readonly selectedPostType = signal<'status' | 'song_share' | 'riff' | 'looking_for_member' | 'gig'>('status');
   readonly selectedSongAttachment = signal<{ id: string; title: string; artist: string; key?: string; bpm?: number } | null>(null);
   readonly isPosting = signal(false);
+
+  /* ─── Comments state ─── */
+  readonly openCommentsPostId = signal<string | null>(null);
+  readonly commentsByPost = signal<Record<string, FeedComment[]>>({});
+  readonly commentInputs = signal<Record<string, string>>({});
+  readonly loadingComments = signal<Record<string, boolean>>({});
+  readonly isSubmittingComment = signal<Record<string, boolean>>({});
+
+  private scrollObserver?: IntersectionObserver;
 
   readonly auditionPosts = computed(() =>
     this.feedPosts().filter((p) => p.type === 'looking_for_member')
@@ -196,6 +228,34 @@ export class CommunityPageComponent {
     });
   }
 
+  ngAfterViewInit() {
+    this.setupInfiniteScroll();
+  }
+
+  ngOnDestroy() {
+    this.scrollObserver?.disconnect();
+  }
+
+  private setupInfiniteScroll() {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+    this.scrollObserver?.disconnect();
+    this.scrollObserver = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first && first.isIntersecting && this.feedHasMore() && !this.feedLoading() && !this.feedLoadingMore()) {
+          this.loadMoreFeed();
+        }
+      },
+      { rootMargin: '350px' }
+    );
+
+    const sentinel = document.getElementById('feedScrollSentinel');
+    if (sentinel) {
+      this.scrollObserver.observe(sentinel);
+    }
+  }
+
   /* ─── Feed Methods ─── */
   setTab(tab: 'feed' | 'directory' | 'auditions') {
     this.activeTab.set(tab);
@@ -203,26 +263,55 @@ export class CommunityPageComponent {
       setTimeout(() => {
         const posts = document.querySelectorAll('.feed-post-card');
         if (posts.length) this.animation.staggerList(Array.from(posts), 0.05, 0.15);
-      }, 50);
+        this.setupInfiniteScroll();
+      }, 60);
     }
   }
 
   setFeedFilter(f: 'for_you' | 'following') {
     this.feedFilter.set(f);
-    this.loadFeed();
+    this.loadFeed(true);
   }
 
-  loadFeed() {
-    this.feedLoading.set(true);
-    this.http.get<FeedPost[]>(`${environment.apiBaseUrl}/feed`, {
-      params: { filter: this.feedFilter() },
-    }).subscribe({
-      next: (posts) => {
-        this.feedPosts.set(posts);
-        this.feedLoading.set(false);
+  loadFeed(reset = true) {
+    if (reset) {
+      this.feedPage.set(1);
+      this.feedHasMore.set(true);
+      this.feedLoading.set(true);
+    }
+
+    this.http.get<FeedResponse>(`${environment.apiBaseUrl}/feed`, {
+      params: {
+        filter: this.feedFilter(),
+        page: this.feedPage(),
+        limit: 10,
       },
-      error: () => this.feedLoading.set(false),
+    }).subscribe({
+      next: (res) => {
+        const items = res?.posts ?? [];
+        if (reset) {
+          this.feedPosts.set(items);
+        } else {
+          this.feedPosts.update((prev) => [...prev, ...items]);
+        }
+        this.feedHasMore.set(res?.hasMore ?? false);
+        this.feedLoading.set(false);
+        this.feedLoadingMore.set(false);
+
+        setTimeout(() => this.setupInfiniteScroll(), 120);
+      },
+      error: () => {
+        this.feedLoading.set(false);
+        this.feedLoadingMore.set(false);
+      },
     });
+  }
+
+  loadMoreFeed() {
+    if (!this.feedHasMore() || this.feedLoading() || this.feedLoadingMore()) return;
+    this.feedLoadingMore.set(true);
+    this.feedPage.update((p) => p + 1);
+    this.loadFeed(false);
   }
 
   submitPost() {
@@ -234,6 +323,8 @@ export class CommunityPageComponent {
       content: text,
       type: this.selectedPostType(),
       attachedSong: this.selectedSongAttachment(),
+      authorName: 'Agustín Roel',
+      authorUsername: 'agustinroel',
     }).subscribe({
       next: (post) => {
         this.feedPosts.update((prev) => [post, ...prev]);
@@ -248,6 +339,76 @@ export class CommunityPageComponent {
         this.isPosting.set(false);
       },
     });
+  }
+
+  /* ─── Comments Interaction ─── */
+  toggleComments(postId: string) {
+    if (this.openCommentsPostId() === postId) {
+      this.openCommentsPostId.set(null);
+      return;
+    }
+    this.openCommentsPostId.set(postId);
+    if (!this.commentsByPost()[postId]) {
+      this.loadingComments.update((m) => ({ ...m, [postId]: true }));
+      this.http.get<FeedComment[]>(`${environment.apiBaseUrl}/feed/${postId}/comments`).subscribe({
+        next: (cmts) => {
+          this.commentsByPost.update((m) => ({ ...m, [postId]: cmts || [] }));
+          this.loadingComments.update((m) => ({ ...m, [postId]: false }));
+        },
+        error: () => {
+          this.loadingComments.update((m) => ({ ...m, [postId]: false }));
+        },
+      });
+    }
+  }
+
+  getCommentInput(postId: string): string {
+    return this.commentInputs()[postId] || '';
+  }
+
+  setCommentInput(postId: string, text: string) {
+    this.commentInputs.update((m) => ({ ...m, [postId]: text }));
+  }
+
+  submitComment(postId: string) {
+    const text = (this.commentInputs()[postId] || '').trim();
+    if (!text) return;
+
+    this.isSubmittingComment.update((m) => ({ ...m, [postId]: true }));
+    this.http.post<FeedComment>(`${environment.apiBaseUrl}/feed/${postId}/comments`, {
+      content: text,
+      authorName: 'Agustín Roel',
+      authorUsername: 'agustinroel',
+    }).subscribe({
+      next: (newCmt) => {
+        this.commentsByPost.update((m) => ({
+          ...m,
+          [postId]: [...(m[postId] || []), newCmt],
+        }));
+        this.commentInputs.update((m) => ({ ...m, [postId]: '' }));
+        this.isSubmittingComment.update((m) => ({ ...m, [postId]: false }));
+
+        this.feedPosts.update((posts) =>
+          posts.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p))
+        );
+        this.notify.success('Comentario publicado', 'OK', 1500);
+      },
+      error: () => {
+        this.notify.error('No se pudo enviar el comentario', 'OK', 2000);
+        this.isSubmittingComment.update((m) => ({ ...m, [postId]: false }));
+      },
+    });
+  }
+
+  copyPostLink(post: FeedPost) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(`${window.location.origin}/community#${post.id}`);
+      this.notify.success('Enlace copiado al portapapeles', 'OK', 2000);
+    }
+  }
+
+  playSong(songId: string) {
+    this.router.navigate(['/songs', songId]);
   }
 
   toggleLike(post: FeedPost) {

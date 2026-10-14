@@ -14,20 +14,14 @@ function getUserId(req: any): string | null {
 }
 
 export async function worksRoutes(app: FastifyInstance) {
-  // LIST library works (authed)
+  // LIST library works (public or authed)
   app.get("/works", async (req, reply) => {
-    const userId = getUserId(req);
-    if (!userId) return reply.code(401).send({ message: "Unauthorized" });
-
     const items = await listWorksWithTopArrangement();
     return items;
   });
 
-  // GET work + arrangements
+  // GET work + arrangements (public or authed)
   app.get("/works/:id", async (req, reply) => {
-    const userId = getUserId(req);
-    if (!userId) return reply.code(401).send({ message: "Unauthorized" });
-
     const { id } = req.params as { id: string };
     const res = await getWorkByIdWithArrangements(id);
     if (!res) return reply.code(404).send({ message: "Work not found" });

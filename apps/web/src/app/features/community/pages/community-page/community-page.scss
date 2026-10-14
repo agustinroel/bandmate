@@ -957,3 +957,146 @@
   font-weight: 700;
   font-size: 13px;
 }
+
+/* ─── Comments Section (X.com / Threads Style) ─── */
+.cm-comments-container {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.cm-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cm-comment-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.cm-comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.cm-comment-bubble {
+  background: #f8fafc;
+  padding: 8px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  flex-grow: 1;
+}
+
+.cm-comment-author {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.cm-comment-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-left: 6px;
+}
+
+.cm-comment-text {
+  font-size: 0.85rem;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.cm-comment-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cm-comment-input {
+  flex-grow: 1;
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+
+  &:focus {
+    background: #ffffff;
+    border-color: var(--bm-primary, #264653);
+    box-shadow: 0 0 0 3px rgba(38, 70, 83, 0.1);
+  }
+}
+
+/* ─── Empty State (X.com Clean Minimalist) ─── */
+.cm-feed-empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px dashed #cbd5e1;
+  margin-bottom: 24px;
+
+  .cm-empty-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(38, 70, 83, 0.08);
+    color: var(--bm-primary, #264653);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  h4 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 0.9rem;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
+
+/* ─── Infinite Scroll Sentinel ─── */
+.cm-scroll-sentinel {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-end-of-feed {
+  text-align: center;
+  padding: 24px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

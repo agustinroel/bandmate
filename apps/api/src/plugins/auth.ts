@@ -193,7 +193,20 @@ async function authPlugin(app: FastifyInstance, opts: AuthPluginOptions) {
   app.decorate("authGuardHook", async (req: FastifyRequest) => {
     if (req.method === "OPTIONS") return;
     const url = req.url || "";
-    if (publicRoutes.some((p) => url.startsWith(p))) return;
+    const isPublic = publicRoutes.some((p) => url.startsWith(p));
+
+    const token = getBearerToken(req);
+    if (token) {
+      try {
+        await app.authenticate(req);
+        return;
+      } catch (err) {
+        if (!isPublic) throw err;
+        // On public routes with expired/invalid token, allow request through without req.user
+      }
+    }
+
+    if (isPublic) return;
     await app.authenticate(req);
   });
 }

@@ -136,6 +136,8 @@ await app.register(registerAuth, {
         "/bands",
         "/profiles",
         "/feed",
+        "/works",
+        "/songs",
     ],
 });
 app.addHook("preHandler", app.authGuardHook);

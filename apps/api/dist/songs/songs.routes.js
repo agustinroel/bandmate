@@ -5,21 +5,17 @@ function getUserId(req) {
     return u?.id ?? null;
 }
 export async function songsRoutes(app) {
-    // LIST
+    // LIST (public or authed)
     app.get("/songs", async (req, reply) => {
         const userId = getUserId(req);
-        if (!userId)
-            return reply.code(401).send({ message: "Unauthorized" });
-        const songs = await listSongsForUser(userId);
+        const songs = await listSongsForUser(userId || "00000000-0000-0000-0000-000000000000");
         return songs;
     });
-    // GET BY ID
+    // GET BY ID (public or authed)
     app.get("/songs/:id", async (req, reply) => {
         const userId = getUserId(req);
-        if (!userId)
-            return reply.code(401).send({ message: "Unauthorized" });
         const { id } = req.params;
-        const song = await getSongByIdForUser(userId, id);
+        const song = await getSongByIdForUser(userId || "00000000-0000-0000-0000-000000000000", id);
         if (!song)
             return reply.code(404).send({ message: "Song not found" });
         return song;

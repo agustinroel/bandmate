@@ -5,19 +5,13 @@ function getUserId(req) {
     return u?.id ?? null;
 }
 export async function worksRoutes(app) {
-    // LIST library works (authed)
+    // LIST library works (public or authed)
     app.get("/works", async (req, reply) => {
-        const userId = getUserId(req);
-        if (!userId)
-            return reply.code(401).send({ message: "Unauthorized" });
         const items = await listWorksWithTopArrangement();
         return items;
     });
-    // GET work + arrangements
+    // GET work + arrangements (public or authed)
     app.get("/works/:id", async (req, reply) => {
-        const userId = getUserId(req);
-        if (!userId)
-            return reply.code(401).send({ message: "Unauthorized" });
         const { id } = req.params;
         const res = await getWorkByIdWithArrangements(id);
         if (!res)

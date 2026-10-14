@@ -178,10 +178,22 @@
 
         <!-- Post Feed List -->
         <div class="cm-feed-timeline">
-          @if (feedLoading()) {
+          @if (feedLoading() && feedPosts().length === 0) {
             <div class="text-center py-5">
               <mat-spinner diameter="36" class="mx-auto mb-2"></mat-spinner>
               <div class="text-muted small">Cargando publicaciones de la comunidad...</div>
+            </div>
+          } @else if ((activeTab() === 'auditions' ? auditionPosts().length === 0 : feedPosts().length === 0) && !feedLoading()) {
+            <div class="cm-feed-empty-state">
+              <div class="cm-empty-icon-wrap">
+                <mat-icon>{{ activeTab() === 'auditions' ? 'campaign' : 'forum' }}</mat-icon>
+              </div>
+              <h4>{{ activeTab() === 'auditions' ? 'No hay audiciones activas' : 'Aún no hay publicaciones en la comunidad' }}</h4>
+              <p>
+                {{ activeTab() === 'auditions' 
+                  ? 'Publica una convocatoria para buscar baterista, bajista, guitarrista o cantante para tu banda.' 
+                  : 'Sé el primero en compartir un riff, consultar acordes o publicar novedades con músicos de todo el mundo.' }}
+              </p>
             </div>
           } @else {
             @for (post of (activeTab() === 'auditions' ? auditionPosts() : feedPosts()); track post.id) {
@@ -215,8 +227,8 @@
                       </div>
                     </div>
                   </div>
-                  <button mat-icon-button class="text-muted">
-                    <mat-icon>more_horiz</mat-icon>
+                  <button mat-icon-button class="text-muted" (click)="copyPostLink(post)" matTooltip="Copiar enlace">
+                    <mat-icon>link</mat-icon>
                   </button>
                 </div>
 
@@ -242,21 +254,26 @@
                       </div>
                     </div>
 
-                    <a
+                    <button
                       mat-flat-button
                       color="primary"
                       class="rounded-pill px-3 cm-play-song-btn"
-                      [routerLink]="['/songs', song.id]"
+                      (click)="playSong(song.id)"
                     >
                       <mat-icon class="me-1">play_circle</mat-icon>
                       Tocar en Vivo
-                    </a>
+                    </button>
                   </div>
                 }
 
                 <!-- Post Action Buttons (X.com Style) -->
                 <div class="cm-post-actions d-flex align-items-center justify-content-between pt-2 border-top">
-                  <button mat-button class="cm-action-btn">
+                  <button
+                    mat-button
+                    class="cm-action-btn"
+                    [class.text-primary]="openCommentsPostId() === post.id"
+                    (click)="toggleComments(post.id)"
+                  >
                     <mat-icon>chat_bubble_outline</mat-icon>
                     <span>{{ post.commentsCount }}</span>
                   </button>
@@ -275,12 +292,78 @@
                     </mat-icon>
                     <span>{{ post.likesCount }}</span>
                   </button>
-                  <button mat-button class="cm-action-btn">
+                  <button mat-button class="cm-action-btn" (click)="copyPostLink(post)" matTooltip="Compartir">
                     <mat-icon>share</mat-icon>
                   </button>
                 </div>
+
+                <!-- Comments Thread (X.com / Threads Accordion) -->
+                @if (openCommentsPostId() === post.id) {
+                  <div class="cm-comments-container">
+                    @if (loadingComments()[post.id]) {
+                      <div class="text-center py-3">
+                        <mat-spinner diameter="24" class="mx-auto"></mat-spinner>
+                      </div>
+                    } @else {
+                      <div class="cm-comments-list">
+                        @if ((commentsByPost()[post.id] || []).length === 0) {
+                          <div class="text-muted small fst-italic py-2">
+                            Aún no hay respuestas. ¡Sé el primero en comentar!
+                          </div>
+                        } @else {
+                          @for (comment of commentsByPost()[post.id]; track comment.id) {
+                            <div class="cm-comment-item">
+                              <img
+                                [src]="comment.authorAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'"
+                                [alt]="comment.authorName"
+                                class="cm-comment-avatar"
+                              />
+                              <div class="cm-comment-bubble">
+                                <div class="d-flex align-items-center">
+                                  <span class="cm-comment-author">{{ comment.authorName }}</span>
+                                  <span class="cm-comment-time">{{ comment.createdAt | date:'shortTime' }}</span>
+                                </div>
+                                <div class="cm-comment-text">{{ comment.content }}</div>
+                              </div>
+                            </div>
+                          }
+                        }
+                      </div>
+
+                      <!-- Reply Form -->
+                      <div class="cm-comment-form">
+                        <input
+                          type="text"
+                          class="cm-comment-input"
+                          placeholder="Escribe tu respuesta..."
+                          [value]="getCommentInput(post.id)"
+                          (input)="setCommentInput(post.id, $any($event.target).value)"
+                          (keydown.enter)="submitComment(post.id)"
+                        />
+                        <button
+                          mat-flat-button
+                          color="primary"
+                          class="rounded-pill btn-sm"
+                          [disabled]="!getCommentInput(post.id).trim() || isSubmittingComment()[post.id]"
+                          (click)="submitComment(post.id)"
+                        >
+                          {{ isSubmittingComment()[post.id] ? '...' : 'Responder' }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
               </article>
             }
+
+            <!-- Infinite Scroll Sentinel -->
+            <div id="feedScrollSentinel" class="cm-scroll-sentinel py-3 text-center">
+              @if (feedLoadingMore()) {
+                <mat-spinner diameter="28" class="mx-auto"></mat-spinner>
+              } @else if (!feedHasMore() && feedPosts().length > 0) {
+                <div class="cm-end-of-feed">Has llegado al final · Bandmate Community</div>
+              }
+            </div>
           }
         </div>
       </div>

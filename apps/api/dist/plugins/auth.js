@@ -157,7 +157,20 @@ async function authPlugin(app, opts) {
         if (req.method === "OPTIONS")
             return;
         const url = req.url || "";
-        if (publicRoutes.some((p) => url.startsWith(p)))
+        const isPublic = publicRoutes.some((p) => url.startsWith(p));
+        const token = getBearerToken(req);
+        if (token) {
+            try {
+                await app.authenticate(req);
+                return;
+            }
+            catch (err) {
+                if (!isPublic)
+                    throw err;
+                // On public routes with expired/invalid token, allow request through without req.user
+            }
+        }
+        if (isPublic)
             return;
         await app.authenticate(req);
     });

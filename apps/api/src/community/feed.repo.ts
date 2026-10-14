@@ -1,4 +1,15 @@
-import { supabase } from '../lib/supabase.js';
+import { readJson, writeJson } from '../persistance/json.store.js';
+
+export interface FeedComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar?: string | null;
+  content: string;
+  createdAt: string;
+}
 
 export interface FeedPost {
   id: string;
@@ -25,123 +36,74 @@ export interface FeedPost {
   createdAt: string;
 }
 
-// In-memory feed store with persistent seed content (and Supabase integration where tables exist)
-const inMemoryPosts: FeedPost[] = [
-  {
-    id: 'post-1',
-    authorId: 'usr-jimi',
-    authorName: 'Jimi V.',
-    authorUsername: 'stratmaster',
-    authorAvatar: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150',
-    authorInstruments: ['Guitar', 'Vocals'],
-    authorTier: 'pro',
-    type: 'song_share',
-    content: 'Acabo de rearmonizar este clásico en Mi menor para tocar en directo este fin de semana. ¡Prueben la sección del solo en el visor de Bandmate! 🎸🔥 #rock #live #stage',
-    attachedSong: {
-      id: 'seed-stand-by-me',
-      title: 'Stand By Me',
-      artist: 'Ben E. King',
-      key: 'A',
-      bpm: 118,
-    },
-    tags: ['rock', 'live', 'stage'],
-    likesCount: 38,
-    repostsCount: 12,
-    commentsCount: 6,
-    isLiked: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-  },
-  {
-    id: 'post-2',
-    authorId: 'usr-charly',
-    authorName: 'Charly B.',
-    authorUsername: 'groovebassist',
-    authorAvatar: 'https://images.unsplash.com/photo-1520523839898-507125cd53c1?w=150',
-    authorInstruments: ['Bass'],
-    authorTier: 'band',
-    type: 'looking_for_member',
-    content: '🚨 ¡BUSCAMOS BATERISTA en Madrid para banda de Funk/Soul progresivo! Ensayamos 2 veces por semana. Tenemos setlist cerrado de 12 temas en Bandmate y bolos programados para mayo. DM abierto 🥁⚡ #audition #madrid #funk',
-    attachedSong: {
-      id: 'seed-house-of-the-rising-sun',
-      title: 'House of the Rising Sun',
-      artist: 'The Animals',
-      key: 'Am',
-      bpm: 116,
-    },
-    tags: ['audition', 'madrid', 'funk'],
-    likesCount: 64,
-    repostsCount: 29,
-    commentsCount: 14,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-  {
-    id: 'post-3',
-    authorId: 'usr-elena',
-    authorName: 'Elena Rostova',
-    authorUsername: 'elenakeys',
-    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-    authorInstruments: ['Keys', 'Vocals'],
-    authorTier: 'pro',
-    type: 'riff',
-    content: 'Practicando el cambio modal de G a Cm en Creep con el nuevo modo de 2 columnas de Bandmate en mi iPad. Cero scroll, una gozada para las manos en el teclado 🎹✨ #practice #neosoft',
-    attachedSong: {
-      id: 'seed-creep',
-      title: 'Creep',
-      artist: 'Radiohead',
-      key: 'G',
-      bpm: 92,
-    },
-    tags: ['practice', 'piano'],
-    likesCount: 92,
-    repostsCount: 18,
-    commentsCount: 9,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
-  },
-  {
-    id: 'post-4',
-    authorId: 'usr-oasis-fan',
-    authorName: 'Liam Gallagher Tribute',
-    authorUsername: 'manchester_sound',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    authorInstruments: ['Guitar', 'Vocals'],
-    authorTier: 'free',
-    type: 'song_share',
-    content: 'Comparto los acordes exactos con Capo 2 para Wonderwall importados directo desde Ultimate Guitar con el Smart Importer. ¡Quedó perfecto en 2 segundos! ⚡🇬🇧',
-    attachedSong: {
-      id: 'seed-wonderwall',
-      title: 'Wonderwall',
-      artist: 'Oasis',
-      key: 'Em',
-      bpm: 87,
-    },
-    tags: ['oasis', 'acoustic', 'britpop'],
-    likesCount: 142,
-    repostsCount: 45,
-    commentsCount: 21,
-    isLiked: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 840).toISOString(),
-  },
-];
+const POSTS_FILE = 'feed_posts.json';
+const COMMENTS_FILE = 'feed_comments.json';
 
-// Track user likes
+// In-memory cache + persistent backing
+let cachedPosts: FeedPost[] | null = null;
+let cachedComments: FeedComment[] | null = null;
 const userLikes = new Set<string>();
 
-export async function getFeedPosts(filter: 'for_you' | 'following' = 'for_you', userId?: string): Promise<FeedPost[]> {
-  // Sort chronological descending
-  const posts = inMemoryPosts.map((post) => ({
+async function getStoredPosts(): Promise<FeedPost[]> {
+  if (cachedPosts === null) {
+    // Only real user posts - starts empty in production
+    cachedPosts = await readJson<FeedPost[]>(POSTS_FILE, []);
+  }
+  return cachedPosts;
+}
+
+async function getStoredComments(): Promise<FeedComment[]> {
+  if (cachedComments === null) {
+    cachedComments = await readJson<FeedComment[]>(COMMENTS_FILE, []);
+  }
+  return cachedComments;
+}
+
+export async function getFeedPosts(
+  filter: 'for_you' | 'following' = 'for_you',
+  userId?: string,
+  page = 1,
+  limit = 10
+): Promise<{ posts: FeedPost[]; page: number; total: number; hasMore: boolean }> {
+  const allPosts = await getStoredPosts();
+
+  // Map likes for current user
+  const formatted = allPosts.map((post) => ({
     ...post,
     isLiked: userId ? userLikes.has(`${userId}:${post.id}`) || post.isLiked : post.isLiked,
   }));
 
-  posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return posts;
+  // Sort chronological descending
+  formatted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Filter if needed
+  let filtered = formatted;
+  if (filter === 'following' && userId) {
+    // In future: filter by followed user IDs. For now, show active discussions
+    filtered = formatted;
+  }
+
+  const offset = (page - 1) * limit;
+  const paginated = filtered.slice(offset, offset + limit);
+  const hasMore = offset + limit < filtered.length;
+
+  return {
+    posts: paginated,
+    page,
+    total: filtered.length,
+    hasMore,
+  };
 }
 
 export async function createFeedPost(
   userId: string,
-  userProfile: { full_name?: string | null; username?: string | null; avatar_url?: string | null; instruments?: string[] | null; subscription_tier?: string | null },
+  userProfile: {
+    full_name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+    instruments?: string[] | null;
+    subscription_tier?: string | null;
+  },
   postData: {
     type?: FeedPost['type'];
     content: string;
@@ -149,8 +111,10 @@ export async function createFeedPost(
     tags?: string[];
   }
 ): Promise<FeedPost> {
+  const posts = await getStoredPosts();
+
   const newPost: FeedPost = {
-    id: `post-${Date.now()}`,
+    id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     authorId: userId,
     authorName: userProfile.full_name || userProfile.username || 'Musician',
     authorUsername: userProfile.username || 'musician',
@@ -168,12 +132,19 @@ export async function createFeedPost(
     createdAt: new Date().toISOString(),
   };
 
-  inMemoryPosts.unshift(newPost);
+  posts.unshift(newPost);
+  cachedPosts = posts;
+  await writeJson(POSTS_FILE, posts);
+
   return newPost;
 }
 
-export async function togglePostLike(userId: string, postId: string): Promise<{ isLiked: boolean; likesCount: number }> {
-  const post = inMemoryPosts.find((p) => p.id === postId);
+export async function togglePostLike(
+  userId: string,
+  postId: string
+): Promise<{ isLiked: boolean; likesCount: number }> {
+  const posts = await getStoredPosts();
+  const post = posts.find((p) => p.id === postId);
   if (!post) throw new Error('Post not found');
 
   const key = `${userId}:${postId}`;
@@ -181,18 +152,69 @@ export async function togglePostLike(userId: string, postId: string): Promise<{ 
     userLikes.delete(key);
     post.likesCount = Math.max(0, post.likesCount - 1);
     post.isLiked = false;
-    return { isLiked: false, likesCount: post.likesCount };
   } else {
     userLikes.add(key);
     post.likesCount += 1;
     post.isLiked = true;
-    return { isLiked: true, likesCount: post.likesCount };
   }
+
+  await writeJson(POSTS_FILE, posts);
+  return { isLiked: post.isLiked, likesCount: post.likesCount };
 }
 
-export async function repostPost(userId: string, postId: string): Promise<{ repostsCount: number }> {
-  const post = inMemoryPosts.find((p) => p.id === postId);
+export async function repostPost(
+  userId: string,
+  postId: string
+): Promise<{ repostsCount: number }> {
+  const posts = await getStoredPosts();
+  const post = posts.find((p) => p.id === postId);
   if (!post) throw new Error('Post not found');
+
   post.repostsCount += 1;
+  await writeJson(POSTS_FILE, posts);
   return { repostsCount: post.repostsCount };
+}
+
+export async function getPostComments(postId: string): Promise<FeedComment[]> {
+  const comments = await getStoredComments();
+  return comments.filter((c) => c.postId === postId).sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+}
+
+export async function createPostComment(
+  postId: string,
+  userId: string,
+  userProfile: {
+    full_name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+  },
+  content: string
+): Promise<FeedComment> {
+  const posts = await getStoredPosts();
+  const post = posts.find((p) => p.id === postId);
+  if (!post) throw new Error('Post not found');
+
+  const comments = await getStoredComments();
+
+  const newComment: FeedComment = {
+    id: `cmt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    postId,
+    authorId: userId,
+    authorName: userProfile.full_name || userProfile.username || 'Musician',
+    authorUsername: userProfile.username || 'musician',
+    authorAvatar: userProfile.avatar_url || null,
+    content: content.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  comments.push(newComment);
+  cachedComments = comments;
+  post.commentsCount = (post.commentsCount || 0) + 1;
+
+  await writeJson(COMMENTS_FILE, comments);
+  await writeJson(POSTS_FILE, posts);
+
+  return newComment;
 }
