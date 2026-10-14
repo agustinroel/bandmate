@@ -1,3 +1,18 @@
+<!-- VISUAL STAGE CUES FLASH HUD -->
+@if (liveSync.activeCue(); as cue) {
+  <div class="p-stage-cue-banner shadow-lg" [attr.data-cue-type]="cue.type" (click)="liveSync.dismissCue()">
+    <div class="p-cue-content">
+      <mat-icon class="p-cue-icon">
+        {{ cue.type === 'solo' ? 'electric_bolt' : cue.type === 'repeat' ? 'replay' : cue.type === 'ending' ? 'flag' : 'campaign' }}
+      </mat-icon>
+      <span class="p-cue-text">{{ cue.text }}</span>
+      <button mat-icon-button class="p-cue-dismiss" (click)="liveSync.dismissCue(); $event.stopPropagation()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+}
+
 <header class="d-flex align-items-start gap-3 mb-3">
   <div class="bm-mark" aria-hidden="true">
     <mat-icon>sports_guitar</mat-icon>
@@ -242,6 +257,117 @@
               </button>
             }
           </div>
+        </div>
+      </mat-menu>
+    </div>
+
+    <!-- Live Band Sync Menu -->
+    <div class="p-band-sync">
+      <button
+        mat-stroked-button
+        type="button"
+        class="p-band-sync-btn"
+        [class.connected]="liveSync.isConnected()"
+        [matMenuTriggerFor]="syncMenu"
+        matTooltip="Sincronización en vivo de banda"
+      >
+        <mat-icon>{{ liveSync.isConnected() ? 'sensors' : 'sensors_off' }}</mat-icon>
+        <span class="d-none d-md-inline ms-1">{{ liveSync.isConnected() ? (liveSync.isLeader() ? 'Líder' : 'Seguidor') : 'Sincro Banda' }}</span>
+        @if (liveSync.isConnected() && liveSync.peerCount() > 0) {
+          <span class="p-peer-badge">{{ liveSync.peerCount() }}</span>
+        }
+      </button>
+
+      <mat-menu #syncMenu="matMenu">
+        <div class="p-sync-panel" (click)="$event.stopPropagation()">
+          <div class="p-sync-head mb-2 d-flex align-items-center gap-2">
+            <mat-icon color="accent">sensors</mat-icon>
+            <span class="fw-bold fs-6">Sincro Banda en Escenario</span>
+          </div>
+
+          <div class="small opacity-75 mb-3">
+            Sincroniza setlist, cambio de canciones y señas visuales entre todos los dispositivos en tiempo real.
+          </div>
+
+          @if (!liveSync.isConnected()) {
+            <button mat-flat-button color="primary" class="w-100 mb-2" (click)="toggleLiveSession()">
+              <mat-icon>broadcast_on_personal</mat-icon> Iniciar Sala de Escenario
+            </button>
+          } @else {
+            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-success-subtle border border-success-subtle mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <span class="p-status-dot online"></span>
+                <span class="fw-bold small text-success">Conectado en Vivo</span>
+              </div>
+              <button mat-button color="warn" class="btn-sm" (click)="liveSync.leaveSession()">
+                Salir
+              </button>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="mb-3">
+              <label class="p-sync-label">Mi Rol en Escenario</label>
+              <div class="btn-group w-100" role="group">
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="liveSync.isLeader()"
+                  [class.btn-outline-secondary]="!liveSync.isLeader()"
+                  (click)="liveSync.setRole('leader')"
+                >
+                  <mat-icon class="icon-xs">star</mat-icon> Líder / Maestro
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="!liveSync.isLeader()"
+                  [class.btn-outline-secondary]="liveSync.isLeader()"
+                  (click)="liveSync.setRole('follower')"
+                >
+                  <mat-icon class="icon-xs">groups</mat-icon> Seguidor
+                </button>
+              </div>
+              <small class="opacity-50 d-block mt-1">
+                {{ liveSync.isLeader() ? 'Controlas el cambio de canción y señas para todos.' : 'Tu pantalla sigue automáticamente al líder.' }}
+              </small>
+            </div>
+
+            <!-- Visual Stage Cues (Available for Leader) -->
+            @if (liveSync.isLeader()) {
+              <div class="mb-3">
+                <label class="p-sync-label">Señas Visuales de Escenario</label>
+                <div class="d-flex flex-wrap gap-1">
+                  <button class="btn btn-outline-warning btn-sm" (click)="sendCue('⚡ SOLO EN 4 COMPASES', 'solo')">
+                    ⚡ Solo en 4
+                  </button>
+                  <button class="btn btn-outline-info btn-sm" (click)="sendCue('🔁 REPETIR CORO', 'repeat')">
+                    🔁 Repetir Coro
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="sendCue('🏁 FINAL EN 1', 'ending')">
+                    🏁 Final en 1
+                  </button>
+                  <button class="btn btn-outline-light btn-sm" (click)="sendCue('⏩ SIGUIENTE TEMA', 'next')">
+                    ⏩ Siguiente
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- Connected Peers -->
+            <div>
+              <label class="p-sync-label">Músicos Conectados ({{ liveSync.peerCount() }})</label>
+              <div class="p-peers-list">
+                @for (peer of liveSync.peers(); track peer.userId) {
+                  <div class="p-peer-row">
+                    <span class="p-peer-name">{{ peer.userName }}</span>
+                    <span class="p-peer-role badge" [class.bg-warning]="peer.role === 'leader'" [class.bg-secondary]="peer.role === 'follower'">
+                      {{ peer.role === 'leader' ? 'Líder' : 'Seguidor' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
       </mat-menu>
     </div>

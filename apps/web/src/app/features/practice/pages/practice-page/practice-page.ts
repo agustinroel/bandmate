@@ -33,6 +33,7 @@ import { AnimationService } from '../../../../core/services/animation.service';
 import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-progress-ring/practice-progress-ring';
 import { PedalListenerService } from '../../../../core/services/pedal-listener.service';
 import { LoopTrainerService } from '../../services/loop-trainer.service';
+import { LiveBandSyncService } from '../../../../core/services/live-band-sync.service';
 
 @Component({
   standalone: true,
@@ -63,6 +64,7 @@ export class PracticePageComponent {
   readonly wakeLock = inject(WakeLockService);
   readonly pedal = inject(PedalListenerService);
   readonly loopTrainer = inject(LoopTrainerService);
+  readonly liveSync = inject(LiveBandSyncService);
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
   private readonly sessionService = inject(PracticeSessionService);
@@ -125,12 +127,50 @@ export class PracticePageComponent {
       this.wakeLock.disable();
       this.metronome.stop();
       this.loopTrainer.stopLoop();
+      this.liveSync.leaveSession();
       this.stopScroll();
       if (this._overlayTimeout) clearTimeout(this._overlayTimeout);
     });
 
     this.loopTrainer.registerLoopScrollHandler((secId) => {
       this.scrollToSection(secId);
+    });
+
+    // Realtime stage sync: Follower receives leader song switch
+    effect(() => {
+      const remoteSong = this.liveSync.remoteSongChange();
+      if (remoteSong && !this.liveSync.isLeader()) {
+        if (typeof remoteSong.index === 'number') {
+          this.p.jumpTo(remoteSong.index);
+        }
+      }
+    });
+
+    // Realtime stage sync: Follower receives section jump
+    effect(() => {
+      const secJump = this.liveSync.remoteSectionJump();
+      if (secJump && !this.liveSync.isLeader()) {
+        const el = document.getElementById('sec-' + secJump.sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+
+    // Realtime stage sync: Leader broadcasts song change
+    effect(() => {
+      const currentId = this.p.currentSongId();
+      const currentSong = this.p.currentSong();
+      if (currentId && this.liveSync.isConnected() && this.liveSync.isLeader()) {
+        this.liveSync.broadcastSongChange({
+          songId: currentId,
+          title: currentSong?.title,
+          artist: currentSong?.artist,
+          bpm: Number(currentSong?.bpm) || undefined,
+          key: currentSong?.key,
+          index: this.p.index(),
+        });
+      }
     });
 
     effect(() => {
@@ -328,6 +368,7 @@ export class PracticePageComponent {
     this.wakeLock.disable();
     this.metronome.stop();
     this.loopTrainer.stopLoop();
+    this.liveSync.leaveSession();
     this.p.stop();
     this.stopScroll();
     this.closeScrollOverlay();
@@ -343,6 +384,7 @@ export class PracticePageComponent {
     this.wakeLock.disable();
     this.metronome.stop();
     this.loopTrainer.stopLoop();
+    this.liveSync.leaveSession();
     this.p.stop();
     this.stopScroll();
     this.closeScrollOverlay();
@@ -511,23 +553,12 @@ export class PracticePageComponent {
 
   // ---- Section Navigation ----
   scrollToSection(sectionId: string) {
+    if (this.liveSync.isConnected() && this.liveSync.isLeader()) {
+      this.liveSync.broadcastSectionJump(sectionId);
+    }
     const el = document.getElementById('sec-' + sectionId);
     if (el) {
-      const headerOffset = 180; // approximate header height
-      const container = document.querySelector('.app-main') || window;
-
-      // Calculate offset relative to the container if possible
-      // But simpler: el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      // is easier but we have a sticky header/toolbar.
-
-      // Manual calc:
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      // Or if we want precise offset:
-      // const headerOffset = 100;
-      // const elementPosition = el.getBoundingClientRect().top;
-      // const offsetPosition = elementPosition + container.scrollTop - headerOffset;
-      // container.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }
 
@@ -615,5 +646,20 @@ export class PracticePageComponent {
   onRepsPerIncrementChange(event: Event) {
     const val = Number((event.target as HTMLSelectElement).value);
     this.loopTrainer.setRepsPerIncrement(val);
+  }
+
+  // ---- Live Band Mesh Synchronization ----
+  toggleLiveSession() {
+    if (this.liveSync.isConnected()) {
+      this.liveSync.leaveSession();
+    } else {
+      const currentSetlist = this.p.setlist();
+      const bandId = (currentSetlist as any)?.bandId || currentSetlist?.id || 'live-stage-session';
+      this.liveSync.joinSession(bandId, 'leader');
+    }
+  }
+
+  sendCue(text: string, type: 'solo' | 'repeat' | 'ending' | 'next' | 'custom' = 'custom') {
+    this.liveSync.broadcastStageCue(text, type);
   }
 }
