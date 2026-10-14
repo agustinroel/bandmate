@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatMenuModule } from '@angular/material/menu';
+import gsap from 'gsap';
 import { PracticeStore } from '../../state/practice.store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { SongsStore } from '../../../songs/state/songs-store';
@@ -77,9 +78,17 @@ export class PracticePageComponent {
   // Must: avoid re-starting practice for the same setlistId due to effect re-runs
   private startedForId = signal<string | null>(null);
 
-  readonly transpose = signal(0);
+  // Ley 4: Aislamiento tonal independiente por canción de sesión (no contamina otros temas ni catálogo)
+  readonly currentSongTranspose = signal(0);
+  private readonly _sessionTranspositions = signal<Record<string, number>>({});
+  readonly transpose = computed(() => this.currentSongTranspose());
+
   readonly isScrolling = signal(false);
   readonly isStageMode = signal(false);
+
+  // Floating mini-control for autoscroll (Touch/Swipe-up overlay with 1-second auto-hide)
+  readonly scrollOverlayVisible = signal(false);
+  private _overlayTimeout: any = null;
 
   // Mobile toolbar visibility (show/hide on swipe)
   readonly isToolbarVisible = signal(true);
@@ -110,7 +119,12 @@ export class PracticePageComponent {
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.wakeLock.disable());
+    this.destroyRef.onDestroy(() => {
+      this.wakeLock.disable();
+      this.metronome.stop();
+      this.stopScroll();
+      if (this._overlayTimeout) clearTimeout(this._overlayTimeout);
+    });
 
     effect(() => {
       if (this.songs.state() === 'idle') this.songs.load();
@@ -133,13 +147,40 @@ export class PracticePageComponent {
       this.sessionService.startSession(setlistId);
     });
 
-    // Track individual song views
+    // Mantener sincronizado el mapa de transposiciones de sesión
+    effect(() => {
+      const val = this.currentSongTranspose();
+      const currentId = this.p.currentSongId();
+      if (currentId) {
+        this._sessionTranspositions.update((map) => {
+          if (map[currentId] === val) return map;
+          return { ...map, [currentId]: val };
+        });
+      }
+    });
+
+    // Track individual song views, aislar transposición por tema y sincronizar BPM del metrónomo
     effect(() => {
       const currentId = this.p.currentSongId();
       if (currentId) {
         this.sessionService.recordSongStart(currentId);
         // Sync with SongsStore to ensure detail is loaded (sections/chords)
         this.songs.loadDetail(currentId);
+
+        // 1. Cargar transposición aislada de esta canción en la sesión (por defecto 0)
+        const saved = this._sessionTranspositions()[currentId] ?? 0;
+        this.currentSongTranspose.set(saved);
+
+        // 2. Ley 2: Sincronizar automáticamente BPM de la nueva canción con Tone.Transport
+        const song = this.p.currentSong();
+        if (song?.bpm) {
+          const bpm = Number(song.bpm) || 120;
+          this.metronome.setBpm(bpm);
+        }
+
+        // 3. Detener scroll anterior y ocultar overlay al cambiar de canción
+        this.stopScroll();
+        this.closeScrollOverlay();
       }
     });
 
@@ -239,12 +280,19 @@ export class PracticePageComponent {
         }
       });
 
-    // Touch swipe detection for toolbar visibility on mobile
+    // Touch detection & swipe detection for toolbar visibility on mobile and autoscroll overlay
     fromEvent<TouchEvent>(document, 'touchstart', { passive: true })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((e) => {
         this._touchStartY = e.touches[0].clientY;
         this._touchStartTime = Date.now();
+
+        // Al tocar la pantalla con autoscroll activo, NO detenerlo y abrir el mini-control
+        if (this.isScrolling()) {
+          this.openScrollOverlay();
+        } else if (this.scrollOverlayVisible()) {
+          this.resetOverlayTimer();
+        }
       });
 
     fromEvent<TouchEvent>(document, 'touchend', { passive: true })
@@ -259,8 +307,9 @@ export class PracticePageComponent {
             // Swipe DOWN -> show toolbar
             this.isToolbarVisible.set(true);
           } else {
-            // Swipe UP -> hide toolbar
+            // Swipe UP -> hide toolbar and open autoscroll mini-control on mobile
             this.isToolbarVisible.set(false);
+            this.openScrollOverlay();
           }
         }
       });
@@ -268,23 +317,25 @@ export class PracticePageComponent {
 
   exit() {
     const id = this.id();
-    // nice/should: stop practice state when leaving
     this.wakeLock.disable();
+    this.metronome.stop();
     this.p.stop();
     this.stopScroll();
+    this.closeScrollOverlay();
 
     // End practice session tracking
     const isCompleted = !this.p.nextSongId(); // Completed if at last song
     this.sessionService.endSession(isCompleted);
 
-    // Should: send focus id back to Setlists
     this.router.navigate(['/setlists'], { queryParams: { focus: id } });
   }
 
   goSetlists() {
-    // nice/should: stop practice state when leaving
     this.wakeLock.disable();
+    this.metronome.stop();
     this.p.stop();
+    this.stopScroll();
+    this.closeScrollOverlay();
 
     // End practice session (not completed since exiting early)
     this.sessionService.endSession(false);
@@ -310,6 +361,7 @@ export class PracticePageComponent {
   private _lastTs: number | null = null;
   private _scrollCarry = 0;
   private _autoScrollCleanup: (() => void) | null = null;
+  private scrollTween: gsap.core.Tween | null = null;
 
   toggleScroll() {
     if (this.isScrolling()) {
@@ -319,18 +371,46 @@ export class PracticePageComponent {
     }
   }
 
-  private scrollTween: gsap.core.Tween | null = null;
+  openScrollOverlay() {
+    this.scrollOverlayVisible.set(true);
+    this.resetOverlayTimer();
+  }
 
-  startScroll() {
-    if (this.isScrolling()) return;
-    if (!this.p.currentSong()) return;
+  closeScrollOverlay() {
+    if (this._overlayTimeout) {
+      clearTimeout(this._overlayTimeout);
+      this._overlayTimeout = null;
+    }
+    this.scrollOverlayVisible.set(false);
+  }
 
-    this.isScrolling.set(true);
+  resetOverlayTimer() {
+    if (this._overlayTimeout) {
+      clearTimeout(this._overlayTimeout);
+    }
+    this._overlayTimeout = setTimeout(() => {
+      this.zone.run(() => {
+        this.scrollOverlayVisible.set(false);
+      });
+    }, 1000);
+  }
 
-    // Bind interruption (wheel/touch)
-    this._autoScrollCleanup?.();
-    this._autoScrollCleanup = this._bindAutoScrollInterruption(() => this.stopScroll());
+  adjustSpeed(delta: number) {
+    const next = Math.min(
+      this.autoScrollSpeedMax,
+      Math.max(this.autoScrollSpeedMin, this.autoScrollSpeed() + delta),
+    );
+    this.setScrollSpeed(next);
+  }
 
+  setScrollSpeed(val: number) {
+    this.autoScrollSpeed.set(val);
+    if (this.isScrolling()) {
+      this._updateScrollTweenSpeed();
+    }
+  }
+
+  private _updateScrollTweenSpeed() {
     this.zone.runOutsideAngular(() => {
       // Target the scrollable container
       // In Stage Mode, the scrollable element is the fixed card (.p-now)
@@ -354,6 +434,10 @@ export class PracticePageComponent {
 
       const duration = remaining / this.autoScrollSpeed();
 
+      if (this.scrollTween) {
+        this.scrollTween.kill();
+      }
+
       this.scrollTween = gsap.to(container, {
         scrollTo: { y: maxScroll },
         duration,
@@ -365,6 +449,19 @@ export class PracticePageComponent {
     });
   }
 
+  startScroll() {
+    if (this.isScrolling()) return;
+    if (!this.p.currentSong()) return;
+
+    this.isScrolling.set(true);
+
+    // Bind interruption (wheel/keys, touch will NOT stop scroll)
+    this._autoScrollCleanup?.();
+    this._autoScrollCleanup = this._bindAutoScrollInterruption(() => this.stopScroll());
+
+    this._updateScrollTweenSpeed();
+  }
+
   stopScroll() {
     if (this.scrollTween) {
       this.scrollTween.kill();
@@ -374,10 +471,6 @@ export class PracticePageComponent {
     this._lastTs = null;
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = null;
-  }
-
-  setScrollSpeed(val: number) {
-    this.autoScrollSpeed.set(val);
   }
 
   readonly el = inject(ElementRef);
@@ -442,10 +535,6 @@ export class PracticePageComponent {
       onInterrupt();
     };
 
-    const onTouch = () => {
-      if (this.isScrolling()) onInterrupt();
-    };
-
     const onKey = (e: KeyboardEvent) => {
       if (!this.isScrolling()) return;
       if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) {
@@ -454,12 +543,10 @@ export class PracticePageComponent {
     };
 
     target.addEventListener('wheel', onWheel, opts);
-    target.addEventListener('touchstart', onTouch, opts);
     target.addEventListener('keydown', onKey);
 
     return () => {
       target.removeEventListener('wheel', onWheel, opts);
-      target.removeEventListener('touchstart', onTouch, opts);
       target.removeEventListener('keydown', onKey);
     };
   }

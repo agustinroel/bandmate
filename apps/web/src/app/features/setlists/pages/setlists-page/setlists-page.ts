@@ -239,7 +239,14 @@ export class SetlistsPageComponent {
 
   exportPdf() {
     if (!this.subscriptionStore.requireTierOrUpgrade('setlist_export')) return;
-    this.notify.info('Coming soon — export setlist as PDF', 'OK', 2000);
+    const sel = this.store.selected();
+    if (!sel || !sel.items.length) {
+      this.notify.info('Setlist is empty', 'OK', 2000);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   }
 
   // Should: rename setlist

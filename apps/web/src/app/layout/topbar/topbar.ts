@@ -18,6 +18,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { UserNotificationsService } from '../../features/notifications/services/user-notifications.service';
 import { MatListModule } from '@angular/material/list';
 import { DatePipe } from '@angular/common';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -69,25 +70,24 @@ import { DatePipe } from '@angular/common';
 
         <div class="bm-slot bm-slot--center">
           <nav class="bm-nav" aria-label="Primary">
-            <!-- same content -->
             <a class="bm-nav-link" routerLink="/songs" routerLinkActive="active">
               <mat-icon class="bm-nav-ic">library_music</mat-icon>
-              Songs
+              {{ i18n.t('nav.songs') }}
             </a>
 
             <a class="bm-nav-link" routerLink="/setlists" routerLinkActive="active">
               <mat-icon class="bm-nav-ic">queue_music</mat-icon>
-              Setlists
+              {{ i18n.t('nav.setlists') }}
             </a>
 
             <a class="bm-nav-link" routerLink="/practice" routerLinkActive="active">
               <mat-icon class="bm-nav-ic">sports_guitar</mat-icon>
-              Practice
+              {{ i18n.t('nav.practice') }}
             </a>
 
             <a class="bm-nav-link" routerLink="/community" routerLinkActive="active">
               <mat-icon class="bm-nav-ic">groups</mat-icon>
-              Community
+              {{ i18n.t('nav.community') }}
             </a>
           </nav>
         </div>
@@ -206,28 +206,28 @@ import { DatePipe } from '@angular/common';
 
                 <button mat-menu-item type="button" (click)="goProfile()">
                   <mat-icon>manage_accounts</mat-icon>
-                  Profile
+                  {{ i18n.t('nav.profile') }}
                 </button>
 
                 <button mat-menu-item type="button" routerLink="/tickets">
                   <mat-icon>confirmation_number</mat-icon>
-                  My Tickets
+                  {{ i18n.t('nav.tickets') }}
                 </button>
 
                 <button mat-menu-item type="button" routerLink="/settings">
                   <mat-icon>settings</mat-icon>
-                  Settings
+                  {{ i18n.t('nav.settings') }}
                 </button>
 
                 <button mat-menu-item type="button" (click)="signOut()">
                   <mat-icon>logout</mat-icon>
-                  Sign out
+                  {{ i18n.t('nav.logout') }}
                 </button>
               </mat-menu>
             } @else {
               <button mat-raised-button color="primary" type="button" (click)="goLogin()">
                 <mat-icon class="me-1">login</mat-icon>
-                Sign in
+                {{ i18n.t('nav.signin') }}
               </button>
             }
           </div>
@@ -482,6 +482,7 @@ export class TopbarComponent implements AfterViewInit {
   readonly router = inject(Router);
   readonly notifService = inject(UserNotificationsService);
   readonly el = inject(ElementRef<HTMLElement>);
+  readonly i18n = inject(I18nService);
 
   readonly isAuthed = this.auth.isAuthed;
 

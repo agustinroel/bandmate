@@ -213,4 +213,5 @@ Every feature added to Bandmate must satisfy:
 1. **Zero-Latency Principle**: UI operations and audio timing never block the main thread.
 2. **Stage Safety**: No accidental navigation during live playback; reliable offline operation.
 3. **Responsive Signals**: All state handled reactively with Angular Signals and immutable patterns.
-4. **Automated Quality**: Verified via Vitest unit tests, Puppeteer visual regression checks, and clean production builds.
+4. **Design & Accessibility Compliance**: Strict adherence to [DESIGN_SYSTEM_AND_ACCESSIBILITY.md](file:///docs/DESIGN_SYSTEM_AND_ACCESSIBILITY.md) incorporating **Vercel Web Design Guidelines**, **Accessibility Audit (WCAG 2.1 AA)**, **Frontend Design (Anthropic)**, and **UX/UI PRO MAX** standards.
+5. **Automated Quality**: Verified via Vitest unit tests, Puppeteer visual regression checks, and clean production builds.

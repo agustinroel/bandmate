@@ -36,23 +36,23 @@
       <mat-nav-list class="bm-nav">
         <a mat-list-item routerLink="/songs" routerLinkActive="active">
           <mat-icon matListItemIcon class="me-2">music_note</mat-icon>
-          <span>Songs</span>
+          <span>{{ i18n.t('nav.songs') }}</span>
         </a>
 
         <a mat-list-item routerLink="/setlists" routerLinkActive="active">
           <mat-icon matListItemIcon class="me-2">queue_music</mat-icon>
-          <span>Setlists</span>
+          <span>{{ i18n.t('nav.setlists') }}</span>
         </a>
       </mat-nav-list>
     </div>
 
     <div class="bm-sidenav-section">
-      <div class="bm-sidenav-section-title">Community</div>
+      <div class="bm-sidenav-section-title">{{ i18n.t('nav.community') }}</div>
 
       <mat-nav-list class="bm-nav">
         <a mat-list-item routerLink="/community" routerLinkActive="active">
           <mat-icon matListItemIcon class="me-2">groups</mat-icon>
-          <span>Community</span>
+          <span>{{ i18n.t('nav.community') }}</span>
         </a>
 
         <a mat-list-item (click)="onBandsClick($event)" style="cursor: pointer">

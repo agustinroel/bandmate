@@ -711,8 +711,130 @@
   top: 16px;
   right: 16px;
   z-index: 60; // Inside card but accessible
-  
-  // Adjust position if transpose is there too
-  // Let's move this button to Left? Or keep it next to transpose?
-  // Let's move Transpose to be next to this button.
+}
+
+/* ==============================================
+   Floating Autoscroll Mini-Control (1s auto-hide)
+   ============================================== */
+.p-scroll-overlay {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(18, 22, 30, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(233, 196, 106, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  animation: bmSlideUpOverlay 0.25s var(--bm-ease-out, ease-out) both;
+  touch-action: manipulation;
+  user-select: none;
+
+  .p-sc-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 2px 6px;
+  }
+
+  .p-sc-speed-val {
+    font-family: var(--bm-mono, monospace);
+    font-size: 0.95rem;
+    font-weight: 700;
+    min-width: 58px;
+    text-align: center;
+    color: var(--bm-accent, #e9c46a);
+
+    small {
+      font-size: 0.7rem;
+      opacity: 0.75;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  button[mat-icon-button] {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    padding: 0;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  .p-sc-btn-play {
+    background: var(--bm-accent, #e9c46a);
+    color: #12151d !important;
+
+    mat-icon {
+      color: #12151d;
+    }
+
+    &:hover {
+      filter: brightness(1.1);
+      background: var(--bm-accent, #e9c46a);
+    }
+  }
+
+  .p-sc-btn-adjust {
+    width: 32px;
+    height: 32px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+
+  .p-sc-btn-close {
+    opacity: 0.65;
+    margin-left: 2px;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes bmSlideUpOverlay {
+  from {
+    transform: translate(-50%, 20px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .p-scroll-overlay {
+    bottom: 24px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
 }

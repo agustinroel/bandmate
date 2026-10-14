@@ -37,7 +37,16 @@ export async function profilesRoutes(app: FastifyInstance) {
     }
 
     const items = await listPublicProfiles(filters, limit, offset);
-    return items;
+    const { getMultipleFollowStats } = await import("../community/follows.repo.js");
+    const userIds = items.map((p) => p.id);
+    const followStats = await getMultipleFollowStats(userIds, (req as any).user?.id);
+    const enriched = items.map((p) => ({
+      ...p,
+      followersCount: followStats[p.id]?.followersCount ?? 0,
+      followingCount: followStats[p.id]?.followingCount ?? 0,
+      isFollowing: followStats[p.id]?.isFollowing ?? false,
+    }));
+    return enriched;
   });
 
   // GET public profile details by username

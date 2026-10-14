@@ -346,3 +346,31 @@
 
 .icon-xs { font-size: 16px; width: 16px; height: 16px; }
 .tracking-wider { letter-spacing: 0.05em; }
+
+@media print {
+  .bm-page-header button,
+  .sl-sidebar,
+  .picker-col,
+  .sl-pro-action,
+  .show-mode-btn,
+  .remove-btn,
+  .drag-handle {
+    display: none !important;
+  }
+  .sl-layout {
+    display: block !important;
+    height: auto !important;
+  }
+  .drag-col, .drag-list {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .card-glass {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .drag-row {
+    box-shadow: none !important;
+    border-bottom: 1px solid #dee2e6 !important;
+  }
+}

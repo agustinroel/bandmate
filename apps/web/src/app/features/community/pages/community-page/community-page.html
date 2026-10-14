@@ -4,10 +4,10 @@
 <section class="cm-hero">
   <div class="cm-hero-badge mb-2">
     <mat-icon>public</mat-icon>
-    <span>Red Musical Global</span>
+    <span>{{ i18n.t('community.heroBadge', 'Red Musical Global') }}</span>
   </div>
-  <h1 class="cm-hero-title">El punto de encuentro para todos los músicos del mundo.</h1>
-  <p class="cm-hero-sub">Comparte tus arreglos, descubre bandas, encuentra integrantes y conéctate directamente.</p>
+  <h1 class="cm-hero-title">{{ i18n.t('community.heroTitle', 'El punto de encuentro para todos los músicos del mundo.') }}</h1>
+  <p class="cm-hero-sub">{{ i18n.t('community.heroSub', 'Comparte tus arreglos, descubre bandas, encuentra integrantes y conéctate directamente.') }}</p>
 
   <!-- Navigation Switcher Pills (X.com / Apple Style) -->
   <div class="cm-nav-switcher shadow-sm mt-3">
@@ -17,7 +17,7 @@
       (click)="setTab('feed')"
     >
       <mat-icon>dynamic_feed</mat-icon>
-      <span>Feed Musical</span>
+      <span>{{ i18n.t('community.tabs.feed', 'Feed Musical') }}</span>
     </button>
     <button
       class="cm-nav-pill"
@@ -25,7 +25,7 @@
       (click)="setTab('directory')"
     >
       <mat-icon>groups</mat-icon>
-      <span>Músicos & Bandas</span>
+      <span>{{ i18n.t('community.tabs.directory', 'Músicos & Bandas') }}</span>
     </button>
     <button
       class="cm-nav-pill"
@@ -33,7 +33,7 @@
       (click)="setTab('auditions')"
     >
       <mat-icon>campaign</mat-icon>
-      <span>Audiciones</span>
+      <span>{{ i18n.t('community.tabs.auditions', 'Audiciones') }}</span>
       @if (auditionPosts().length > 0) {
         <span class="cm-pill-count">{{ auditionPosts().length }}</span>
       }
@@ -49,15 +49,15 @@
   @if (activeTab() === 'feed' || activeTab() === 'auditions') {
     <div class="row g-4 justify-content-center">
       <div class="col-12 col-lg-8">
-        <!-- Feed Subheader Filters (Para Ti vs Siguiendo) -->
+        <!-- Feed Subheader Filters (Para ti vs Siguiendo) -->
         @if (activeTab() === 'feed') {
-          <div class="cm-feed-header-tabs mb-4 border-bottom">
+          <div class="cm-feed-header-tabs mb-3 border-bottom">
             <button
               class="cm-feed-tab-btn"
               [class.active]="feedFilter() === 'for_you'"
               (click)="setFeedFilter('for_you')"
             >
-              Para ti
+              {{ i18n.t('community.feed.forYou', 'Para ti') }}
               <div class="tab-indicator"></div>
             </button>
             <button
@@ -65,10 +65,45 @@
               [class.active]="feedFilter() === 'following'"
               (click)="setFeedFilter('following')"
             >
-              Siguiendo
+              {{ i18n.t('community.feed.following', 'Siguiendo') }}
               <div class="tab-indicator"></div>
             </button>
           </div>
+
+          <!-- Feed Search Bar (X.com Explore style) -->
+          <div class="cm-feed-search-bar mb-3">
+            <div class="cm-feed-search-input-wrap">
+              <mat-icon class="cm-feed-search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="cm-feed-search-input"
+                [placeholder]="i18n.t('community.searchPlaceholder', 'Buscar publicaciones, riffs, acordes o #hashtags...')"
+                [ngModel]="searchQuery()"
+                (ngModelChange)="onSearchFeed($event)"
+                (keydown.enter)="onSearchFeed()"
+              />
+              @if (searchQuery()) {
+                <button mat-icon-button class="cm-search-clear-btn" (click)="clearFeedFilter()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Active Filter Banner (if tag or search query active) -->
+          @if (searchQuery() || activeTag()) {
+            <div class="cm-active-filter-banner d-flex align-items-center justify-content-between p-2 px-3 rounded-pill mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <mat-icon class="cm-filter-icon">filter_alt</mat-icon>
+                <span class="small">
+                  Filtrando por: <strong>{{ activeTag() ? '#' + activeTag() : searchQuery() }}</strong>
+                </span>
+              </div>
+              <button mat-button class="btn-sm rounded-pill cm-clear-filter-btn" (click)="clearFeedFilter()">
+                <mat-icon class="me-1">close</mat-icon> Quitar filtro
+              </button>
+            </div>
+          }
 
           <!-- X.com Style Post Composer Card -->
           <div class="cm-composer-card shadow-sm border mb-4">
@@ -85,7 +120,7 @@
                 <textarea
                   class="cm-composer-input"
                   [(ngModel)]="postContent"
-                  placeholder="¿Qué estás tocando o componiendo hoy? Comparte un riff, busca músicos o publica un tema..."
+                  [placeholder]="i18n.t('community.feed.composerPlaceholder', '¿Qué estás tocando o componiendo hoy? Comparte un riff, busca músicos o publica un tema...')"
                   rows="3"
                 ></textarea>
 
@@ -117,7 +152,7 @@
                       [class.active]="selectedPostType() === 'status'"
                       (click)="selectedPostType.set('status')"
                     >
-                      💬 Estado
+                      💬 {{ i18n.t('community.feed.types.status', 'Estado') }}
                     </button>
                     <button
                       mat-button
@@ -125,7 +160,7 @@
                       [class.active]="selectedPostType() === 'riff'"
                       (click)="selectedPostType.set('riff')"
                     >
-                      🎸 Riff
+                      🎸 {{ i18n.t('community.feed.types.riff', 'Riff') }}
                     </button>
                     <button
                       mat-button
@@ -133,7 +168,7 @@
                       [class.active]="selectedPostType() === 'song_share'"
                       (click)="selectedPostType.set('song_share')"
                     >
-                      🎵 Canción
+                      🎵 {{ i18n.t('community.feed.types.song', 'Canción') }}
                     </button>
                     <button
                       mat-button
@@ -141,7 +176,7 @@
                       [class.active]="selectedPostType() === 'looking_for_member'"
                       (click)="selectedPostType.set('looking_for_member')"
                     >
-                      🚨 Busco Músico
+                      🚨 {{ i18n.t('community.feed.types.audition', 'Busco Músico') }}
                     </button>
 
                     <!-- Attach Song Menu Button (aligned chip) -->
@@ -150,10 +185,10 @@
                       mat-button
                       class="cm-type-chip cm-attach-chip"
                       [matMenuTriggerFor]="songMenu"
-                      matTooltip="Adjuntar canción de tu repertorio"
+                      [matTooltip]="i18n.t('community.feed.attachSong', 'Adjuntar canción de tu repertorio')"
                     >
                       <mat-icon class="me-1">library_music</mat-icon>
-                      <span>Adjuntar canción</span>
+                      <span>{{ i18n.t('community.feed.attachSong', 'Adjuntar canción') }}</span>
                     </button>
 
                     <mat-menu #songMenu="matMenu">
@@ -174,7 +209,7 @@
                     class="cm-publish-btn rounded-pill px-4 ms-auto"
                   >
                     <mat-icon class="me-1">send</mat-icon>
-                    {{ isPosting() ? 'Publicando...' : 'Publicar' }}
+                    {{ isPosting() ? i18n.t('community.feed.publishing', 'Publicando...') : i18n.t('community.feed.publish', 'Publicar') }}
                   </button>
                 </div>
               </div>
@@ -257,14 +292,39 @@
                       </div>
                     </div>
                   </div>
-                  <button mat-icon-button class="text-muted" (click)="copyPostLink(post)" matTooltip="Copiar enlace">
-                    <mat-icon>link</mat-icon>
-                  </button>
+
+                  <div class="d-flex align-items-center gap-2">
+                    @if (post.authorId && post.authorId !== authStore.user()?.id) {
+                      <button
+                        mat-stroked-button
+                        class="cm-follow-btn rounded-pill btn-sm"
+                        [class.cm-following-btn]="post.isAuthorFollowed || isFollowing(post.authorId)"
+                        (click)="toggleFollow(post.authorId, post.authorName)"
+                      >
+                        <mat-icon class="cm-follow-btn-icon">{{ (post.isAuthorFollowed || isFollowing(post.authorId)) ? 'check' : 'person_add' }}</mat-icon>
+                        <span>{{ (post.isAuthorFollowed || isFollowing(post.authorId)) ? i18n.t('community.following', 'Siguiendo') : i18n.t('community.follow', 'Seguir') }}</span>
+                      </button>
+                    }
+                    <button mat-icon-button class="text-muted" (click)="copyPostLink(post)" matTooltip="Copiar enlace">
+                      <mat-icon>link</mat-icon>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Post Body Content -->
                 <div class="cm-post-content mb-3">
                   <p class="m-0 fs-6" style="white-space: pre-line;">{{ post.content }}</p>
+                  
+                  <!-- Clickable Hashtags List -->
+                  @if (post.tags && post.tags.length > 0) {
+                    <div class="cm-post-tags d-flex flex-wrap gap-1 mt-2">
+                      @for (t of post.tags; track t) {
+                        <button class="cm-hashtag-chip" (click)="filterByTag(t)">
+                          #{{ t }}
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
 
                 <!-- Attached Song Interactive Box -->
@@ -275,7 +335,7 @@
                         <mat-icon>album</mat-icon>
                       </div>
                       <div>
-                        <div class="fw-bold fs-6 text-dark">{{ song.title }}</div>
+                        <div class="fw-bold fs-6">{{ song.title }}</div>
                         <div class="text-muted small">{{ song.artist }}</div>
                         <div class="d-flex gap-2 mt-1">
                           <span class="badge bg-light text-dark border">Clave: {{ song.key || 'C' }}</span>
@@ -344,7 +404,7 @@
                           @for (comment of commentsByPost()[post.id]; track comment.id) {
                             <div class="cm-comment-item">
                               <img
-                                [src]="comment.authorAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'"
+                                [src]="comment.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                                 [alt]="comment.authorName"
                                 class="cm-comment-avatar"
                               />
@@ -398,37 +458,84 @@
         </div>
       </div>
 
-      <!-- Sidebar: Suggested Bands & Top Jams -->
+      <!-- Sidebar: Real Trends & Who to Follow (X.com Style) -->
       <div class="col-12 col-lg-4 d-none d-lg-block">
-        <div class="cm-sidebar-card shadow-sm border p-4 rounded-4 mb-4">
+        <!-- Musical Trends Widget -->
+        <div class="cm-sidebar-card shadow-sm border p-3 rounded-4 mb-3">
           <h3 class="fs-6 fw-bold mb-3 d-flex align-items-center gap-2">
             <mat-icon class="text-primary">trending_up</mat-icon>
-            Tendencias Musicales
+            {{ i18n.t('community.trendsTitle', 'Tendencias Musicales') }}
           </h3>
-          <div class="small text-muted mb-2">#StandByMe (84 ensayos hoy)</div>
-          <div class="small text-muted mb-2">#Wonderwall (112 bandas tocando)</div>
-          <div class="small text-muted mb-2">#BuscoBateristaMadrid (18 anuncios)</div>
-          <div class="small text-muted">#StageModeBandmate (Trending)</div>
+          @if (trends().length === 0) {
+            <div class="small text-muted fst-italic py-2">Explora los riffs y temas del momento</div>
+          } @else {
+            @for (trend of trends(); track trend.tag) {
+              <div class="cm-trend-item py-2 px-2 rounded-3 mb-1" (click)="filterByTag(trend.tag)" role="button" tabindex="0">
+                <div class="text-muted" style="font-size: 11px;">{{ trend.category }}</div>
+                <div class="fw-bold small text-primary">#{{ trend.tag }}</div>
+                <div class="text-muted" style="font-size: 11px;">{{ trend.count }} publicaciones</div>
+              </div>
+            }
+          }
         </div>
 
-        <div class="cm-sidebar-card shadow-sm border p-4 rounded-4">
+        <!-- Who to Follow Widget -->
+        <div class="cm-sidebar-card shadow-sm border p-3 rounded-4 mb-3">
+          <h3 class="fs-6 fw-bold mb-3 d-flex align-items-center gap-2">
+            <mat-icon class="text-primary">person_add</mat-icon>
+            {{ i18n.t('community.whoToFollow', 'A quién seguir') }}
+          </h3>
+          @if (whoToFollow().length === 0) {
+            <div class="small text-muted fst-italic py-2">¡Estás al día con todos los músicos!</div>
+          } @else {
+            @for (rec of whoToFollow(); track rec.id) {
+              <div class="d-flex align-items-center justify-content-between py-2 border-bottom cm-rec-item">
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                  <img
+                    [src]="rec.avatar_url || 'assets/brand/avatar-fallback.svg'"
+                    [alt]="rec.username"
+                    class="cm-rec-avatar"
+                  />
+                  <div class="min-w-0">
+                    <div class="fw-bold small text-truncate">{{ rec.full_name || rec.username }}</div>
+                    <div class="text-muted" style="font-size: 11px;">&#64;{{ rec.username }}</div>
+                  </div>
+                </div>
+                <button
+                  mat-flat-button
+                  class="cm-follow-sm-btn rounded-pill btn-sm"
+                  (click)="toggleFollow(rec.id, rec.full_name || rec.username)"
+                >
+                  {{ i18n.t('community.follow', 'Seguir') }}
+                </button>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Band Widget -->
+        <div class="cm-sidebar-card shadow-sm border p-3 rounded-4">
           <h3 class="fs-6 fw-bold mb-3 d-flex align-items-center gap-2">
             <mat-icon class="text-primary">groups</mat-icon>
-            Bandas en tu Ciudad
+            {{ i18n.t('community.myBandsTitle', 'Tus Bandas') }}
           </h3>
-          @for (b of myBands().slice(0, 3); track b.id) {
-            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-              <div class="d-flex align-items-center gap-2">
-                <div class="cm-band-avatar-mini">{{ b.name[0] }}</div>
-                <div>
-                  <div class="fw-bold small">{{ b.name }}</div>
-                  <div class="text-muted" style="font-size: 11px;">Banda Activa</div>
+          @if (myBands().length === 0) {
+            <div class="small text-muted fst-italic py-2">Aún no tienes bandas registradas.</div>
+          } @else {
+            @for (b of myBands().slice(0, 3); track b.id) {
+              <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="cm-band-avatar-mini">{{ b.name[0] }}</div>
+                  <div>
+                    <div class="fw-bold small">{{ b.name }}</div>
+                    <div class="text-muted" style="font-size: 11px;">Banda Activa</div>
+                  </div>
                 </div>
+                <button mat-stroked-button class="btn-sm rounded-pill" [routerLink]="['/bands', b.id]">
+                  Ver
+                </button>
               </div>
-              <button mat-stroked-button class="btn-sm rounded-pill" [routerLink]="['/bands', b.id]">
-                Ver
-              </button>
-            </div>
+            }
           }
         </div>
       </div>
@@ -442,7 +549,7 @@
     <section class="cm-section" id="cm-musicians-anchor">
       <div class="cm-section-head">
         <div>
-          <div class="cm-section-title">Directorio de Músicos</div>
+          <h2 class="cm-section-title m-0">{{ i18n.t('community.directoryTitle', 'Directorio de Músicos') }}</h2>
           @if (!loading()) {
             <div class="cm-section-count">{{ resultCountLabel() }}</div>
           }
@@ -474,7 +581,7 @@
         </div>
       </div>
 
-      <!-- Musicians Grid -->
+      <!-- Musicians Grid (UX/UI PRO MAX + Vercel Web Design) -->
       @if (loading()) {
         <div class="text-center py-5">
           <mat-spinner diameter="40" class="mx-auto mb-3"></mat-spinner>
@@ -489,42 +596,91 @@
       } @else {
         <div class="cm-grid">
           @for (profile of profiles(); track profile.id) {
-            <div class="cm-card cm-gsap-item">
-              <div class="d-flex align-items-center gap-3 mb-3">
-                <img
-                  [src]="profile.avatar_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150'"
-                  [alt]="profile.username"
-                  class="cm-avatar"
-                />
-                <div class="flex-grow-1 min-w-0">
-                  <div class="fw-bold text-truncate">{{ profile.full_name || profile.username }}</div>
-                  <div class="text-muted small">&#64;{{ profile.username }}</div>
-                  @if (profile.subscription_tier === 'pro') {
-                    <span class="badge bg-warning-subtle text-warning border px-2 py-0 mt-1">PRO</span>
+            <div class="cm-musician-card cm-gsap-item">
+              <div class="cm-musician-card-header">
+                <div class="cm-musician-banner-aura"></div>
+                <div class="d-flex justify-content-between align-items-start position-relative px-3 pt-3">
+                  <div class="cm-musician-avatar-container">
+                    <img
+                      [src]="profile.avatar_url || 'assets/brand/avatar-fallback.svg'"
+                      [alt]="profile.full_name || profile.username"
+                      class="cm-musician-avatar"
+                      [class.cm-tier-ring-studio]="profile.subscription_tier === 'studio'"
+                      [class.cm-tier-ring-pro]="profile.subscription_tier === 'pro'"
+                    />
+                    <div class="cm-status-dot" [matTooltip]="musicianStatus(profile).label"></div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-1">
+                    @if (profile.subscription_tier && profile.subscription_tier !== 'free') {
+                      <span class="cm-tier-badge" [class]="'cm-tier-' + profile.subscription_tier.toLowerCase()">
+                        {{ profile.subscription_tier | uppercase }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="px-3 pt-2">
+                  <div class="d-flex align-items-center gap-1">
+                    <h3 class="cm-musician-name m-0">{{ profile.full_name || profile.username }}</h3>
+                    @if (profile.subscription_tier === 'pro' || profile.subscription_tier === 'studio') {
+                      <mat-icon class="cm-verified-badge-inline" matTooltip="Músico Verificado">verified</mat-icon>
+                    }
+                  </div>
+                  <div class="cm-musician-handle text-muted">&#64;{{ profile.username }}</div>
+                  
+                  <!-- Follower & Following Counts -->
+                  <div class="cm-musician-social-stats d-flex align-items-center gap-3 mt-2">
+                    <span class="small text-muted">
+                      <strong class="text-body">{{ profile.followersCount || 0 }}</strong> {{ i18n.t('community.followers', 'seguidores') }}
+                    </span>
+                    <span class="small text-muted">
+                      <strong class="text-body">{{ profile.followingCount || 0 }}</strong> {{ i18n.t('community.following', 'siguiendo') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cm-musician-card-body px-3 py-2 flex-grow-1">
+                @if (profile.bio) {
+                  <p class="cm-musician-bio">{{ profile.bio }}</p>
+                } @else {
+                  <p class="cm-musician-bio cm-musician-bio-empty">Músico apasionado listo para crear proyectos y tocar en vivo.</p>
+                }
+
+                <!-- Instruments Chips with Icons -->
+                <div class="cm-musician-instruments d-flex flex-wrap gap-1 mt-2">
+                  @for (inst of profile.instruments; track inst) {
+                    <span class="cm-instrument-chip cm-chip-sm" [ngClass]="getInstrumentClass(inst)">
+                      {{ getInstrumentIcon(inst) }} {{ inst }}
+                    </span>
                   }
                 </div>
               </div>
 
-              @if (profile.bio) {
-                <p class="cm-bio text-muted small mb-3">{{ profile.bio }}</p>
-              }
-
-              <div class="d-flex flex-wrap gap-1 mb-3">
-                @for (inst of profile.instruments; track inst) {
-                  <span class="cm-instrument-tag">{{ inst }}</span>
+              <!-- Musician Card Footer Actions -->
+              <div class="cm-musician-card-footer px-3 pb-3 pt-2 d-flex gap-2">
+                @if (profile.id !== authStore.user()?.id) {
+                  <button
+                    mat-stroked-button
+                    class="cm-follow-btn rounded-pill flex-grow-1"
+                    [class.cm-following-btn]="profile.isFollowing || isFollowing(profile.id)"
+                    (click)="toggleFollow(profile.id, profile.full_name || profile.username)"
+                  >
+                    <mat-icon class="cm-follow-btn-icon">{{ (profile.isFollowing || isFollowing(profile.id)) ? 'check' : 'person_add' }}</mat-icon>
+                    <span>{{ (profile.isFollowing || isFollowing(profile.id)) ? i18n.t('community.following', 'Siguiendo') : i18n.t('community.follow', 'Seguir') }}</span>
+                  </button>
                 }
-              </div>
 
-              <div class="mt-auto d-flex gap-2">
                 <button
-                  mat-stroked-button
+                  mat-flat-button
                   color="primary"
-                  class="flex-grow-1 rounded-pill"
+                  class="rounded-pill px-3 cm-invite-btn"
                   [disabled]="isInvited(profile.id)"
                   (click)="openInviteMenu(profile)"
+                  matTooltip="Invitar a tu banda"
                 >
-                  <mat-icon class="me-1">person_add</mat-icon>
-                  {{ isInvited(profile.id) ? 'Invitado' : 'Invitar a Banda' }}
+                  <mat-icon>group_add</mat-icon>
                 </button>
               </div>
             </div>

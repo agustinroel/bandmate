@@ -1237,3 +1237,485 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ═══════════════════════════════════════════════ */
+/* 🔍 FEED SEARCH & ACTIVE FILTERS (X.COM STYLE)  */
+/* ═══════════════════════════════════════════════ */
+.cm-feed-search-bar {
+  position: relative;
+  width: 100%;
+}
+
+.cm-feed-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bm-surface, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 4px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:focus-within {
+    border-color: var(--bm-accent, #e9c46a);
+    box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.2);
+  }
+}
+
+.cm-feed-search-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--bm-muted, #94a3b8);
+  margin-right: 8px;
+}
+
+.cm-feed-search-input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--bm-text, #0f172a);
+  padding: 6px 0;
+
+  &::placeholder {
+    color: var(--bm-muted, #94a3b8);
+  }
+}
+
+.cm-search-clear-btn {
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  padding: 0 !important;
+  color: var(--bm-muted, #94a3b8) !important;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.cm-active-filter-banner {
+  background: rgba(38, 70, 83, 0.08);
+  border: 1px solid rgba(38, 70, 83, 0.15);
+  color: var(--bm-text, #0f172a);
+
+  .cm-filter-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--bm-primary, #264653);
+  }
+
+  .cm-clear-filter-btn {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--bm-primary, #264653);
+    padding: 2px 10px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+/* ─── Hashtag Chips ─── */
+.cm-hashtag-chip {
+  background: rgba(38, 70, 83, 0.06);
+  color: var(--bm-primary, #264653);
+  border: none;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--bm-primary, #264653);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+}
+
+/* ─── Follow Buttons (X.com Style High Contrast Pill) ─── */
+.cm-follow-btn {
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  padding: 4px 14px !important;
+  min-width: 96px !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: var(--bm-text, #0f172a) !important;
+  background: transparent !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+
+  .cm-follow-btn-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: var(--bm-primary, #264653) !important;
+  }
+
+  &.cm-following-btn {
+    background: var(--bm-primary, #264653) !important;
+    color: #ffffff !important;
+    border-color: var(--bm-primary, #264653) !important;
+
+    &:hover {
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+    }
+  }
+}
+
+.cm-follow-sm-btn {
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  padding: 2px 12px !important;
+  background: var(--bm-primary, #264653) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+}
+
+/* ─── Sidebar Trends & Recs ─── */
+.cm-trend-item {
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.cm-rec-item {
+  &:last-child {
+    border-bottom: none !important;
+  }
+}
+
+.cm-rec-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* 👥 REDESIGNED MUSICIAN DIRECTORY (UX/UI PRO MAX) */
+/* ═══════════════════════════════════════════════ */
+.cm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 20px;
+}
+
+.cm-musician-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bm-surface, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    border-color: rgba(233, 196, 106, 0.4);
+  }
+}
+
+.cm-musician-card-header {
+  position: relative;
+}
+
+.cm-musician-banner-aura {
+  height: 52px;
+  background: linear-gradient(135deg, rgba(38, 70, 83, 0.12) 0%, rgba(233, 196, 106, 0.15) 100%);
+  width: 100%;
+}
+
+.cm-musician-avatar-container {
+  position: relative;
+  margin-top: -32px;
+}
+
+.cm-musician-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ffffff;
+  border: 3px solid var(--bm-surface, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  &.cm-tier-ring-studio {
+    border-color: #ff0080;
+    box-shadow: 0 0 0 2px #7928ca;
+  }
+
+  &.cm-tier-ring-pro {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 2px #ff8c00;
+  }
+}
+
+.cm-status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid var(--bm-surface, #ffffff);
+}
+
+.cm-musician-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--bm-text, #0f172a);
+}
+
+.cm-verified-badge-inline {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #3b82f6;
+}
+
+.cm-musician-handle {
+  font-size: 0.8rem;
+  color: var(--bm-muted, #94a3b8);
+}
+
+.cm-musician-social-stats {
+  font-size: 0.78rem;
+}
+
+.cm-musician-bio {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--bm-muted, #64748b);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 6px 0;
+
+  &.cm-musician-bio-empty {
+    font-style: italic;
+    opacity: 0.75;
+  }
+}
+
+.cm-chip-sm {
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+}
+
+.cm-musician-card-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.cm-invite-btn {
+  background: rgba(38, 70, 83, 0.08) !important;
+  color: var(--bm-primary, #264653) !important;
+
+  &:hover {
+    background: var(--bm-primary, #264653) !important;
+    color: #ffffff !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* 🌙 DARK MODE OVERRIDES (HIGH CONTRAST WCAG AA) */
+/* ═══════════════════════════════════════════════ */
+[data-bs-theme="dark"],
+.theme-dark {
+  .cm-nav-switcher {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .cm-nav-pill {
+    color: #94a3b8;
+
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.06);
+      color: #f8fafc;
+    }
+
+    &.active {
+      background: #f8fafc;
+      color: #030712;
+      box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  .cm-feed-search-input-wrap {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .cm-active-filter-banner {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+
+    .cm-filter-icon,
+    .cm-clear-filter-btn {
+      color: #f8fafc;
+    }
+  }
+
+  .cm-hashtag-chip {
+    background: rgba(255, 255, 255, 0.08);
+    color: #93c5fd;
+
+    &:hover {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+  }
+
+  .cm-follow-btn {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #f8fafc !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-color: #f8fafc !important;
+    }
+
+    &.cm-following-btn {
+      background: #f8fafc !important;
+      color: #030712 !important;
+      border-color: #f8fafc !important;
+
+      &:hover {
+        background: #ef4444 !important;
+        border-color: #ef4444 !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .cm-follow-sm-btn {
+    background: #f8fafc !important;
+    color: #030712 !important;
+  }
+
+  .cm-trend-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .cm-sidebar-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .cm-musician-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      border-color: rgba(233, 196, 106, 0.5);
+    }
+  }
+
+  .cm-musician-banner-aura {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(233, 196, 106, 0.1) 100%);
+  }
+
+  .cm-musician-avatar {
+    border-color: #0f172a;
+  }
+
+  .cm-musician-name {
+    color: #f8fafc;
+  }
+
+  .cm-musician-card-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .cm-invite-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+
+    &:hover {
+      background: #f8fafc !important;
+      color: #030712 !important;
+    }
+  }
+
+  .cm-composer-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .cm-post-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .cm-post-song-box {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    .fw-bold {
+      color: #f8fafc !important;
+    }
+  }
+
+  .cm-feed-empty-state {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.15);
+
+    h4 {
+      color: #f8fafc;
+    }
+    p {
+      color: #94a3b8;
+    }
+  }
+
+  .cm-comment-bubble {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.06);
+
+    .cm-comment-author {
+      color: #f8fafc;
+    }
+    .cm-comment-text {
+      color: #cbd5e1;
+    }
+  }
+
+  .cm-comment-input {
+    background: #1e293b;
+    color: #f8fafc;
+
+    &:focus {
+      background: #0f172a;
+      border-color: #f8fafc;
+    }
+  }
+}
+
+

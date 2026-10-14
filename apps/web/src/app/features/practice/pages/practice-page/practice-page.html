@@ -181,7 +181,7 @@
               <!-- Auto-scroll FAB -->
             </div>
 
-            <bm-transpose-bar [value]="transpose()" [onChange]="transpose" />
+            <bm-transpose-bar [value]="transpose()" [onChange]="currentSongTranspose" />
           </div>
 
           @if (p.currentSong()!.notes) {
@@ -307,6 +307,61 @@
       </button>
     </div>
   </div>
+
+  <!-- Floating Autoscroll Mini-Control (Overlay with 1-second auto-hide) -->
+  @if (scrollOverlayVisible()) {
+    <aside
+      class="p-scroll-overlay shadow-lg"
+      aria-label="Controles de autoscroll"
+      (pointerdown)="resetOverlayTimer()"
+      (touchstart)="resetOverlayTimer()"
+      (click)="$event.stopPropagation(); resetOverlayTimer()"
+    >
+      <button
+        mat-icon-button
+        type="button"
+        class="p-sc-btn-play"
+        (click)="toggleScroll(); resetOverlayTimer()"
+        [matTooltip]="isScrolling() ? 'Detener autoscroll' : 'Reanudar autoscroll'"
+      >
+        <mat-icon>{{ isScrolling() ? 'pause' : 'play_arrow' }}</mat-icon>
+      </button>
+
+      <div class="p-sc-speed-control">
+        <button
+          mat-icon-button
+          type="button"
+          class="p-sc-btn-adjust"
+          (click)="adjustSpeed(-4); resetOverlayTimer()"
+          matTooltip="Reducir velocidad"
+        >
+          <mat-icon>remove</mat-icon>
+        </button>
+
+        <span class="p-sc-speed-val">{{ autoScrollSpeed() }} <small>px/s</small></span>
+
+        <button
+          mat-icon-button
+          type="button"
+          class="p-sc-btn-adjust"
+          (click)="adjustSpeed(4); resetOverlayTimer()"
+          matTooltip="Aumentar velocidad"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        class="p-sc-btn-close"
+        (click)="closeScrollOverlay()"
+        matTooltip="Cerrar control"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </aside>
+  }
 }
 
 <!-- BLUETOOTH PEDAL HUD -->

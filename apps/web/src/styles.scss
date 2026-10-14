@@ -67,28 +67,126 @@
 }
 
 /* ---------- Dark Theme Tokens ---------- */
+/* ---------- Dark Theme Tokens (WCAG AA High-Contrast & Vercel Design) ---------- */
 [data-bs-theme="dark"],
 .theme-dark,
-:root.theme-dark {
-  --bm-bg: #090d16;
-  --bm-surface: #111827;
-  --bm-border: rgba(255, 255, 255, 0.08);
+:root.theme-dark,
+body.theme-dark {
+  --bm-bg: #030712; /* Deep OLED black */
+  --bm-surface: #0f172a; /* Slate 900 card surface */
+  --bm-surface-hover: #1e293b;
+  --bm-border: rgba(255, 255, 255, 0.14);
+  --bm-primary: #f8fafc; /* High contrast text/headings in dark mode */
   --bm-text: #f8fafc;
   --bm-muted: #94a3b8;
+  --bs-body-bg: #030712;
+  --bs-body-color: #f8fafc;
+  --bs-secondary-color: #94a3b8;
+  --bs-border-color: rgba(255, 255, 255, 0.14);
+
   color-scheme: dark;
-  background-color: #090d16 !important;
+  background-color: #030712 !important;
   color: #f8fafc !important;
+
+  h1, h2, h3, h4, h5, h6,
+  .bm-page-title,
+  .cm-section-title,
+  .cm-hero-title,
+  .fw-bold {
+    color: #ffffff !important;
+  }
+
+  p, .cm-bio {
+    color: #cbd5e1 !important;
+  }
+
+  .text-dark {
+    color: #f8fafc !important;
+  }
+
+  .text-muted,
+  .cm-hero-sub,
+  .cm-section-count,
+  .small.opacity-75 {
+    color: #94a3b8 !important;
+  }
+
+  .bg-light,
+  .bg-white {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+  }
+
+  .border,
+  .border-top,
+  .border-bottom,
+  .border-start,
+  .border-end {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
 
   .bm-card,
   .cm-composer-card,
   .cm-post-card,
+  .cm-card,
   .cm-sidebar-card,
-  .cm-nav-switcher,
   .cm-feed-empty-state,
-  .cm-comment-bubble {
-    background-color: #111827 !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+  .cm-comment-bubble,
+  .cm-empty-state {
+    background-color: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     color: #f8fafc !important;
+  }
+
+  .cm-nav-switcher {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  .cm-nav-pill {
+    color: #94a3b8;
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #ffffff !important;
+    }
+    &.active {
+      background: #f8fafc !important;
+      color: #090d16 !important;
+    }
+  }
+
+  .cm-feed-tab-btn {
+    color: #94a3b8;
+    &:hover:not(.active) {
+      color: #ffffff;
+    }
+    &.active {
+      color: #ffffff;
+      .tab-indicator {
+        background: var(--bm-accent, #e9c46a);
+      }
+    }
+  }
+
+  .cm-type-chip {
+    color: #cbd5e1 !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #ffffff !important;
+    }
+
+    &.active {
+      background: rgba(233, 196, 106, 0.2) !important;
+      color: var(--bm-accent, #e9c46a) !important;
+    }
+  }
+
+  .cm-attach-chip {
+    background: rgba(42, 157, 143, 0.15) !important;
+    color: #5eead4 !important;
+    border-color: rgba(42, 157, 143, 0.35) !important;
   }
 
   .cm-composer-input {
@@ -99,35 +197,76 @@
   }
 
   .cm-comment-input {
-    background: #1f2937 !important;
+    background: #1e293b !important;
     color: #f8fafc !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    &::placeholder {
+      color: #64748b !important;
+    }
   }
 
   .cm-post-song-box {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    .text-dark {
-      color: #f8fafc !important;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    .badge {
+      background-color: #090d16 !important;
+      color: #e2e8f0 !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
     }
   }
 
   .cm-action-btn {
     color: #94a3b8 !important;
     &:hover {
-      background: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
       color: #ffffff !important;
     }
   }
 
   .mat-mdc-card {
-    background-color: #111827 !important;
+    background-color: #0f172a !important;
     color: #f8fafc !important;
   }
 
-  .cm-publish-btn:disabled {
-    background-color: #334155 !important;
-    color: #94a3b8 !important;
+  /* Angular Material form fields in dark mode */
+  .mat-mdc-form-field {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    .mat-mdc-input-element {
+      color: #f8fafc !important;
+      &::placeholder {
+        color: #64748b !important;
+      }
+    }
+    .mat-mdc-floating-label {
+      color: #94a3b8 !important;
+    }
+  }
+
+  /* Material Menus and Dialogs */
+  .mat-mdc-menu-panel {
+    background-color: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    .mat-mdc-menu-item {
+      color: #f8fafc !important;
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+    }
+  }
+
+  .cm-publish-btn {
+    background-color: var(--bm-accent, #e9c46a) !important;
+    color: #090d16 !important;
+
+    &:disabled {
+      background-color: #334155 !important;
+      color: #94a3b8 !important;
+      opacity: 0.8 !important;
+    }
   }
 
   .cm-band-pill {
@@ -140,6 +279,7 @@
     color: #94a3b8 !important;
   }
 
+  /* High contrast instrument chips in dark mode */
   .cm-inst-guitar {
     background: rgba(245, 158, 11, 0.2) !important;
     color: #fcd34d !important;

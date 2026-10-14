@@ -1,4 +1,5 @@
 import { readJson, writeJson } from '../persistance/json.store.js';
+import { getFollowedUserIds } from './follows.repo.js';
 const POSTS_FILE = 'feed_posts.json';
 const COMMENTS_FILE = 'feed_comments.json';
 // In-memory cache + persistent backing
@@ -7,7 +8,6 @@ let cachedComments = null;
 const userLikes = new Set();
 async function getStoredPosts() {
     if (cachedPosts === null) {
-        // Only real user posts - starts empty in production
         cachedPosts = await readJson(POSTS_FILE, []);
     }
     return cachedPosts;
@@ -18,13 +18,33 @@ async function getStoredComments() {
     }
     return cachedComments;
 }
-export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit = 10) {
+export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit = 10, search, tag) {
     const allPosts = await getStoredPosts();
     // Map likes for current user
-    const formatted = allPosts.map((post) => ({
+    let formatted = allPosts.map((post) => ({
         ...post,
         isLiked: userId ? userLikes.has(`${userId}:${post.id}`) || post.isLiked : post.isLiked,
     }));
+    // Filter by following if requested
+    if (filter === 'following' && userId) {
+        const followedIds = await getFollowedUserIds(userId);
+        // Show posts from people user follows + their own posts
+        formatted = formatted.filter((p) => p.authorId === userId || followedIds.includes(p.authorId));
+    }
+    // Filter by search keyword
+    if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        formatted = formatted.filter((p) => p.content.toLowerCase().includes(q) ||
+            p.authorName.toLowerCase().includes(q) ||
+            p.authorUsername.toLowerCase().includes(q) ||
+            (p.attachedSong && (p.attachedSong.title.toLowerCase().includes(q) || p.attachedSong.artist.toLowerCase().includes(q))));
+    }
+    // Filter by hashtag
+    if (tag && tag.trim()) {
+        const clean = tag.trim().replace(/^#/, '').toLowerCase();
+        formatted = formatted.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === clean) ||
+            p.content.toLowerCase().includes('#' + clean));
+    }
     // X.com-style ranking algorithm for "For you" / "Para ti"
     if (filter === 'for_you') {
         const now = Date.now();
@@ -35,11 +55,11 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
             // Tier boost
             const aTier = (a.authorTier || '').toLowerCase();
             const bTier = (b.authorTier || '').toLowerCase();
-            const aTierBonus = (aTier === 'studio' || aTier === 'band') ? 25 : (aTier === 'pro' ? 15 : 0);
-            const bTierBonus = (bTier === 'studio' || bTier === 'band') ? 25 : (bTier === 'pro' ? 15 : 0);
+            const aTierBonus = aTier === 'studio' || aTier === 'band' ? 25 : aTier === 'pro' ? 15 : 0;
+            const bTierBonus = bTier === 'studio' || bTier === 'band' ? 25 : bTier === 'pro' ? 15 : 0;
             // Engagement score: likes * 3 + reposts * 5 + comments * 4 + songAttached (10)
-            const aEng = (a.likesCount * 3) + (a.repostsCount * 5) + (a.commentsCount * 4) + (a.attachedSong ? 10 : 0);
-            const bEng = (b.likesCount * 3) + (b.repostsCount * 5) + (b.commentsCount * 4) + (b.attachedSong ? 10 : 0);
+            const aEng = a.likesCount * 3 + a.repostsCount * 5 + a.commentsCount * 4 + (a.attachedSong ? 10 : 0);
+            const bEng = b.likesCount * 3 + b.repostsCount * 5 + b.commentsCount * 4 + (b.attachedSong ? 10 : 0);
             // Gravity decay formula: Score = (Engagement + TierBonus + 1) / (Hours + 2)^1.25
             const aScore = (aEng + aTierBonus + 1) / Math.pow(aHours + 2, 1.25);
             const bScore = (bEng + bTierBonus + 1) / Math.pow(bHours + 2, 1.25);
@@ -50,23 +70,57 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
         // Chronological descending for 'following'
         formatted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
-    // Filter if needed
-    let filtered = formatted;
-    if (filter === 'following' && userId) {
-        filtered = formatted;
-    }
     const offset = (page - 1) * limit;
-    const paginated = filtered.slice(offset, offset + limit);
-    const hasMore = offset + limit < filtered.length;
+    const paginated = formatted.slice(offset, offset + limit);
+    const hasMore = offset + limit < formatted.length;
     return {
         posts: paginated,
         page,
-        total: filtered.length,
+        total: formatted.length,
         hasMore,
     };
 }
+export async function getTrendingHashtags() {
+    const posts = await getStoredPosts();
+    const counts = {};
+    for (const post of posts) {
+        const postTags = new Set();
+        // Tags array
+        (post.tags || []).forEach((t) => postTags.add(t.toLowerCase().replace(/^#/, '')));
+        // Extracted from content
+        const inText = post.content.match(/#([a-zA-Z0-9_\u00C0-\u017F]+)/g) || [];
+        inText.forEach((t) => postTags.add(t.slice(1).toLowerCase()));
+        for (const tag of postTags) {
+            if (tag)
+                counts[tag] = (counts[tag] || 0) + 1;
+        }
+    }
+    // Pre-seed with vibrant music community trends if needed
+    const defaultTrends = [
+        { tag: 'StandByMe', count: 84, category: 'Canciones populares' },
+        { tag: 'Wonderwall', count: 112, category: 'Clásicos de fogón' },
+        { tag: 'BuscoBaterista', count: 37, category: 'Audiciones' },
+        { tag: 'SoloGuitarra', count: 52, category: 'Riffs & Jams' },
+        { tag: 'RockArgentino', count: 96, category: 'Comunidad' },
+        { tag: 'StageMode', count: 43, category: 'Bandmate Live' },
+    ];
+    const sortedReal = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([tag, count]) => ({ tag, count, category: 'Tendencia en Bandmate' }));
+    const merged = [...sortedReal];
+    for (const dt of defaultTrends) {
+        if (!merged.some((m) => m.tag.toLowerCase() === dt.tag.toLowerCase())) {
+            merged.push(dt);
+        }
+    }
+    return merged.slice(0, 8);
+}
 export async function createFeedPost(userId, userProfile, postData) {
     const posts = await getStoredPosts();
+    // Extract hashtags from content
+    const regex = /#([a-zA-Z0-9_\u00C0-\u017F]+)/g;
+    const inTextTags = (postData.content.match(regex) || []).map((t) => t.slice(1).toLowerCase());
+    const allTags = Array.from(new Set([...(postData.tags || []), ...inTextTags]));
     const newPost = {
         id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         authorId: userId,
@@ -80,7 +134,7 @@ export async function createFeedPost(userId, userProfile, postData) {
         type: postData.type || 'status',
         content: postData.content,
         attachedSong: postData.attachedSong || null,
-        tags: postData.tags || [],
+        tags: allTags,
         likesCount: 0,
         repostsCount: 0,
         commentsCount: 0,

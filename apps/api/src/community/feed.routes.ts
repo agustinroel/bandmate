@@ -6,22 +6,59 @@ import {
   repostPost,
   getPostComments,
   createPostComment,
+  getTrendingHashtags,
 } from './feed.repo.js';
+import { toggleFollow, getFollowStatus } from './follows.repo.js';
 import { getProfileById } from '../profiles/profiles.repo.js';
 
 export const feedRoutes: FastifyPluginAsync = async (app) => {
   /**
    * GET /feed
-   * Query: { filter: 'for_you' | 'following', page?: number, limit?: number }
+   * Query: { filter: 'for_you' | 'following', page?: number, limit?: number, search?: string, tag?: string }
    */
   app.get('/feed', async (req: any, reply) => {
     const filter = (req.query?.filter as 'for_you' | 'following') || 'for_you';
     const page = Math.max(1, Number(req.query?.page) || 1);
     const limit = Math.min(50, Math.max(1, Number(req.query?.limit) || 10));
+    const search = req.query?.search as string | undefined;
+    const tag = req.query?.tag as string | undefined;
     const userId = req.user?.id;
 
-    const result = await getFeedPosts(filter, userId, page, limit);
+    const result = await getFeedPosts(filter, userId, page, limit, search, tag);
     return result;
+  });
+
+  /**
+   * GET /feed/trends
+   */
+  app.get('/feed/trends', async (_req, _reply) => {
+    return await getTrendingHashtags();
+  });
+
+  /**
+   * POST /community/follow/:id
+   */
+  app.post('/community/follow/:id', async (req: any, reply) => {
+    const followerId = req.user?.id || req.body?.followerId || 'usr-agustin-roel';
+    const { id: followedId } = req.params;
+
+    try {
+      const res = await toggleFollow(followerId, followedId);
+      return res;
+    } catch (err: any) {
+      return reply.status(400).send({ message: err.message });
+    }
+  });
+
+  /**
+   * GET /community/follow/:id
+   */
+  app.get('/community/follow/:id', async (req: any, reply) => {
+    const currentUserId = req.user?.id || (req.query?.followerId as string);
+    const { id: targetUserId } = req.params;
+
+    const res = await getFollowStatus(currentUserId, targetUserId);
+    return res;
   });
 
   /**

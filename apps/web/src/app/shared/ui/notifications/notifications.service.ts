@@ -20,6 +20,10 @@ export class NotificationsService {
     this.open('warn', message, action, ms);
   }
 
+  warning(message: string, action = 'OK', ms = 3200) {
+    this.warn(message, action, ms);
+  }
+
   error(message: string, action = 'OK', ms = 4200) {
     this.open('error', message, action, ms);
   }

@@ -70,6 +70,7 @@ export type FeedPost = {
   repostsCount: number;
   commentsCount: number;
   isLiked?: boolean;
+  isAuthorFollowed?: boolean;
   createdAt: string;
 };
 
@@ -80,7 +81,11 @@ type ProfileDto = {
   avatar_url?: string | null;
   bio?: string | null;
   instruments?: string[];
+  genres?: string[];
   subscription_tier?: string | null;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 };
 
 type ActiveFilter = { type: string; label: string; value: string };
@@ -147,6 +152,12 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   readonly feedPage = signal(1);
   readonly feedHasMore = signal(true);
   readonly feedLoadingMore = signal(false);
+
+  /* ─── Search, Hashtags & Trends ─── */
+  readonly searchQuery = signal('');
+  readonly activeTag = signal<string | null>(null);
+  readonly trends = signal<{ tag: string; count: number; category: string }[]>([]);
+  readonly followedUserIds = signal<Set<string>>(new Set());
 
   readonly postContent = signal('');
   readonly selectedPostType = signal<'status' | 'song_share' | 'riff' | 'looking_for_member' | 'gig'>('status');
@@ -221,8 +232,16 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     return `Showing ${n} musician${n !== 1 ? 's' : ''}`;
   });
 
+  readonly whoToFollow = computed(() => {
+    const currentId = this.authStore.user()?.id;
+    return this.profiles()
+      .filter((p) => p.id !== currentId && !this.followedUserIds().has(p.id))
+      .slice(0, 4);
+  });
+
   constructor() {
     this.loadFeed();
+    this.loadTrends();
     this.loadProfiles();
     this.loadBands();
     this.loadActivities();
@@ -300,13 +319,19 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
       this.feedLoading.set(true);
     }
 
-    this.http.get<FeedResponse>(`${environment.apiBaseUrl}/feed`, {
-      params: {
-        filter: this.feedFilter(),
-        page: this.feedPage(),
-        limit: 10,
-      },
-    }).subscribe({
+    const params: any = {
+      filter: this.feedFilter(),
+      page: this.feedPage(),
+      limit: 10,
+    };
+    if (this.searchQuery().trim()) {
+      params.search = this.searchQuery().trim();
+    }
+    if (this.activeTag()) {
+      params.tag = this.activeTag();
+    }
+
+    this.http.get<FeedResponse>(`${environment.apiBaseUrl}/feed`, { params }).subscribe({
       next: (res) => {
         const items = res?.posts ?? [];
         if (reset) {
@@ -327,6 +352,94 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  loadTrends() {
+    this.http.get<{ trends: { tag: string; count: number; category: string }[] }>(
+      `${environment.apiBaseUrl}/feed/trends`
+    ).subscribe({
+      next: (res) => {
+        if (res?.trends) {
+          this.trends.set(res.trends);
+        }
+      },
+      error: () => {},
+    });
+  }
+
+  filterByTag(tag: string) {
+    this.activeTag.set(tag);
+    this.activeTab.set('feed');
+    this.loadFeed(true);
+  }
+
+  onSearchFeed(q?: string) {
+    if (q !== undefined) {
+      this.searchQuery.set(q);
+    }
+    this.loadFeed(true);
+  }
+
+  clearFeedFilter() {
+    this.searchQuery.set('');
+    this.activeTag.set(null);
+    this.loadFeed(true);
+  }
+
+  toggleFollow(targetUserId: string, name?: string) {
+    const currentUserId = this.authStore.user()?.id;
+    if (!currentUserId) {
+      this.notify.warning(this.i18n.t('community.followMustBeLoggedIn', 'Inicia sesión para seguir a otros músicos'));
+      return;
+    }
+    if (targetUserId === currentUserId) {
+      this.notify.warning(this.i18n.t('community.cannotFollowSelf', 'No puedes seguirte a ti mismo'));
+      return;
+    }
+
+    this.http.post<{ isFollowing: boolean; followersCount: number }>(
+      `${environment.apiBaseUrl}/community/follow/${targetUserId}`,
+      {}
+    ).subscribe({
+      next: (res) => {
+        this.followedUserIds.update((set) => {
+          const next = new Set(set);
+          if (res.isFollowing) next.add(targetUserId);
+          else next.delete(targetUserId);
+          return next;
+        });
+
+        this.feedPosts.update((posts) =>
+          posts.map((p) =>
+            p.authorId === targetUserId ? { ...p, isAuthorFollowed: res.isFollowing } : p
+          )
+        );
+
+        this.profiles.update((profs) =>
+          profs.map((p) =>
+            p.id === targetUserId
+              ? { ...p, isFollowing: res.isFollowing, followersCount: res.followersCount }
+              : p
+          )
+        );
+
+        const msg = res.isFollowing
+          ? `Ahora sigues a ${name || 'este músico'}`
+          : `Has dejado de seguir a ${name || 'este músico'}`;
+        this.notify.success(msg, 'OK', 1500);
+
+        if (this.feedFilter() === 'following') {
+          this.loadFeed(true);
+        }
+      },
+      error: () => {
+        this.notify.error('No se pudo actualizar el seguimiento', 'OK', 2000);
+      },
+    });
+  }
+
+  isFollowing(targetUserId: string): boolean {
+    return this.followedUserIds().has(targetUserId);
+  }
+
   loadMoreFeed() {
     if (!this.feedHasMore() || this.feedLoading() || this.feedLoadingMore()) return;
     this.feedLoadingMore.set(true);
@@ -342,6 +455,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico Bandmate';
     const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
     const avatar = user?.user_metadata?.['avatar_url'] || user?.user_metadata?.['picture'] || null;
+    const tier = this.sub.tier() || 'free';
 
     this.isPosting.set(true);
     this.http.post<FeedPost>(`${environment.apiBaseUrl}/feed`, {
@@ -351,6 +465,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
       authorName: fullName,
       authorUsername: username,
       authorAvatar: avatar,
+      authorTier: tier,
     }).subscribe({
       next: (post) => {
         this.feedPosts.update((prev) => [post, ...prev]);
@@ -359,6 +474,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
         this.selectedPostType.set('status');
         this.isPosting.set(false);
         this.notify.success('¡Publicación compartida con la comunidad!', 'OK', 2000);
+        this.loadTrends();
       },
       error: () => {
         this.notify.error('No se pudo publicar', 'OK', 2000);
@@ -530,6 +646,11 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
         this.profiles.set(data);
         this.loading.set(false);
         this.computeActiveCount(data);
+        const followed = new Set<string>();
+        for (const p of data) {
+          if (p.isFollowing) followed.add(p.id);
+        }
+        this.followedUserIds.set(followed);
       },
       error: (err) => {
         console.error(err);

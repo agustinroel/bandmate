@@ -13,10 +13,14 @@ const TRANSLATIONS: Record<SupportedLang, Record<string, string>> = {
     'nav.community': 'Comunidad',
     'nav.settings': 'Ajustes',
     'nav.profile': 'Perfil',
+    'nav.notifications': 'Notificaciones',
+    'nav.tickets': 'Mis Entradas',
     'nav.logout': 'Cerrar sesión',
+    'nav.signin': 'Iniciar sesión',
+    'nav.menu': 'Menú',
 
     // Community Header
-    'community.hero.badge': 'Ecosistema Global',
+    'community.hero.badge': 'Red Musical Global',
     'community.hero.title': 'El punto de encuentro para todos los músicos del mundo.',
     'community.hero.subtitle': 'Comparte tus arreglos, descubre bandas, encuentra integrantes y conéctate directamente.',
 
@@ -33,11 +37,31 @@ const TRANSLATIONS: Record<SupportedLang, Record<string, string>> = {
     'feed.composer.riff': '🎸 Riff',
     'feed.composer.song': '🎵 Canción',
     'feed.composer.audition': '🚨 Busco Músico',
-    'feed.composer.attach_song': 'Adjuntar Canción',
+    'feed.composer.attach_song': 'Adjuntar canción',
     'feed.composer.publish': 'Publicar',
     'feed.composer.publishing': 'Publicando...',
     'feed.composer.success': '¡Publicación compartida con la comunidad!',
     'feed.composer.error': 'No se pudo publicar',
+
+    // Search & Hashtags
+    'community.search.placeholder': 'Buscar por texto, #hashtag o autor...',
+    'community.search.filter_active': 'Filtrado por',
+    'community.search.clear': 'Quitar filtro',
+
+    // Social & Follow
+    'community.follow.btn': 'Seguir',
+    'community.following.btn': 'Siguiendo',
+    'community.follow.followers': 'seguidores',
+    'community.follow.following': 'siguiendo',
+    'community.sidebar.who_to_follow': 'A quién seguir',
+
+    // Directory
+    'community.directory.title': 'Directorio de Músicos & Bandas',
+    'community.directory.search': 'Buscar por nombre, usuario o instrumento...',
+    'community.directory.invite': 'Invitar a Banda',
+    'community.directory.invited': 'Invitado',
+    'community.directory.view_profile': 'Ver Perfil',
+    'community.directory.empty': 'No se encontraron músicos con estos filtros',
 
     // Post Cards & Interactions
     'feed.post.reposted': 'ha reposteado',
@@ -88,10 +112,14 @@ const TRANSLATIONS: Record<SupportedLang, Record<string, string>> = {
     'nav.community': 'Community',
     'nav.settings': 'Settings',
     'nav.profile': 'Profile',
+    'nav.notifications': 'Notifications',
+    'nav.tickets': 'My Tickets',
     'nav.logout': 'Sign Out',
+    'nav.signin': 'Sign in',
+    'nav.menu': 'Menu',
 
     // Community Header
-    'community.hero.badge': 'Global Ecosystem',
+    'community.hero.badge': 'Global Music Network',
     'community.hero.title': 'The meeting ground for musicians worldwide.',
     'community.hero.subtitle': 'Share arrangements, discover bands, find members, and connect directly.',
 
@@ -108,11 +136,31 @@ const TRANSLATIONS: Record<SupportedLang, Record<string, string>> = {
     'feed.composer.riff': '🎸 Riff',
     'feed.composer.song': '🎵 Song',
     'feed.composer.audition': '🚨 Musician Wanted',
-    'feed.composer.attach_song': 'Attach Song',
+    'feed.composer.attach_song': 'Attach song',
     'feed.composer.publish': 'Post',
     'feed.composer.publishing': 'Posting...',
     'feed.composer.success': 'Post shared with the community!',
     'feed.composer.error': 'Could not publish post',
+
+    // Search & Hashtags
+    'community.search.placeholder': 'Search by text, #hashtag or author...',
+    'community.search.filter_active': 'Filtered by',
+    'community.search.clear': 'Clear filter',
+
+    // Social & Follow
+    'community.follow.btn': 'Follow',
+    'community.following.btn': 'Following',
+    'community.follow.followers': 'followers',
+    'community.follow.following': 'following',
+    'community.sidebar.who_to_follow': 'Who to follow',
+
+    // Directory
+    'community.directory.title': 'Musicians & Bands Directory',
+    'community.directory.search': 'Search by name, handle, or instrument...',
+    'community.directory.invite': 'Invite to Band',
+    'community.directory.invited': 'Invited',
+    'community.directory.view_profile': 'View Profile',
+    'community.directory.empty': 'No musicians found with these filters',
 
     // Post Cards & Interactions
     'feed.post.reposted': 'reposted',
@@ -184,8 +232,8 @@ export class I18nService {
     }
   }
 
-  t(key: string): string {
+  t(key: string, fallback?: string): string {
     const dict = TRANSLATIONS[this.currentLang()] || TRANSLATIONS.es;
-    return dict[key] || TRANSLATIONS.es[key] || key;
+    return dict[key] || TRANSLATIONS.es[key] || fallback || key;
   }
 }

@@ -10,7 +10,8 @@ import { AuthStore } from '../../../core/auth/auth.store';
 
 @Injectable({ providedIn: 'root' })
 export class SetlistsStore {
-  SELECTED_KEY = 'bandmate.selectedSetlistId';
+  readonly SELECTED_KEY = 'bandmate.selectedSetlistId';
+  readonly CACHE_KEY = 'bandmate.cached_setlists.v1';
 
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
@@ -58,6 +59,18 @@ export class SetlistsStore {
   });
 
   constructor() {
+    // Carga inmediata desde caché offline local si existe (Zero latency / Offline first)
+    const cachedItems = this.storageGet(this.CACHE_KEY);
+    if (cachedItems) {
+      try {
+        const parsed = JSON.parse(cachedItems);
+        if (Array.isArray(parsed) && parsed.length) {
+          this._items.set(parsed);
+          this._state.set('ready');
+        }
+      } catch {}
+    }
+
     const saved = this.storageGet(this.SELECTED_KEY);
     if (saved) this._selectedId.set(saved);
 
@@ -84,16 +97,15 @@ export class SetlistsStore {
   }
 
   load(silent = false) {
-    if (!silent) {
+    if (!silent && this._items().length === 0) {
       this._state.set('loading');
     }
     this._error.set(null);
-    // Realtime init moved to effect
-    // this._initRealtime();
 
     return from(this.api.list()).pipe(
       tap((items) => {
         this._items.set(items);
+        this.storageSet(this.CACHE_KEY, JSON.stringify(items));
         if (!silent) {
           this._state.set('ready');
         }
@@ -111,6 +123,14 @@ export class SetlistsStore {
         if (!this._selectedId() && items.length) this._selectedId.set(items[0].id);
       }),
       catchError((err) => {
+        const cached = this._items();
+        if (cached && cached.length > 0) {
+          // Si falló la red pero disponemos de caché, mantenemos la sesión de ensayo activa (Invariante 3)
+          if (!silent) {
+            this._state.set('ready');
+          }
+          return from([cached]);
+        }
         if (!silent) {
           this._state.set('error');
           this._error.set(err?.message ?? 'Failed to load setlists');

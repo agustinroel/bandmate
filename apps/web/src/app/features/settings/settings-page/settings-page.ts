@@ -44,6 +44,10 @@ export class SettingsPageComponent {
   readonly tier = this.subscriptionStore.tier;
   readonly loadingPortal = signal(false);
 
+  constructor() {
+    this.subscriptionStore.loadCurrentTier();
+  }
+
   setTheme(mode: AppTheme) {
     this.theme.setTheme(mode);
     this.notify.success(

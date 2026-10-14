@@ -20,6 +20,7 @@ import { SubscriptionStore } from '../../core/subscription/subscription.store';
 import { AuthStore } from '../../core/auth/auth.store';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { UpgradeDialogComponent } from '../../core/subscription/upgrade-dialog/upgrade-dialog.component';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -54,6 +55,7 @@ export class ShellComponent implements AfterViewInit {
   readonly authStore = inject(AuthStore);
   private readonly dialog = inject(MatDialog);
   readonly router = inject(Router);
+  readonly i18n = inject(I18nService);
 
   constructor() {
     // Sync subscription tier on auth/init
