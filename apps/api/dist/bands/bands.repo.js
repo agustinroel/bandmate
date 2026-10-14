@@ -50,6 +50,16 @@ export async function listBandsForUser(userId) {
         my_roles: m.roles,
     }));
 }
+export async function listBands(limit = 20, offset = 0) {
+    const { data, error } = await supabase
+        .from("bands")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+    if (error)
+        throw error;
+    return data || [];
+}
 export async function getBand(bandId) {
     const { data, error } = await supabase
         .from("bands")

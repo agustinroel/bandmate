@@ -2,7 +2,7 @@ import { supabase } from "../lib/supabase.js";
 export async function listPublicProfiles(filters = {}, limit = 50, offset = 0) {
     let query = supabase
         .from("profiles")
-        .select("id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public")
+        .select("id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public, subscription_tier")
         .eq("is_public", true);
     if (filters.query) {
         // Search in username OR full_name
@@ -32,6 +32,18 @@ export async function getProfileByUsername(username) {
         .from("profiles")
         .select("*")
         .eq("username", username)
+        .maybeSingle();
+    if (error)
+        throw error;
+    if (!data)
+        return null;
+    return data;
+}
+export async function getProfileById(userId) {
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .maybeSingle();
     if (error)
         throw error;

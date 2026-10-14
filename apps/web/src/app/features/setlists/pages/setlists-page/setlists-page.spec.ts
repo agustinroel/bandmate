@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SetlistsPage } from './setlists-page';
+import { SetlistsPageComponent } from './setlists-page';
 
-describe('SetlistsPage', () => {
-  let component: SetlistsPage;
-  let fixture: ComponentFixture<SetlistsPage>;
+describe('SetlistsPageComponent', () => {
+  let component: SetlistsPageComponent;
+  let fixture: ComponentFixture<SetlistsPageComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SetlistsPage]
+      imports: [SetlistsPageComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(SetlistsPage);
+    fixture = TestBed.createComponent(SetlistsPageComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

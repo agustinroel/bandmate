@@ -4,6 +4,7 @@ function mapWork(row) {
         id: row.id,
         title: row.title,
         artist: row.artist,
+        genre: row.genre ?? null,
         musicbrainzId: row.musicbrainz_id ?? null,
         wikidataId: row.wikidata_id ?? null,
         rights: row.rights ?? "unknown",
@@ -117,6 +118,18 @@ export async function getWorkByIdWithArrangements(workId) {
     };
 }
 /**
+ * Check if a work already has arrangements
+ */
+export async function getWorkArrangementsCount(workId) {
+    const { count, error } = await supabase
+        .from("arrangements")
+        .select("*", { count: "exact", head: true })
+        .eq("work_id", workId);
+    if (error)
+        throw error;
+    return count ?? 0;
+}
+/**
  * Create work (optional, por si querés crear desde UI más adelante)
  */
 export async function createWork(input) {
@@ -137,6 +150,7 @@ export async function createWork(input) {
     const payload = {
         title: title.trim(),
         artist: artist.trim(),
+        genre: input.genre ?? null,
         rights: input.rights ?? "unknown",
         source: input.source ?? "user",
         musicbrainz_id: musicbrainzId ?? null,
@@ -184,7 +198,10 @@ export async function createArrangementFromSong(userId, song) {
         .insert(payload)
         .select("*")
         .single();
-    if (error)
+    if (error) {
+        console.error(`[Repo] Failed to create arrangement for work ${song.work_id}:`, error.message);
         throw error;
+    }
+    console.log(`[Repo] Created arrangement ${data.id} for work ${song.work_id}`);
     return mapArrangement(data);
 }

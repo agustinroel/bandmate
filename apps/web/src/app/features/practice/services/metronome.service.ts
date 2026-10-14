@@ -1,100 +1,115 @@
-import { Injectable, signal, effect, untracked } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import * as Tone from 'tone';
 
 @Injectable({ providedIn: 'root' })
 export class MetronomeService {
   readonly isPlaying = signal(false);
   readonly bpm = signal(100);
   readonly beat = signal(0);
+  readonly bar = signal(1);
+  readonly beatInBar = signal(1);
 
-  private audioCtx: AudioContext | null = null;
-  private nextNoteTime = 0;
-  private timerId: number | null = null;
-  private lookaheadWrapper: (() => void) | null = null;
+  private synth: Tone.MembraneSynth | null = null;
+  private repeatEventId: number | null = null;
+  private isAudioUnlocked = false;
 
-  // How frequently to call scheduling function (in milliseconds)
-  private readonly lookahead = 25;
+  constructor() {}
 
-  // How far ahead to schedule audio (sec)
-  private readonly scheduleAheadTime = 0.1;
-
-  constructor() {
-    // Stop if bpm changes significantly or cleanup?
-    // Actually simplicity first: just keep playing if bpm updates.
+  /**
+   * Unlock AudioContext safely for mobile/Capacitor/web gestures.
+   */
+  async unlockAudio(): Promise<void> {
+    if (this.isAudioUnlocked) return;
+    await Tone.start();
+    if (Tone.context.state === 'suspended') {
+      await Tone.context.rawContext.resume();
+    }
+    this.isAudioUnlocked = true;
   }
 
-  toggle() {
-    if (this.isPlaying()) this.stop();
-    else this.start();
+  private initSynth() {
+    if (!this.synth) {
+      this.synth = new Tone.MembraneSynth({
+        pitchDecay: 0.008,
+        octaves: 2,
+        oscillator: { type: 'sine' },
+        envelope: {
+          attack: 0.001,
+          decay: 0.1,
+          sustain: 0,
+          release: 0.05,
+        },
+      }).toDestination();
+      this.synth.volume.value = -6;
+    }
+  }
+
+  async toggle() {
+    if (this.isPlaying()) {
+      this.stop();
+    } else {
+      await this.start();
+    }
   }
 
   async start() {
     if (this.isPlaying()) return;
 
-    if (!this.audioCtx) {
-      this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    await this.unlockAudio();
+    this.initSynth();
+
+    // Synchronize Tone.Transport tempo
+    Tone.getTransport().bpm.value = this.bpm();
+
+    // Reset beat counts
+    this.beat.set(0);
+    this.bar.set(1);
+    this.beatInBar.set(1);
+
+    // Schedule strict clock ticks via Tone.Transport with 0 audio-visual latency
+    if (this.repeatEventId !== null) {
+      Tone.getTransport().clear(this.repeatEventId);
     }
 
-    if (this.audioCtx?.state === 'suspended') {
-      await this.audioCtx.resume();
-    }
+    this.repeatEventId = Tone.getTransport().scheduleRepeat((time) => {
+      const currentBeat = this.beat();
+      const currentBeatInBar = (currentBeat % 4) + 1;
+      const currentBar = Math.floor(currentBeat / 4) + 1;
+      const isDownbeat = currentBeatInBar === 1;
 
+      // Click sound: higher pitch for downbeat
+      const note = isDownbeat ? 'C5' : 'G4';
+      this.synth?.triggerAttackRelease(note, '32n', time);
+
+      // Use Tone.Draw to fire GSAP / Signal visual updates strictly on the next animation frame
+      // synchronized with the audio clock (zero latency)
+      Tone.getDraw().schedule(() => {
+        if (this.isPlaying()) {
+          this.beat.set(currentBeat + 1);
+          this.beatInBar.set(currentBeatInBar);
+          this.bar.set(currentBar);
+        }
+      }, time);
+    }, '4n');
+
+    Tone.getTransport().start();
     this.isPlaying.set(true);
-    this.nextNoteTime = this.audioCtx!.currentTime;
-
-    this.timerId = window.setInterval(() => this.scheduler(), this.lookahead);
   }
 
   stop() {
     this.isPlaying.set(false);
-    if (this.timerId !== null) {
-      window.clearInterval(this.timerId);
-      this.timerId = null;
+    if (this.repeatEventId !== null) {
+      Tone.getTransport().clear(this.repeatEventId);
+      this.repeatEventId = null;
     }
+    Tone.getTransport().stop();
+    this.beat.set(0);
+    this.beatInBar.set(1);
   }
 
   setBpm(val: number) {
-    // Clamp basic safe values
     const safe = Math.max(30, Math.min(300, val));
     this.bpm.set(safe);
-  }
-
-  private scheduler() {
-    // While there are notes that will need to play before the next interval,
-    // schedule them and advance the pointer.
-    while (this.nextNoteTime < this.audioCtx!.currentTime + this.scheduleAheadTime) {
-      this.scheduleNote(this.nextNoteTime);
-      this.nextNote();
-    }
-  }
-
-  private nextNote() {
-    const secondsPerBeat = 60.0 / this.bpm();
-    this.nextNoteTime += secondsPerBeat;
-  }
-
-  private scheduleNote(time: number) {
-    const osc = this.audioCtx!.createOscillator();
-    const envelope = this.audioCtx!.createGain();
-
-    osc.frequency.value = 1000;
-    envelope.gain.value = 1;
-    envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
-    envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
-
-    osc.connect(envelope);
-    envelope.connect(this.audioCtx!.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.03);
-
-    // Sync UI beat signal exactly when note plays
-    const now = this.audioCtx!.currentTime;
-    const msToNote = Math.max(0, (time - now) * 1000);
-
-    setTimeout(() => {
-      if (this.isPlaying()) {
-        this.beat.update((v) => v + 1);
-      }
-    }, msToNote);
+    Tone.getTransport().bpm.value = safe;
   }
 }

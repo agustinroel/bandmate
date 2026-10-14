@@ -1,10 +1,10 @@
 import fp from "fastify-plugin";
-import { createRemoteJWKSet, jwtVerify, errors as JoseErrors } from "jose";
+import https from "node:https";
+import { jwtVerify, errors as JoseErrors, decodeProtectedHeader, importJWK, } from "jose";
 function getBearerToken(req) {
     const h = req.headers.authorization;
     if (!h)
         return null;
-    // soporta "Bearer   token" y casos raros con espacios
     const parts = h.split(" ").filter(Boolean);
     if (parts.length < 2)
         return null;
@@ -31,17 +31,79 @@ function normalizeJoseError(e) {
         return "Invalid token";
     return "Invalid or expired token";
 }
+// Fetch JWKS manually with SSL bypass for corporate networks
+async function fetchJWKS(url) {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, {
+            // Only bypass SSL in development (corporate proxy workaround)
+            rejectUnauthorized: process.env.NODE_ENV === "production",
+        }, (res) => {
+            let data = "";
+            res.on("data", (chunk) => (data += chunk));
+            res.on("end", () => {
+                try {
+                    resolve(JSON.parse(data));
+                }
+                catch (e) {
+                    reject(new Error("Invalid JWKS JSON"));
+                }
+            });
+        });
+        req.on("error", reject);
+        req.setTimeout(10000, () => {
+            req.destroy();
+            reject(new Error("JWKS fetch timeout"));
+        });
+    });
+}
 async function authPlugin(app, opts) {
     const supabaseUrl = process.env.SUPABASE_URL;
     if (!supabaseUrl)
         throw new Error("Missing SUPABASE_URL");
     const issuer = issuerFromSupabaseUrl(supabaseUrl);
-    // JWKS (RS256) por defecto
     const jwksUrl = process.env.SUPABASE_JWKS_URL ?? `${issuer}/.well-known/jwks.json`;
-    const JWKS = createRemoteJWKSet(new URL(jwksUrl));
-    // Fallback HS256 si lo configurás (no siempre hace falta en Supabase)
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET
-        ? new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET)
+    // Pre-fetch and cache JWKS at startup
+    let cachedKeys = new Map();
+    let lastFetch = 0;
+    const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+    async function getKeyFromJWKS(kid) {
+        const now = Date.now();
+        // Refresh cache if expired or empty
+        if (cachedKeys.size === 0 || now - lastFetch > CACHE_TTL) {
+            try {
+                console.log("[AUTH] Fetching JWKS from", jwksUrl);
+                const jwks = await fetchJWKS(jwksUrl);
+                cachedKeys = new Map();
+                for (const key of jwks.keys) {
+                    if (key.kid) {
+                        const cryptoKey = await importJWK(key, key.alg);
+                        cachedKeys.set(key.kid, cryptoKey);
+                    }
+                }
+                lastFetch = now;
+                console.log(`[AUTH] Cached ${cachedKeys.size} keys from JWKS`);
+            }
+            catch (e) {
+                console.error("[AUTH] Failed to fetch JWKS:", e.message);
+                if (cachedKeys.size === 0)
+                    throw e;
+                // Use stale cache if we have one
+            }
+        }
+        // Try to find the key by kid, or return the first one
+        if (kid && cachedKeys.has(kid)) {
+            return cachedKeys.get(kid);
+        }
+        // Return first key if no kid specified
+        const firstKey = cachedKeys.values().next().value;
+        if (!firstKey)
+            throw new Error("No keys in JWKS cache");
+        return firstKey;
+    }
+    // JWT Secret HS256 - Supabase lo entrega en base64
+    const rawSecret = process.env.SUPABASE_JWT_SECRET;
+    const jwtSecret = rawSecret
+        ? Uint8Array.from(Buffer.from(rawSecret, "base64"))
         : null;
     const publicRoutes = opts.publicRoutes ?? ["/health", "/debug"];
     app.decorate("authenticate", async (req) => {
@@ -50,26 +112,39 @@ async function authPlugin(app, opts) {
             throw httpError(401, "Missing bearer token");
         let payload;
         try {
-            // 1) Preferimos JWKS
+            // Decode header to get algorithm and key id
+            let alg = "unknown";
+            let kid;
             try {
-                const verified = await jwtVerify(token, JWKS, { issuer });
-                payload = verified.payload;
+                const header = decodeProtectedHeader(token);
+                alg = header.alg ?? "unknown";
+                kid = header.kid;
             }
-            catch (e) {
-                // 2) Fallback HS256 (si está configurado)
-                if (!jwtSecret)
-                    throw e;
+            catch {
+                // Continue with unknown algorithm
+            }
+            if (alg === "HS256" && jwtSecret) {
+                // Token firmado con HS256 (legacy)
                 const verified = await jwtVerify(token, jwtSecret, { issuer });
                 payload = verified.payload;
             }
+            else if (alg === "ES256" || alg === "RS256" || alg === "unknown") {
+                // Token firmado con clave asimétrica - usar JWKS
+                const key = await getKeyFromJWKS(kid);
+                const verified = await jwtVerify(token, key, { issuer });
+                payload = verified.payload;
+            }
+            else {
+                throw new Error(`Unsupported algorithm: ${alg}`);
+            }
         }
         catch (e) {
+            console.error("[AUTH] Verification failed:", e.message);
             throw httpError(401, normalizeJoseError(e));
         }
         const sub = payload?.sub;
         if (!sub || typeof sub !== "string")
             throw httpError(401, "Invalid token: missing sub");
-        // adjuntamos el user al request
         req.user = {
             id: sub,
             email: typeof payload.email === "string" ? payload.email : undefined,
@@ -77,14 +152,10 @@ async function authPlugin(app, opts) {
             claims: payload,
         };
     });
-    // Alias más semántico, por compat con tu código previo
     app.decorate("requireAuth", async (req) => app.authenticate(req));
-    // Hook global opcional: si lo querés global, registralo en main con app.addHook.
     app.decorate("authGuardHook", async (req) => {
-        // 1. Saltar OPTIONS (peticiones preflight del navegador)
         if (req.method === "OPTIONS")
             return;
-        // 2. Rutas públicas por prefix
         const url = req.url || "";
         if (publicRoutes.some((p) => url.startsWith(p)))
             return;

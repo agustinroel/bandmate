@@ -1,4 +1,4 @@
-import { listPublicProfiles, getProfileByUsername } from "./profiles.repo.js";
+import { listPublicProfiles, getProfileByUsername, getProfileById, } from "./profiles.repo.js";
 export async function profilesRoutes(app) {
     // LIST public profiles (discovery)
     app.get("/profiles", async (req, reply) => {
@@ -39,6 +39,15 @@ export async function profilesRoutes(app) {
             // Requirement: "filter all, but only see info if public".
             // So if I know the username but it's private, I should probably not see details.
             return reply.code(403).send({ message: "This profile is private." });
+        }
+        return profile;
+    });
+    // GET current user's profile (authenticated)
+    app.get("/profiles/me", { preHandler: [app.requireAuth] }, async (req, reply) => {
+        const userId = req.user.id;
+        const profile = await getProfileById(userId);
+        if (!profile) {
+            return reply.code(404).send({ message: "Profile not found" });
         }
         return profile;
     });

@@ -20,8 +20,12 @@ import { eventsRoutes } from "./events/events.routes.js";
 import { ticketingRoutes } from "./events/ticketing.routes.js";
 import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
 import { subscriptionRoutes } from "./subscriptions/subscriptions.routes.js";
+import { aiRoutes } from "./ai/ai.routes.js";
+import { initAiQueue } from "./ai/ai-queue.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
 import { subscriptionHook } from "./services/subscription.middleware.js";
+
+initAiQueue();
 
 if (process.env.SEED_LIBRARY === "true") {
   // ... existing seed logic ...
@@ -188,6 +192,7 @@ await app.register(ticketingRoutes);
 await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
 await app.register(subscriptionRoutes);
+await app.register(aiRoutes);
 
 app.setErrorHandler((err, req, reply) => {
   const status = (err as any).statusCode ?? 500;

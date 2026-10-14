@@ -1,6 +1,7 @@
+import "./env.js";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import "dotenv/config";
+import rateLimit from "@fastify/rate-limit";
 import { Readable } from "node:stream";
 import { registerAuth } from "./plugins/auth.js";
 import { songsRoutes } from "./songs/songs.routes.js";
@@ -16,13 +17,23 @@ import { notificationsRoutes } from "./notifications/notifications.routes.js";
 import { eventsRoutes } from "./events/events.routes.js";
 import { ticketingRoutes } from "./events/ticketing.routes.js";
 import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
+import { subscriptionRoutes } from "./subscriptions/subscriptions.routes.js";
+import { aiRoutes } from "./ai/ai.routes.js";
+import { initAiQueue } from "./ai/ai-queue.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
+import { subscriptionHook } from "./services/subscription.middleware.js";
+initAiQueue();
 if (process.env.SEED_LIBRARY === "true") {
     // ... existing seed logic ...
 }
 const app = Fastify({
     logger: true,
     ignoreTrailingSlash: true,
+});
+// Rate limiting: 100 requests per minute per IP
+await app.register(rateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
 });
 // Hook onRequest para CORS "Total Freedom": Inyectar antes de que nadie pueda bloquear
 app.addHook("onRequest", async (request, reply) => {
@@ -121,9 +132,12 @@ await app.register(registerAuth, {
         "/debug",
         "/auth/spotify",
         "/webhooks/stripe",
+        "/bands",
+        "/profiles",
     ],
 });
 app.addHook("preHandler", app.authGuardHook);
+app.addHook("preHandler", subscriptionHook);
 // Diagnostic Routes
 app.get("/health", async () => ({ status: "ok" }));
 app.get("/health/cors", async () => ({
@@ -148,6 +162,8 @@ await app.register(eventsRoutes);
 await app.register(ticketingRoutes);
 await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
+await app.register(subscriptionRoutes);
+await app.register(aiRoutes);
 app.setErrorHandler((err, req, reply) => {
     const status = err.statusCode ?? 500;
     req.log.error({ err }, "Unhandled error");

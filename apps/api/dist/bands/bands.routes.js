@@ -1,4 +1,4 @@
-import { addSongToBand, createBand, getBand, listBandMembers, listBandSongs, listBandsForUser, removeSongFromBand, updateBand, getOrCreateInviteCode, joinBandByCode, inviteUserToBand, listPendingInvites, respondToInvite, } from "./bands.repo.js";
+import { addSongToBand, createBand, getBand, listBandMembers, listBandSongs, listBandsForUser, removeSongFromBand, updateBand, getOrCreateInviteCode, joinBandByCode, inviteUserToBand, listPendingInvites, respondToInvite, listBands, } from "./bands.repo.js";
 export async function bandsRoutes(app) {
     // --- Invitations (User to User) ---
     // Invite a user to a band
@@ -84,6 +84,20 @@ export async function bandsRoutes(app) {
         catch (e) {
             req.log.error(e);
             return reply.code(500).send({ message: "Could not list bands" });
+        }
+    });
+    // Discovery: List all bands
+    app.get("/bands", async (req, reply) => {
+        const query = (req.query ?? {});
+        const limit = query.limit ? Number(query.limit) : 20;
+        const offset = query.offset ? Number(query.offset) : 0;
+        try {
+            const bands = await listBands(limit, offset);
+            return bands;
+        }
+        catch (e) {
+            req.log.error(e);
+            return reply.code(500).send({ message: "Error fetching discover bands" });
         }
     });
     // List bands for a specific profile (Public or Auth)

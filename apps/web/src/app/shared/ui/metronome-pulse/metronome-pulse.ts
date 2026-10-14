@@ -1,8 +1,8 @@
-import { Component, inject, computed, ElementRef, viewChild } from '@angular/core';
+import { Component, inject, ElementRef, viewChild, effect, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MetronomeService } from '../../../features/practice/services/metronome.service';
 import { AnimationService } from '../../../core/services/animation.service';
-import { effect } from '@angular/core';
+import gsap from 'gsap';
 
 @Component({
   selector: 'bm-metronome-pulse',
@@ -10,15 +10,21 @@ import { effect } from '@angular/core';
   imports: [CommonModule],
   template: `
     @if (metronome.isPlaying()) {
-      <div class="pulse-container">
-        <div #pulseDot class="pulse-dot"></div>
+      <div class="pulse-container d-flex align-items-center gap-1">
+        @for (b of [1, 2, 3, 4]; track b) {
+          <div
+            #dots
+            class="pulse-dot"
+            [class.active]="metronome.beatInBar() === b"
+            [class.downbeat]="b === 1"
+          ></div>
+        }
       </div>
     }
   `,
   styles: [
     `
       .pulse-container {
-        width: 24px;
         height: 24px;
         display: flex;
         align-items: center;
@@ -26,12 +32,20 @@ import { effect } from '@angular/core';
         pointer-events: none;
       }
       .pulse-dot {
-        width: 12px;
-        height: 12px;
-        background-color: var(--bm-burnt);
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        box-shadow: 0 0 10px var(--bm-burnt);
-        opacity: 0.8;
+        background-color: var(--bm-border-subtle, rgba(255, 255, 255, 0.2));
+        transition: background-color 0.1s ease;
+      }
+      .pulse-dot.active {
+        background-color: var(--bm-burnt, #e76f51);
+        box-shadow: 0 0 8px var(--bm-burnt, #e76f51);
+      }
+      .pulse-dot.downbeat.active {
+        background-color: #2a9d8f;
+        box-shadow: 0 0 10px #2a9d8f;
+        transform: scale(1.2);
       }
     `,
   ],
@@ -39,15 +53,21 @@ import { effect } from '@angular/core';
 export class MetronomePulseComponent {
   readonly metronome = inject(MetronomeService);
   private readonly animation = inject(AnimationService);
-  private readonly pulseDot = viewChild<ElementRef>('pulseDot');
 
   constructor() {
     effect(() => {
-      // React to beat changes
       const b = this.metronome.beat();
-      const dot = this.pulseDot();
-      if (dot && b > 0) {
-        this.animation.pulse(dot, 0.15);
+      const beatInBar = this.metronome.beatInBar();
+      if (b > 0) {
+        // High-precision GSAP flash on the active beat synchronized via Tone.Transport
+        const activeEl = document.querySelector('.pulse-dot.active');
+        if (activeEl) {
+          gsap.fromTo(
+            activeEl,
+            { scale: beatInBar === 1 ? 1.4 : 1.2 },
+            { scale: 1, duration: 0.15, ease: 'power2.out' },
+          );
+        }
       }
     });
   }

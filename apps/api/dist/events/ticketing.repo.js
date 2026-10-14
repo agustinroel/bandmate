@@ -68,8 +68,9 @@ export async function validateTicket(qrHash, bandId) {
         title,
         event_date
       ),
-      profiles (
-        full_name
+      profiles:user_id (
+        full_name,
+        email
       )
     `)
         .eq("qr_hash", qrHash)
