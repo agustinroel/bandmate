@@ -12,8 +12,8 @@
 ---
 
 ## ⚡ Tarea en Curso
-- **ID**: `ROADMAP-AUDIT-COMPLETE`
-- **Estado**: ✅ Todas las tareas fundamentales de las Fases 0 a 7 (Stage Plot, Tech Rider, Bulk Import/Export, Live Band Sync, EPK Generator, Tuner Pro, Practice Loop Trainer, Audiciones y Presets) están 100% implementadas y verificadas con 73 tests pasando y 0 errores de compilación.
+- **ID**: `AUDIT-STAGE-ACCESSIBILITY`
+- **Estado**: 🚧 En ejecución (Auto-Discovery). Optimizando áreas de toque mínimas para escenario (44-48px) y etiquetado de accesibilidad WCAG 2.1 AA (`aria-label` en controles de reproducción, transporte, afinador, zoom de acordes y barras de autoscroll).
 
 ---
 

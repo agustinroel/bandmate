@@ -132,10 +132,100 @@ body.theme-dark {
   .cm-sidebar-card,
   .cm-feed-empty-state,
   .cm-comment-bubble,
-  .cm-empty-state {
+  .cm-empty-state,
+  .card-glass,
+  .p-card,
+  .song-card {
     background-color: #0f172a !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
     color: #f8fafc !important;
+  }
+
+  /* Prevent ambient surface white bleaching on dark mode footer & sidenav */
+  .app-footer {
+    background: #030712 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+
+    &::before {
+      display: none !important;
+    }
+
+    .footer-brand {
+      color: #f8fafc !important;
+      opacity: 0.95;
+    }
+    .footer-muted {
+      color: #94a3b8 !important;
+    }
+    .footer-link {
+      color: #cbd5e1 !important;
+      &:hover {
+        color: #ffffff !important;
+      }
+    }
+    .footer-dot {
+      color: rgba(255, 255, 255, 0.25) !important;
+    }
+  }
+
+  mat-sidenav::before {
+    display: none !important;
+  }
+
+  /* Material Outlined / Stroked / Text buttons in Dark Mode */
+  .mat-mdc-outlined-button:not(:disabled),
+  .mat-mdc-stroked-button:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #f8fafc !important;
+    --mdc-outlined-button-label-text-color: #f8fafc !important;
+    --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.2) !important;
+
+    .mdc-button__label,
+    mat-icon,
+    span {
+      color: #f8fafc !important;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(255, 255, 255, 0.35) !important;
+    }
+  }
+
+  .mat-mdc-icon-button:not(:disabled) {
+    color: #cbd5e1 !important;
+    --mat-icon-color: #cbd5e1;
+
+    &:hover {
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+  }
+
+  .mat-mdc-button:not(:disabled) {
+    color: #f8fafc !important;
+    --mdc-text-button-label-text-color: #f8fafc !important;
+  }
+
+  /* Accent Buttons / Gold Pills (WCAG 2.1 AA: dark text on gold) */
+  .show-mode-btn,
+  .bm-btn-accent {
+    background-color: var(--bm-accent, #e9c46a) !important;
+    color: #090d16 !important;
+    --mdc-filled-button-label-text-color: #090d16 !important;
+    font-weight: 750 !important;
+
+    .mdc-button__label,
+    mat-icon,
+    span {
+      color: #090d16 !important;
+    }
+
+    &:hover {
+      filter: brightness(1.08) !important;
+      color: #090d16 !important;
+    }
   }
 
   .cm-nav-switcher {

@@ -12,6 +12,86 @@ const commentLine = (id, text) => ({
 });
 export const SEED_ARRANGEMENTS = [
     // =========================
+    // Amazing Grace (Public Domain - Complete Chords & Lyrics)
+    // =========================
+    {
+        workSlug: "amazing-grace-traditional",
+        source: "public-domain",
+        isSeed: true,
+        key: "G",
+        bpm: 72,
+        durationSec: 210,
+        timeSignature: "3/4",
+        notes: "Public domain arrangement with full chords and lyrics.",
+        tags: ["hymn", "traditional", "chords-and-lyrics"],
+        sections: [
+            {
+                id: "ag-v1",
+                type: "verse",
+                name: "Verse 1",
+                order: 1,
+                lines: [
+                    chordLine("ag-v1-1", "[G]Amazing grace, how [C]sweet the sound,"),
+                    chordLine("ag-v1-2", "That [G]saved a wretch like [D]me;"),
+                    chordLine("ag-v1-3", "I [G]once was lost, but [C]now am found,"),
+                    chordLine("ag-v1-4", "Was [G]blind, but [D]now I [G]see."),
+                ],
+            },
+            {
+                id: "ag-v2",
+                type: "verse",
+                name: "Verse 2",
+                order: 2,
+                lines: [
+                    chordLine("ag-v2-1", "[G]'Twas grace that taught my [C]heart to fear,"),
+                    chordLine("ag-v2-2", "And [G]grace my fears re[D]lieved;"),
+                    chordLine("ag-v2-3", "How [G]precious did that [C]grace appear"),
+                    chordLine("ag-v2-4", "The [G]hour I [D]first be[G]lieved."),
+                ],
+            },
+        ],
+    },
+    // =========================
+    // Auld Lang Syne (Public Domain - Complete Chords & Lyrics)
+    // =========================
+    {
+        workSlug: "auld-lang-syne-traditional",
+        source: "public-domain",
+        isSeed: true,
+        key: "G",
+        bpm: 84,
+        durationSec: 180,
+        timeSignature: "4/4",
+        notes: "Public domain folk song with full chords and lyrics.",
+        tags: ["folk", "traditional", "chords-and-lyrics"],
+        sections: [
+            {
+                id: "als-v1",
+                type: "verse",
+                name: "Verse 1",
+                order: 1,
+                lines: [
+                    chordLine("als-v1-1", "Should [G]auld acquaintance be for[C]got,"),
+                    chordLine("als-v1-2", "And [G]never brought to [D]mind?"),
+                    chordLine("als-v1-3", "Should [G]auld acquaintance be for[C]got,"),
+                    chordLine("als-v1-4", "And [G]days of [D]auld lang [G]syne!"),
+                ],
+            },
+            {
+                id: "als-c",
+                type: "chorus",
+                name: "Chorus",
+                order: 2,
+                lines: [
+                    chordLine("als-c-1", "For [G]auld lang [C]syne, my dear,"),
+                    chordLine("als-c-2", "For [G]auld lang [D]syne,"),
+                    chordLine("als-c-3", "We'll [G]take a cup o' [C]kindness yet,"),
+                    chordLine("als-c-4", "For [G]auld lang [D]syne!"),
+                ],
+            },
+        ],
+    },
+    // =========================
     // Radiohead — Creep (SAFE)
     // =========================
     {

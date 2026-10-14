@@ -107,17 +107,20 @@
 }
 
 .btn-sm-icon {
-    width: 32px !important;
-    height: 32px !important;
-    line-height: 32px !important;
-    display: flex !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
 
     mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
     }
 }
 
@@ -126,9 +129,11 @@
     font-weight: 700 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 0 12px !important;
-    height: 28px !important;
-    line-height: 28px !important;
+    padding: 0 14px !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    touch-action: manipulation;
 }
 
 /* Slider Customization */

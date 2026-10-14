@@ -57,6 +57,7 @@
               mat-icon-button
               (click)="adjTranspose(-1)"
               matTooltip="Transpose Down"
+              aria-label="Transponer medio tono abajo"
               class="btn-sm-icon"
             >
               <mat-icon>remove</mat-icon>
@@ -68,6 +69,7 @@
               mat-icon-button
               (click)="adjTranspose(1)"
               matTooltip="Transpose Up"
+              aria-label="Transponer medio tono arriba"
               class="btn-sm-icon"
             >
               <mat-icon>add</mat-icon>
@@ -78,6 +80,7 @@
             color="primary"
             class="rounded-pill bm-btn-mini"
             (click)="resetTranspose()"
+            aria-label="Restablecer transposición a la clave original"
             [disabled]="internalTranspose() === 0"
           >
             Reset
@@ -92,6 +95,7 @@
               [color]="metronome.isPlaying() ? 'accent' : ''"
               (click)="toggleMetronome()"
               matTooltip="Toggle Metronome"
+              aria-label="Alternar reproducción de metrónomo"
             >
               <mat-icon>{{ metronome.isPlaying() ? 'metronome' : 'timer' }}</mat-icon>
             </button>
@@ -101,6 +105,7 @@
               class="bm-bpm-btn-mini"
               [matMenuTriggerFor]="bpmMenu"
               matTooltip="Adjust BPM"
+              aria-label="Ajustar tempo y BPM del metrónomo"
             >
               {{ metronome.bpm() }}
             </button>
@@ -111,6 +116,7 @@
               class="bm-btn-mini rounded-pill px-2 fw-bold"
               (click)="onTapTempo()"
               matTooltip="Toca al ritmo (Tap Tempo)"
+              aria-label="Tocar al ritmo para calcular tempo"
             >
               TAP
             </button>
@@ -119,11 +125,11 @@
               <div class="p-3" style="min-width: 200px" (click)="$event.stopPropagation()">
                 <div class="small opacity-75 mb-2">Tempo (BPM)</div>
                 <div class="d-flex align-items-center gap-2">
-                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() - 5)">
+                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() - 5)" aria-label="Reducir tempo 5 BPM">
                     <mat-icon>remove</mat-icon>
                   </button>
                   <span class="fw-bold fs-5 flex-grow-1 text-center">{{ metronome.bpm() }}</span>
-                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() + 5)">
+                  <button mat-icon-button (click)="metronome.setBpm(metronome.bpm() + 5)" aria-label="Aumentar tempo 5 BPM">
                     <mat-icon>add</mat-icon>
                   </button>
                 </div>
@@ -132,6 +138,7 @@
                     matSliderThumb
                     [value]="metronome.bpm()"
                     (valueChange)="metronome.setBpm($event)"
+                    aria-label="Control deslizante de tempo en BPM"
                   />
                 </mat-slider>
               </div>
@@ -148,6 +155,7 @@
             [color]="showTuner() ? 'accent' : ''"
             (click)="toggleTuner()"
             matTooltip="Guitar Tuner"
+            aria-label="Alternar afinador de guitarra"
           >
             <mat-icon>music_note</mat-icon>
           </button>
@@ -160,6 +168,7 @@
             [color]="twoColumns() ? 'primary' : ''"
             (click)="toggleTwoColumns()"
             matTooltip="Alternar 2 Columnas (Tablet/Escenario)"
+            aria-label="Alternar visualización en dos columnas para atril o tablet"
           >
             <mat-icon>{{ twoColumns() ? 'view_column' : 'view_stream' }}</mat-icon>
           </button>
@@ -169,6 +178,7 @@
             [color]="isOledDark() ? 'accent' : ''"
             (click)="toggleOledDark()"
             matTooltip="Modo Escenario OLED Alto Contraste"
+            aria-label="Alternar modo escenario OLED de alto contraste"
           >
             <mat-icon>{{ isOledDark() ? 'light_mode' : 'nightlife' }}</mat-icon>
           </button>
@@ -180,6 +190,7 @@
               (click)="adjustFontScale(-0.1)"
               class="btn-sm-icon"
               matTooltip="Reducir fuente"
+              aria-label="Reducir tamaño de letra de acordes"
               [disabled]="fontScale() <= 0.7"
             >
               <mat-icon>text_decrease</mat-icon>
@@ -192,6 +203,7 @@
               (click)="adjustFontScale(0.1)"
               class="btn-sm-icon"
               matTooltip="Aumentar fuente"
+              aria-label="Aumentar tamaño de letra de acordes"
               [disabled]="fontScale() >= 1.8"
             >
               <mat-icon>text_increase</mat-icon>
@@ -210,6 +222,7 @@
                 matSliderThumb
                 [value]="scrollSpeed()"
                 (input)="updateScrollSpeed($any($event.target).value)"
+                aria-label="Velocidad de desplazamiento automático"
               />
             </mat-slider>
           </div>
@@ -219,6 +232,7 @@
             mat-flat-button
             [color]="isScrolling() ? 'accent' : 'primary'"
             (click)="toggleScroll()"
+            aria-label="Alternar desplazamiento automático de acordes"
             class="rounded-pill px-4 shadow-sm"
           >
             <mat-icon class="me-2">{{ isScrolling() ? 'pause' : 'play_arrow' }}</mat-icon>
@@ -232,7 +246,7 @@
     @if (showTuner()) {
       <div class="sv-floating-tool tuner-overlay">
         <bm-tuner-compact />
-        <button mat-mini-fab color="warn" class="close-tool" (click)="toggleTuner()">
+        <button mat-mini-fab color="warn" class="close-tool" (click)="toggleTuner()" aria-label="Cerrar afinador flotante">
           <mat-icon>close</mat-icon>
         </button>
       </div>

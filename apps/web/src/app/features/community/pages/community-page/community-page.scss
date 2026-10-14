@@ -1596,6 +1596,13 @@
   .cm-follow-btn {
     border-color: rgba(255, 255, 255, 0.25) !important;
     color: #f8fafc !important;
+    --mdc-outlined-button-label-text-color: #f8fafc !important;
+
+    .cm-follow-btn-icon,
+    span,
+    .mdc-button__label {
+      color: #f8fafc !important;
+    }
 
     &:hover {
       background: rgba(255, 255, 255, 0.1) !important;
@@ -1606,11 +1613,24 @@
       background: #f8fafc !important;
       color: #030712 !important;
       border-color: #f8fafc !important;
+      --mdc-outlined-button-label-text-color: #030712 !important;
+
+      .cm-follow-btn-icon,
+      span,
+      .mdc-button__label {
+        color: #030712 !important;
+      }
 
       &:hover {
         background: #ef4444 !important;
         border-color: #ef4444 !important;
         color: #ffffff !important;
+
+        .cm-follow-btn-icon,
+        span,
+        .mdc-button__label {
+          color: #ffffff !important;
+        }
       }
     }
   }
@@ -1618,6 +1638,62 @@
   .cm-follow-sm-btn {
     background: #f8fafc !important;
     color: #030712 !important;
+    --mdc-filled-button-label-text-color: #030712 !important;
+    font-weight: 700 !important;
+
+    ::ng-deep .mdc-button__label,
+    .mdc-button__label,
+    span {
+      color: #030712 !important;
+    }
+
+    &:hover {
+      background: #ffffff !important;
+      color: #030712 !important;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+    }
+  }
+
+  .cm-band-avatar-mini {
+    background: #1e293b !important;
+    color: var(--bm-accent, #e9c46a) !important;
+    border: 1px solid rgba(233, 196, 106, 0.3) !important;
+  }
+
+  /* Directory instrument chips */
+  .cm-chip {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border-color: rgba(255, 255, 255, 0.25) !important;
+      color: #ffffff !important;
+    }
+
+    &.cm-chip--active {
+      background: rgba(233, 196, 106, 0.2) !important;
+      border-color: var(--bm-accent, #e9c46a) !important;
+      color: var(--bm-accent, #e9c46a) !important;
+    }
+  }
+
+  .cm-musician-social-stats {
+    .text-muted {
+      color: #94a3b8 !important;
+    }
+    .text-body {
+      color: #f8fafc !important;
+    }
+  }
+
+  .cm-musician-bio {
+    color: #cbd5e1 !important;
+  }
+
+  .cm-musician-handle {
+    color: #94a3b8 !important;
   }
 
   .cm-trend-item:hover {
@@ -1627,6 +1703,21 @@
   .cm-sidebar-card {
     background: #0f172a;
     border-color: rgba(255, 255, 255, 0.08) !important;
+
+    button[routerLink*="/bands"] {
+      border-color: rgba(255, 255, 255, 0.2) !important;
+      color: #f8fafc !important;
+      --mdc-outlined-button-label-text-color: #f8fafc !important;
+
+      .mdc-button__label,
+      span {
+        color: #f8fafc !important;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+    }
   }
 
   .cm-musician-card {

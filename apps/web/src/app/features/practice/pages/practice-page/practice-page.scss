@@ -1105,3 +1105,65 @@
     opacity: 1;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Dark Mode Overrides (High-Contrast & Refined Dark Aesthetic)
+   ══════════════════════════════════════════════════════════════ */
+:host-context([data-bs-theme="dark"]),
+:host-context(.theme-dark) {
+  .exit-button {
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+
+    mat-icon {
+      color: #f8fafc !important;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+  }
+
+  .p-card {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+
+    .p-empty {
+      color: #f8fafc !important;
+
+      .p-empty-ic {
+        color: var(--bm-accent, #e9c46a) !important;
+      }
+      .small {
+        color: #94a3b8 !important;
+      }
+      .fw-semibold {
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .p-pill {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+
+    .p-pill-ic {
+      color: #94a3b8 !important;
+    }
+  }
+
+  .p-metronome {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+
+    .p-bpm-btn {
+      color: #ffffff !important;
+    }
+    .p-metronome-btn {
+      color: var(--bm-accent, #e9c46a) !important;
+    }
+  }
+}

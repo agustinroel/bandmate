@@ -400,8 +400,13 @@ import { I18nService } from '../../core/services/i18n.service';
       }
       .bm-nav-link.active {
         background: var(--bm-accent);
-        color: var(--bm-primary);
+        color: #090d16 !important;
         box-shadow: 0 4px 12px rgba(233, 196, 106, 0.3);
+
+        .bm-nav-ic {
+          color: #090d16 !important;
+          opacity: 1;
+        }
       }
       .bm-nav-ic {
         font-size: 18px;
