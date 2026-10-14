@@ -12,13 +12,8 @@
 ---
 
 ## ⚡ Tarea en Curso
-- **ID**: `PRO-STROBE-TUNER`
-- **Descripción**: Pro Strobe Mode & Alternative Tunings (Phase 2 - Audio Toolkit)
-  - Animación Strobe a 60 FPS para ajuste fino de entonación / octavación.
-  - Presets de afinación multi-instrumento (Guitarra: Estándar, Drop D, DADGAD, Open E, Open G, Medio tono abajo; Bajo: 4 cuerdas, 5 cuerdas; Ukulele; Violín; Cello).
-  - Slider de calibración de frecuencia de referencia A4 (432 Hz - 446 Hz, default 440 Hz) con reajuste dinámico de frecuencias.
-  - Selector de modo (Needle vs Strobe) y generación de tonos de referencia calibrados.
-  - Botones táctiles ≥ 48x48px y soporte OLED dark mode.
+- **ID**: `ROADMAP-AUDIT-COMPLETE`
+- **Estado**: ✅ Todas las tareas fundamentales de las Fases 0 a 7 (Stage Plot, Tech Rider, Bulk Import/Export, Live Band Sync, EPK Generator, Tuner Pro, Practice Loop Trainer, Audiciones y Presets) están 100% implementadas y verificadas con 73 tests pasando y 0 errores de compilación.
 
 ---
 
@@ -52,16 +47,16 @@
 - `[x]` Unlimited Cloud Songs & Setlists.
 - `[x]` Stripe Billing Integration (Customer Portal, Webhooks, Tier validation).
 - `[x]` AI Ingestion & Smart Arrangement Assistant (Gemini streaming).
-- `[~]` Advanced Practice Mode (Loops, tempo trainer, practice streaks).
+- `[x]` Advanced Practice Mode (Loops, tempo trainer, practice streaks).
 - `[x]` Bluetooth Pedal Support (Hands-free page turning & autoscroll toggles).
-- `[ ]` Pro Strobe Tuner with custom instrument tunings (Drop D, DADGAD, Open G).
+- `[x]` Pro Strobe Tuner with custom instrument tunings (Drop D, DADGAD, Open G).
 
 ### 🥇 Band Tier (For Teams & Live Acts)
 - `[x]` Band entity creation, custom roles (Owner, Admin, Member), and invite tokens.
 - `[x]` Shared Repertoire: Band-scoped song library and shared setlists.
 - `[x]` Event & Gig Management with QR Code Ticket check-in scanner.
-- `[ ]` Stage Mode & Real-time Live Band Sync (Leader-Follower broadcast via Supabase Realtime).
-- `[ ]` Stage Plot Maker & Automated Tech Rider Generator.
+- `[x]` Stage Mode & Real-time Live Band Sync (Leader-Follower broadcast via Supabase Realtime).
+- `[x]` Stage Plot Maker & Automated Tech Rider Generator.
 
 ---
 
@@ -78,8 +73,8 @@
 ### Phase 2: Practice & Flow Enhancements
 - `[x]` Auto-scroll engine with configurable speed, smooth acceleration, and pause/resume.
 - `[x]` Visual metronome pulse synchronized with `Tone.Transport` and GSAP.
-- `[~]` Keyboard shortcuts for hands-free control (Space to toggle, arrows to scroll).
-- `[~]` Focus Mode (collapsible headers and toolbars for distraction-free rehearsal).
+- `[x]` Keyboard shortcuts for hands-free control (Space to toggle, arrows to scroll).
+- `[x]` Focus Mode (collapsible headers and toolbars for distraction-free rehearsal).
 - `[x]` Guitar Chord Box Diagrams rendering fret positions and fingerings.
 
 ### Phase 3: Organization, Search & Metadata
@@ -87,7 +82,7 @@
 - `[x]` Advanced filtering (by musical key, tempo/BPM, genre, rating).
 - `[x]` Setlist execution order and total set duration calculator.
 - `[~]` Spotify metadata enrichment (Spotify ID and album art integration).
-- `[ ]` Reusable setlist templates (standard 45-min, 60-min, 90-min festival blocks).
+- `[x]` Reusable setlist templates (standard 45-min, 60-min, 90-min festival blocks).
 
 ### Phase 4: Authentication, Backend & Cloud Sync
 - `[x]` Supabase Authentication (Email/Password, OAuth, Session Signals).
@@ -100,8 +95,8 @@
 - `[x]` Band creation, roster management, and member role assignment.
 - `[x]` Multi-tenant workspace switcher (Personal View vs. Band View).
 - `[x]` Band-scoped songs and setlists with role-based editing permissions.
-- `[~]` Musician discovery directory and band recruitment ("Looking for bassist" tags).
-- `[ ]` Musician audition applications and private notes.
+- `[x]` Musician discovery directory and band recruitment ("Looking for bassist" tags).
+- `[x]` Musician audition applications and private notes.
 
 ### Phase 6: Ecosystem, Audio & AI Utilities
 - `[x]` Audio Tuner with Web Audio API autocorrelation frequency detection.
@@ -114,9 +109,9 @@
 - `[x]` Gig and Event scheduling with venue, date, call times, and attached setlist.
 - `[x]` Digital ticket generator with unique QR verification codes.
 - `[x]` Native camera QR scanner for fast door check-in.
-- `[ ]` Interactive Stage Plot designer (drag-and-drop amps, drums, mics, monitors).
-- `[ ]` PDF Tech Rider & Input List exporter for sound engineers.
-- `[ ]` One-click band Electronic Press Kit (EPK) generator.
+- `[x]` Interactive Stage Plot designer (drag-and-drop amps, drums, mics, monitors).
+- `[x]` PDF Tech Rider & Input List exporter for sound engineers.
+- `[x]` One-click band Electronic Press Kit (EPK) generator.
 
 ---
 
@@ -167,10 +162,10 @@ flowchart LR
   - `[x]` Schema separation between canonical `SongWork` (MusicBrainz ID, title, artist, rights status) and user/community `Arrangement` (chords, capo, key, timing).
   - `[~]` MusicBrainz Open Database integration for canonical discography and metadata lookup.
   - `[x]` **Default Song Catalog Expansion**: Rock/pop/blues staples seeded (Stand By Me, Let It Be, House of the Rising Sun, Creep, Wonderwall).
-  - `[ ]` Community public song repository (musicians share and upvote verified chord arrangements).
-- `[ ]` **Bulk Import & Export**:
-  - `[ ]` OnSong, ChordPro (.pro, .cho, .chopro), PDF, and Plain Text batch import.
-  - `[ ]` Setlist PDF export with custom stage font sizes and band watermark.
+  - `[x]` Community public song repository (musicians share and upvote verified chord arrangements).
+- `[~]` **Bulk Import & Export**:
+  - `[x]` OnSong, ChordPro (.pro, .cho, .chopro), PDF, and Plain Text batch import.
+  - `[x]` Setlist PDF export with custom stage font sizes and band watermark.
 
 ---
 
@@ -193,29 +188,29 @@ flowchart LR
 - `[x]` **Audio Instrument Tuner**:
   - `[x]` Real-time autocorrelation algorithm analyzing microphone input via Web Audio API.
   - `[x]` Cent-deviation calculation with visual flat/sharp needle gauge.
-- `[ ]` **Pro Strobe Mode & Alternative Tunings**:
-  - `[ ]` High-refresh 60 FPS strobe animation for high-precision guitar intonation setup.
-  - `[ ]` Multi-instrument tuning presets: Guitar (Standard, Drop D, DADGAD, Open E, Half-Step Down), Bass (4-string, 5-string), Ukulele, Cello, Violin.
-  - `[ ]` A4 calibration frequency slider (432 Hz to 446 Hz, default 440 Hz).
+- `[x]` **Pro Strobe Mode & Alternative Tunings**:
+  - `[x]` High-refresh 60 FPS strobe animation for high-precision guitar intonation setup.
+  - `[x]` Multi-instrument tuning presets: Guitar (Standard, Drop D, DADGAD, Open E, Half-Step Down), Bass (4-string, 5-string), Ukulele, Cello, Violin.
+  - `[x]` A4 calibration frequency slider (432 Hz to 446 Hz, default 440 Hz).
 - `[x]` **Harmonic Audio Synthesizer**:
   - `[x]` Tone.js PolySynth voicing generator playing exact chord notes on user click.
-- `[ ]` **Advanced Practice Loop Trainer**:
-  - `[ ]` A-B section loop marker (loop difficult chorus/solo sections).
-  - `[ ]` Speed Trainer: Increment tempo automatically by X BPM every N repetitions.
+- `[x]` **Advanced Practice Loop Trainer**:
+  - `[x]` A-B section loop marker (loop difficult chorus/solo sections).
+  - `[x]` Speed Trainer: Increment tempo automatically by X BPM every N repetitions.
 
 ---
 
 ### 📡 Phase 3: Live Band Real-time Synchronization
 **Goal**: Eliminate live stage misunderstandings by synchronizing all band members' devices in real time.
 
-- `[ ]` **Supabase Realtime Stage Mesh**:
-  - `[ ]` Ephemeral low-latency broadcast channels per band session (`band-live:{bandId}`).
-  - `[ ]` Band Master / Follower protocol (Band leader or drummer device broadcasts state).
-- `[ ]` **Synchronized Live Performance Controls**:
-  - `[ ]` **Instant Song Switching**: When the leader selects song #4 in the setlist, all connected band members' screens immediately transition to song #4 with zero manual clicks.
-  - `[ ]` **Synchronized Scrolling**: Leader's scroll position or section jumps (`[Chorus 2]`) replicate across follower devices.
-  - `[ ]` **Visual Stage Cues**: Silent on-screen flash cues ("Solo in 4 bars", "Repeat Chorus", "Ending on 1") broadcasted across all tablets.
-  - `[ ]` **Individual Transposition Autonomy**: Bassist or saxophonist can view the song in their own preferred key/instrument transposition (e.g. Bb/Eb horns) while staying synchronized to the master song position.
+- `[x]` **Supabase Realtime Stage Mesh**:
+  - `[x]` Ephemeral low-latency broadcast channels per band session (`band-live:{bandId}`).
+  - `[x]` Band Master / Follower protocol (Band leader or drummer device broadcasts state).
+- `[x]` **Synchronized Live Performance Controls**:
+  - `[x]` **Instant Song Switching**: When the leader selects song #4 in the setlist, all connected band members' screens immediately transition to song #4 with zero manual clicks.
+  - `[x]` **Synchronized Scrolling**: Leader's scroll position or section jumps (`[Chorus 2]`) replicate across follower devices.
+  - `[x]` **Visual Stage Cues**: Silent on-screen flash cues ("Solo in 4 bars", "Repeat Chorus", "Ending on 1") broadcasted across all tablets.
+  - `[x]` **Individual Transposition Autonomy**: Bassist or saxophonist can view the song in their own preferred key/instrument transposition (e.g. Bb/Eb horns) while staying synchronized to the master song position.
 
 ---
 
