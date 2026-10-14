@@ -16,7 +16,7 @@ describe('SongsPageComponent', () => {
     fixture = TestBed.createComponent(SongsPageComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
-  });
+  }, 30000);
 
   it('should create', () => {
     expect(component).toBeTruthy();

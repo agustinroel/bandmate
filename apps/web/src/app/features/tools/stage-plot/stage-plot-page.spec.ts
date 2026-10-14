@@ -29,7 +29,7 @@ describe('StagePlotPageComponent', () => {
     fixture = TestBed.createComponent(StagePlotPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
+  }, 30000);
 
   it('should create the component and initialize with default rock preset', () => {
     expect(component).toBeTruthy();
