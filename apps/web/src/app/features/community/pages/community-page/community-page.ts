@@ -25,6 +25,7 @@ import { InvitationsDialogComponent } from '../../ui/invitations-dialog/invitati
 import { SongsStore } from '../../../songs/state/songs-store';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { I18nService } from '../../../../core/services/i18n.service';
+import { AuditionDialogComponent } from '../../ui/audition-dialog/audition-dialog.component';
 
 export type FeedComment = {
   id: string;
@@ -882,5 +883,42 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   scrollToMusicians() {
     const el = document.getElementById('cm-musicians-anchor');
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  openAuditionApply(post: any) {
+    this.dialog.open(AuditionDialogComponent, {
+      width: '640px',
+      maxWidth: '96vw',
+      data: {
+        postId: post.id,
+        postTitle: post.content.slice(0, 50),
+        bandName: post.authorBand || post.authorName,
+        mode: 'apply',
+      },
+    });
+  }
+
+  openAuditionDashboard(post: any) {
+    this.dialog.open(AuditionDialogComponent, {
+      width: '740px',
+      maxWidth: '96vw',
+      data: {
+        postId: post.id,
+        postTitle: post.content.slice(0, 50),
+        bandName: post.authorBand || post.authorName,
+        mode: 'review',
+      },
+    });
+  }
+
+  getAuditionCount(postId: string): number {
+    const raw = localStorage.getItem(`bandmate_auditions_${postId}`);
+    if (!raw) return 0;
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      return 0;
+    }
   }
 }

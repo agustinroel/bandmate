@@ -19,6 +19,7 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
 import { EventsStore } from '../../../events/state/events.store';
 import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-create-dialog.component';
 import { StagePlotComponent } from '../../ui/stage-plot/stage-plot.component';
+import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog.component';
 
 @Component({
   standalone: true,
@@ -105,7 +106,15 @@ import { StagePlotComponent } from '../../ui/stage-plot/stage-plot.component';
                   {{ b.description || 'No description' }}
                 </p>
 
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
+                  <button
+                    mat-flat-button
+                    color="accent"
+                    class="rounded-pill shadow-sm"
+                    (click)="openEpk()"
+                  >
+                    <mat-icon class="me-2">newspaper</mat-icon> EPK / Dossier
+                  </button>
                   @if (isMember()) {
                     <button
                       mat-flat-button
@@ -945,6 +954,22 @@ export class BandDetailPageComponent {
     console.log('Share song clicked');
     this.dialog.open(ShareSongDialogComponent, {
       width: '500px',
+    });
+  }
+
+  openEpk() {
+    const b = this.band();
+    if (!b) return;
+
+    this.dialog.open(BandEpkDialogComponent, {
+      width: '900px',
+      maxWidth: '96vw',
+      data: {
+        band: b,
+        members: this.members(),
+        songs: this.songs(),
+        events: this.eventsStore.bandEvents(),
+      },
     });
   }
 }

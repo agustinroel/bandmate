@@ -41,12 +41,31 @@ export interface FeedPost {
   createdAt: string;
 }
 
+export interface AuditionApplication {
+  id: string;
+  postId: string;
+  musicianId: string;
+  musicianName: string;
+  musicianUsername?: string;
+  musicianAvatar?: string | null;
+  instrument: string;
+  experienceYears: number;
+  mediaUrl?: string;
+  message: string;
+  status: 'pending' | 'shortlisted' | 'accepted' | 'rejected';
+  privateNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const POSTS_FILE = 'feed_posts.json';
 const COMMENTS_FILE = 'feed_comments.json';
+const APPLICATIONS_FILE = 'audition_applications.json';
 
 // In-memory cache + persistent backing
 let cachedPosts: FeedPost[] | null = null;
 let cachedComments: FeedComment[] | null = null;
+let cachedApplications: AuditionApplication[] | null = null;
 const userLikes = new Set<string>();
 
 async function getStoredPosts(): Promise<FeedPost[]> {
@@ -61,6 +80,13 @@ async function getStoredComments(): Promise<FeedComment[]> {
     cachedComments = await readJson<FeedComment[]>(COMMENTS_FILE, []);
   }
   return cachedComments;
+}
+
+async function getStoredApplications(): Promise<AuditionApplication[]> {
+  if (cachedApplications === null) {
+    cachedApplications = await readJson<AuditionApplication[]>(APPLICATIONS_FILE, []);
+  }
+  return cachedApplications;
 }
 
 export async function getFeedPosts(
@@ -335,4 +361,83 @@ export async function createPostComment(
   await writeJson(POSTS_FILE, posts);
 
   return newComment;
+}
+
+export async function createAuditionApplication(
+  postId: string,
+  musicianId: string,
+  userProfile: {
+    full_name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+  },
+  data: {
+    instrument: string;
+    experienceYears: number;
+    mediaUrl?: string;
+    message: string;
+  }
+): Promise<AuditionApplication> {
+  const posts = await getStoredPosts();
+  const post = posts.find((p) => p.id === postId);
+  if (!post) throw new Error('Audition post not found');
+
+  const applications = await getStoredApplications();
+
+  // Check if musician already applied
+  const existing = applications.find(
+    (a) => a.postId === postId && a.musicianId === musicianId
+  );
+  if (existing) {
+    throw new Error('Ya has enviado una solicitud para esta audición');
+  }
+
+  const now = new Date().toISOString();
+  const application: AuditionApplication = {
+    id: `app-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    postId,
+    musicianId,
+    musicianName: userProfile.full_name || userProfile.username || 'Músico',
+    musicianUsername: userProfile.username || 'musico',
+    musicianAvatar: userProfile.avatar_url || null,
+    instrument: data.instrument,
+    experienceYears: data.experienceYears,
+    mediaUrl: data.mediaUrl?.trim() || undefined,
+    message: data.message.trim(),
+    status: 'pending',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  applications.push(application);
+  cachedApplications = applications;
+  await writeJson(APPLICATIONS_FILE, applications);
+
+  return application;
+}
+
+export async function getAuditionApplications(postId: string): Promise<AuditionApplication[]> {
+  const applications = await getStoredApplications();
+  return applications.filter((a) => a.postId === postId);
+}
+
+export async function updateAuditionApplication(
+  applicationId: string,
+  updates: {
+    status?: AuditionApplication['status'];
+    privateNotes?: string;
+  }
+): Promise<AuditionApplication> {
+  const applications = await getStoredApplications();
+  const app = applications.find((a) => a.id === applicationId);
+  if (!app) throw new Error('Application not found');
+
+  if (updates.status) app.status = updates.status;
+  if (updates.privateNotes !== undefined) app.privateNotes = updates.privateNotes;
+  app.updatedAt = new Date().toISOString();
+
+  cachedApplications = applications;
+  await writeJson(APPLICATIONS_FILE, applications);
+
+  return app;
 }

@@ -356,6 +356,30 @@
                   </div>
                 }
 
+                <!-- Audition CTA Banner for Musicians and Band Leaders -->
+                @if (post.type === 'looking_for_member') {
+                  <div class="mb-3 p-3 bg-warning-subtle rounded-3 border border-warning-subtle d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon class="text-warning">how_to_reg</mat-icon>
+                      <div>
+                        <div class="fw-bold small text-dark">Convocatoria de Músico Activa</div>
+                        <div class="small text-muted">Postulaciones y notas privadas gestionadas en Bandmate</div>
+                      </div>
+                    </div>
+                    @if (post.authorId !== authStore.user()?.id) {
+                      <button mat-flat-button color="accent" class="btn-sm rounded-pill px-3 shadow-sm" (click)="openAuditionApply(post)">
+                        <mat-icon class="me-1">send</mat-icon>
+                        Postular a Audición
+                      </button>
+                    } @else {
+                      <button mat-stroked-button color="primary" class="btn-sm rounded-pill px-3 bg-white" (click)="openAuditionDashboard(post)">
+                        <mat-icon class="me-1">groups</mat-icon>
+                        Ver Candidatos ({{ getAuditionCount(post.id) }})
+                      </button>
+                    }
+                  </div>
+                }
+
                 <!-- Post Action Buttons (X.com Style) -->
                 <div class="cm-post-actions d-flex align-items-center justify-content-between pt-2 border-top">
                   <button

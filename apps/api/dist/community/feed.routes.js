@@ -1,4 +1,4 @@
-import { getFeedPosts, createFeedPost, togglePostLike, repostPost, getPostComments, createPostComment, getTrendingHashtags, } from './feed.repo.js';
+import { getFeedPosts, createFeedPost, togglePostLike, repostPost, getPostComments, createPostComment, getTrendingHashtags, createAuditionApplication, getAuditionApplications, updateAuditionApplication, } from './feed.repo.js';
 import { toggleFollow, getFollowStatus } from './follows.repo.js';
 import { getProfileById } from '../profiles/profiles.repo.js';
 export const feedRoutes = async (app) => {
@@ -160,6 +160,67 @@ export const feedRoutes = async (app) => {
         try {
             const comment = await createPostComment(id, userId, resolvedProfile, content.trim());
             return reply.status(201).send(comment);
+        }
+        catch (err) {
+            return reply.status(404).send({ message: err.message });
+        }
+    });
+    /**
+     * POST /auditions/:postId/apply
+     * Body: { instrument: string, experienceYears: number, mediaUrl?: string, message: string }
+     */
+    app.post('/auditions/:postId/apply', async (req, reply) => {
+        const { postId } = req.params;
+        const body = req.body || {};
+        const userId = req.user?.id || body.musicianId || 'usr-agustin-roel';
+        if (!body.instrument || !body.message) {
+            return reply.status(400).send({ message: 'Instrument and message are required' });
+        }
+        let profile = null;
+        try {
+            if (userId && !userId.startsWith('usr-')) {
+                profile = await getProfileById(userId);
+            }
+        }
+        catch {
+            // Fallback
+        }
+        const resolvedProfile = {
+            username: profile?.username || body.musicianUsername || (req.user?.email ? req.user.email.split('@')[0] : 'agustinroel'),
+            full_name: profile?.full_name || body.musicianName || 'Agustín Roel',
+            avatar_url: profile?.avatar_url || body.musicianAvatar || null,
+        };
+        try {
+            const application = await createAuditionApplication(postId, userId, resolvedProfile, {
+                instrument: body.instrument,
+                experienceYears: Number(body.experienceYears) || 1,
+                mediaUrl: body.mediaUrl,
+                message: body.message,
+            });
+            return reply.status(201).send(application);
+        }
+        catch (err) {
+            return reply.status(400).send({ message: err.message });
+        }
+    });
+    /**
+     * GET /auditions/:postId/applications
+     */
+    app.get('/auditions/:postId/applications', async (req, reply) => {
+        const { postId } = req.params;
+        const applications = await getAuditionApplications(postId);
+        return applications;
+    });
+    /**
+     * PATCH /auditions/applications/:applicationId
+     * Body: { status?: 'pending' | 'shortlisted' | 'accepted' | 'rejected', privateNotes?: string }
+     */
+    app.patch('/auditions/applications/:applicationId', async (req, reply) => {
+        const { applicationId } = req.params;
+        const { status, privateNotes } = req.body || {};
+        try {
+            const updated = await updateAuditionApplication(applicationId, { status, privateNotes });
+            return updated;
         }
         catch (err) {
             return reply.status(404).send({ message: err.message });
