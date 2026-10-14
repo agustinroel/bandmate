@@ -17,6 +17,7 @@ dist/
 /out
 /build
 /coverage
+!apps/api/dist/
 
 # Logs
 npm-debug.log*
