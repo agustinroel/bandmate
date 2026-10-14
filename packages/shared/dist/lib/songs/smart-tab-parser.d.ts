@@ -25,7 +25,15 @@ export declare function detectSectionType(header: string): {
  */
 export declare function mergeChordAndLyricsLine(chordLine: string, lyricsLine: string): string;
 /**
+ * Attempts to parse title and artist from a file name like:
+ * "The Beatles - Let It Be.cho", "Hotel California - Eagles.pro", or "Creep.txt"
+ */
+export declare function parseFilenameMetadata(filename: string): {
+    title: string;
+    artist: string;
+};
+/**
  * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, and Plain Text tabs
  */
-export declare function parseSmartTab(rawInput: string): ParsedSmartSong;
+export declare function parseSmartTab(rawInput: string, fallbackFilename?: string): ParsedSmartSong;
 //# sourceMappingURL=smart-tab-parser.d.ts.map

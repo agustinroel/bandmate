@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { catchError, finalize, tap, throwError } from 'rxjs';
+import { catchError, finalize, firstValueFrom, from, Observable, tap, throwError } from 'rxjs';
 import type {
   CreateSongDto,
   Song,
@@ -169,12 +169,41 @@ export class SongsStore {
     );
   }
 
+  /**
+   * Imports multiple songs in batch with sequential processing and progress reporting.
+   */
+  createBatch(
+    dtos: CreateSongDto[],
+    onProgress?: (current: number, total: number) => void,
+  ): Observable<{ succeeded: number; failed: number; songs: Song[] }> {
+    return from(this.createBatchAsync(dtos, onProgress));
+  }
+
+  private async createBatchAsync(
+    dtos: CreateSongDto[],
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<{ succeeded: number; failed: number; songs: Song[] }> {
+    let succeeded = 0;
+    let failed = 0;
+    const createdSongs: Song[] = [];
+
+    for (let i = 0; i < dtos.length; i++) {
+      try {
+        const song = await firstValueFrom(this.create(dtos[i]));
+        createdSongs.push(song);
+        succeeded++;
+      } catch (err) {
+        console.error(`[SongsStore] Failed to create batch song "${dtos[i].title}":`, err);
+        failed++;
+      }
+      onProgress?.(i + 1, dtos.length);
+    }
+
+    return { succeeded, failed, songs: createdSongs };
+  }
+
   seed(dtos: CreateSongDto[]) {
-    // Simple serial or parallel creation
-    // For MVP, just fire and forget loop or simple concat
-    dtos.forEach((dto) => {
-      this.create(dto).subscribe();
-    });
+    this.createBatch(dtos).subscribe();
   }
 
   /**

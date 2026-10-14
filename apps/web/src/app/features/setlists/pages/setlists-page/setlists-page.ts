@@ -20,6 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SongsStore } from '../../../songs/state/songs-store';
 import { SetlistsStore } from '../../../setlists/state/setlists.store';
 import { NewSetlistDialogComponent } from '../../ui/new-setlist-dialog';
+import { SetlistExportDialogComponent } from '../../ui/setlist-export-dialog';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { take } from 'rxjs';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
@@ -267,9 +268,19 @@ export class SetlistsPageComponent {
       this.notify.info('Setlist is empty', 'OK', 2000);
       return;
     }
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+    const songs = sel.items
+      .map((item) => this.songs.getById(item.songId))
+      .filter((s): s is NonNullable<typeof s> => !!s);
+
+    this.dialog.open(SetlistExportDialogComponent, {
+      width: '800px',
+      maxWidth: '96vw',
+      data: {
+        setlist: sel,
+        songs,
+        bandName: 'Bandmate Live',
+      },
+    });
   }
 
   // Should: rename setlist

@@ -92,9 +92,30 @@ export function mergeChordAndLyricsLine(chordLine, lyricsLine) {
     return result;
 }
 /**
+ * Attempts to parse title and artist from a file name like:
+ * "The Beatles - Let It Be.cho", "Hotel California - Eagles.pro", or "Creep.txt"
+ */
+export function parseFilenameMetadata(filename) {
+    // Strip extension (.cho, .pro, .chopro, .txt, .crd, etc.)
+    const cleanName = filename.replace(/\.[a-zA-Z0-9]+$/i, '').trim();
+    if (cleanName.includes(' - ')) {
+        const parts = cleanName.split(' - ').map((p) => p.trim());
+        if (parts.length >= 2) {
+            return {
+                artist: parts[0],
+                title: parts.slice(1).join(' - '),
+            };
+        }
+    }
+    return {
+        title: cleanName || 'Untitled Song',
+        artist: 'Unknown Artist',
+    };
+}
+/**
  * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, and Plain Text tabs
  */
-export function parseSmartTab(rawInput) {
+export function parseSmartTab(rawInput, fallbackFilename) {
     let content = rawInput;
     // 1. Clean Ultimate Guitar tags: [ch]Am[/ch] -> [Am], [tab] -> comments
     content = content.replace(/\[ch\](.*?)\[\/ch\]/gi, '[$1]');
@@ -105,6 +126,11 @@ export function parseSmartTab(rawInput) {
     content = content.replace(/<\/?[^>]+(>|$)/g, ''); // strip remaining HTML
     let title = 'Untitled Song';
     let artist = 'Unknown Artist';
+    if (fallbackFilename) {
+        const meta = parseFilenameMetadata(fallbackFilename);
+        title = meta.title;
+        artist = meta.artist;
+    }
     let key;
     let capo;
     let bpm;
@@ -119,6 +145,23 @@ export function parseSmartTab(rawInput) {
         lines: [],
     };
     let i = 0;
+    // Heuristic for Plain Text title/artist headers:
+    // e.g.
+    // Line 0: "Stand By Me"
+    // Line 1: "Ben E. King"
+    // Line 2: "" (empty)
+    if (lines.length > 3 && !lines[0].startsWith('{') && !lines[0].startsWith('[')) {
+        const l0 = lines[0].trim();
+        const l1 = lines[1].trim();
+        const l2 = lines[2].trim();
+        if (l0 && l1 && !l2 && !isChordLine(l0) && !isChordLine(l1)) {
+            if (title === 'Untitled Song')
+                title = l0;
+            if (artist === 'Unknown Artist')
+                artist = l1;
+            i = 3;
+        }
+    }
     while (i < lines.length) {
         const rawLine = lines[i];
         const line = rawLine.trim();
@@ -252,6 +295,18 @@ export function parseSmartTab(rawInput) {
                     source: content.trim(),
                 }],
         });
+    }
+    if (title === 'Untitled Song' && fallbackFilename) {
+        const cleanName = fallbackFilename.replace(/\.(pro|cho|chopro|crd|onsong|txt)$/i, '').trim();
+        if (cleanName.includes(' - ')) {
+            const parts = cleanName.split(' - ');
+            // Handle both "Artist - Title" and "Title - Artist" common naming
+            artist = parts[0].trim();
+            title = parts.slice(1).join(' - ').trim();
+        }
+        else {
+            title = cleanName;
+        }
     }
     // Generate clean ChordPro output
     const chordProLines = [

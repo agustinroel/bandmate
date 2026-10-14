@@ -51,4 +51,10 @@ describe('smart-tab-parser', () => {
         expect(parsed.bpm).toBe(120);
         expect(parsed.sections.some(s => s.type === 'chorus')).toBe(true);
     });
+    it('infers title and artist from fallback filename if directives are absent', () => {
+        const rawContent = `[Verse 1]\n[G]On a dark desert highway, [D]cool wind in my hair`;
+        const parsed = parseSmartTab(rawContent, 'Eagles - Hotel California.cho');
+        expect(parsed.artist).toBe('Eagles');
+        expect(parsed.title).toBe('Hotel California');
+    });
 });
