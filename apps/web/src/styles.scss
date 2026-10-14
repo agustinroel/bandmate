@@ -833,7 +833,29 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Touch targets optimization */
+/* Touch targets optimization & Stage accessibility */
 button, a, .mat-mdc-button-base, [role="button"] {
   touch-action: manipulation;
 }
+
+.touch-target-48 {
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+
+.touch-target-44 {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+
+/* WCAG 2.1 AA Keyboard Navigation & Focus Visible Ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+.mat-mdc-button-base:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.5) !important;
+}
