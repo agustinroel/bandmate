@@ -565,6 +565,7 @@
         (click)="p.prev()"
         [disabled]="!p.prevSongId()"
         matTooltip="Previous Song"
+        aria-label="Canción anterior"
       >
         <mat-icon>skip_previous</mat-icon>
       </button>
@@ -580,6 +581,7 @@
         (click)="p.next()"
         [disabled]="!p.nextSongId()"
         matTooltip="Next Song"
+        aria-label="Siguiente canción"
       >
         <mat-icon>skip_next</mat-icon>
       </button>
@@ -589,7 +591,7 @@
     <div class="p-tb-group justify-content-end">
       <!-- Sections Menu -->
       @if (currentSections().length) {
-        <button mat-stroked-button [matMenuTriggerFor]="sectionsMenu">
+        <button mat-stroked-button [matMenuTriggerFor]="sectionsMenu" aria-label="Abrir menú de secciones de la canción">
           <mat-icon class="me-1">segment</mat-icon>
           Sections
         </button>
@@ -604,7 +606,7 @@
       }
 
       <!-- Restart button (only if at end or explicit need) -->
-      <button mat-icon-button (click)="p.jumpTo(0)" matTooltip="Restart Setlist">
+      <button mat-icon-button (click)="p.jumpTo(0)" matTooltip="Restart Setlist" aria-label="Reiniciar setlist desde el inicio">
         <mat-icon>replay</mat-icon>
       </button>
     </div>
@@ -625,6 +627,7 @@
         class="p-sc-btn-play"
         (click)="toggleScroll(); resetOverlayTimer()"
         [matTooltip]="isScrolling() ? 'Detener autoscroll' : 'Reanudar autoscroll'"
+        aria-label="Alternar desplazamiento automático de acordes"
       >
         <mat-icon>{{ isScrolling() ? 'pause' : 'play_arrow' }}</mat-icon>
       </button>
@@ -636,6 +639,7 @@
           class="p-sc-btn-adjust"
           (click)="adjustSpeed(-4); resetOverlayTimer()"
           matTooltip="Reducir velocidad"
+          aria-label="Reducir velocidad de desplazamiento"
         >
           <mat-icon>remove</mat-icon>
         </button>
@@ -648,6 +652,7 @@
           class="p-sc-btn-adjust"
           (click)="adjustSpeed(4); resetOverlayTimer()"
           matTooltip="Aumentar velocidad"
+          aria-label="Aumentar velocidad de desplazamiento"
         >
           <mat-icon>add</mat-icon>
         </button>
@@ -659,6 +664,7 @@
         class="p-sc-btn-close"
         (click)="closeScrollOverlay()"
         matTooltip="Cerrar control"
+        aria-label="Cerrar barra flotante de autoscroll"
       >
         <mat-icon>close</mat-icon>
       </button>
