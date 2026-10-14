@@ -29,7 +29,7 @@ export async function createArrangementForWork(userId, workId, dto) {
         return "WORK_NOT_FOUND";
     const payload = {
         work_id: workId,
-        author_user_id: userId, // por ahora userId string (uuid supabase normalmente)
+        author_user_id: userId && userId.trim() ? userId : null,
         version: 1,
         sections: dto.sections ?? [],
         key: dto.key ?? null,

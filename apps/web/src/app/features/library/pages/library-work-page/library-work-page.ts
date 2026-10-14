@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SongsStore } from '../../../songs/state/songs-store';
 import { AnimationService } from '../../../../core/services/animation.service';
+import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 
 import { environment } from '../../../../../environments/environment';
 
@@ -64,8 +65,10 @@ export class LibraryWorkPageComponent {
   private readonly http = inject(HttpClient);
   private readonly songsStore = inject(SongsStore);
   private readonly animation = inject(AnimationService);
+  private readonly notify = inject(NotificationsService);
 
   readonly workId = signal<string>('');
+  readonly isGeneratingAi = signal(false);
 
   readonly state = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
   readonly error = signal<string | null>(null);

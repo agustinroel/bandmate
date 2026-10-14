@@ -98,6 +98,154 @@
       </mat-menu>
     </div>
 
+    <!-- Advanced Loop & Speed Trainer -->
+    <div class="p-loop-trainer">
+      <button
+        mat-stroked-button
+        type="button"
+        class="p-loop-btn"
+        [class.active]="loopTrainer.isEnabled()"
+        [matMenuTriggerFor]="loopMenu"
+        matTooltip="Bucle A-B & Speed Trainer"
+      >
+        <mat-icon>{{ loopTrainer.isEnabled() ? 'all_inclusive' : 'repeat' }}</mat-icon>
+        <span class="d-none d-md-inline ms-1">Loop A-B</span>
+        @if (loopTrainer.isEnabled()) {
+          <span class="p-loop-badge-count">R{{ loopTrainer.currentRepetition() }}</span>
+        }
+      </button>
+
+      <mat-menu #loopMenu="matMenu">
+        <div class="p-loop-panel" (click)="$event.stopPropagation()">
+          <div class="p-loop-panel-head">
+            <mat-icon class="p-loop-head-icon">all_inclusive</mat-icon>
+            <span class="fw-bold fs-6">Loop Trainer A-B</span>
+          </div>
+
+          <div class="mb-2">
+            <label class="p-loop-label">Punto A (Inicio)</label>
+            <select
+              class="form-select form-select-sm"
+              [value]="loopTrainer.startSectionId() ?? ''"
+              (change)="onSelectSectionA($event)"
+            >
+              <option value="">Selecciona sección...</option>
+              @for (sec of currentSections(); track sec.id) {
+                <option [value]="sec.id">{{ sec.name || (sec.type | titlecase) }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="p-loop-label">Punto B (Final)</label>
+            <select
+              class="form-select form-select-sm"
+              [value]="loopTrainer.endSectionId() ?? ''"
+              (change)="onSelectSectionB($event)"
+            >
+              <option value="">Selecciona sección...</option>
+              @for (sec of currentSections(); track sec.id) {
+                <option [value]="sec.id">{{ sec.name || (sec.type | titlecase) }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small opacity-75 mb-1">
+              <span>Compases por Bucle</span>
+              <span class="fw-bold">{{ loopTrainer.barsPerLoop() }} compases</span>
+            </div>
+            <input
+              type="range"
+              class="form-range"
+              min="1"
+              max="16"
+              [value]="loopTrainer.barsPerLoop()"
+              (input)="onBarsChange($event)"
+            />
+          </div>
+
+          <div class="form-check form-switch mb-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="speedTrainerCheck"
+              [checked]="loopTrainer.isSpeedTrainer()"
+              (change)="toggleSpeedTrainer($event)"
+            />
+            <label class="form-check-label small fw-semibold" for="speedTrainerCheck">
+              Speed Trainer (+BPM)
+            </label>
+          </div>
+
+          @if (loopTrainer.isSpeedTrainer()) {
+            <div class="p-speed-box p-2 rounded mb-3">
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="small opacity-75">BPM Inicial</label>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    [value]="loopTrainer.initialBpm()"
+                    (change)="onInitialBpmChange($event)"
+                    min="40"
+                    max="220"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="small opacity-75">BPM Meta</label>
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    [value]="loopTrainer.targetBpm()"
+                    (change)="onTargetBpmChange($event)"
+                    min="50"
+                    max="260"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="small opacity-75">Aumento</label>
+                  <select
+                    class="form-select form-select-sm"
+                    [value]="loopTrainer.bpmIncrement()"
+                    (change)="onIncrementChange($event)"
+                  >
+                    <option [value]="2">+2 BPM</option>
+                    <option [value]="5">+5 BPM</option>
+                    <option [value]="10">+10 BPM</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="small opacity-75">Frecuencia</label>
+                  <select
+                    class="form-select form-select-sm"
+                    [value]="loopTrainer.repsPerIncrement()"
+                    (change)="onRepsPerIncrementChange($event)"
+                  >
+                    <option [value]="1">Cada 1 rep</option>
+                    <option [value]="2">Cada 2 reps</option>
+                    <option [value]="4">Cada 4 reps</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="d-grid mt-2">
+            @if (!loopTrainer.isEnabled()) {
+              <button mat-flat-button color="accent" (click)="loopTrainer.startLoop()">
+                <mat-icon>play_arrow</mat-icon> Iniciar Bucle
+              </button>
+            } @else {
+              <button mat-flat-button color="warn" (click)="loopTrainer.stopLoop()">
+                <mat-icon>stop</mat-icon> Detener Bucle
+              </button>
+            }
+          </div>
+        </div>
+      </mat-menu>
+    </div>
+
     <button mat-stroked-button class="exit-button m-0" type="button" (click)="exit()">
       <mat-icon class="me-1">close</mat-icon>
       Exit
@@ -156,6 +304,34 @@
       >
         <mat-icon>{{ isStageMode() ? 'close_fullscreen' : 'fullscreen' }}</mat-icon>
       </button>
+
+      @if (loopTrainer.isEnabled() && loopTrainer.statusSummary(); as loopStatus) {
+        <div class="p-loop-active-bar shadow-sm mb-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <mat-icon class="p-loop-active-ic">all_inclusive</mat-icon>
+            <span class="fw-bold">Bucle A-B Activo</span>
+            <span class="p-loop-chip">Reps: {{ loopStatus.rep }}</span>
+            @if (loopStatus.speedActive) {
+              <span class="p-loop-chip bpm-chip">
+                <mat-icon>speed</mat-icon> {{ loopStatus.currentBpm }} BPM
+                @if (loopStatus.isTargetReached) {
+                  <span class="text-success fw-bold ms-1">✓ Meta Alcanzada!</span>
+                } @else {
+                  <span class="opacity-75 ms-1">(Meta: {{ loopStatus.targetBpm }} BPM)</span>
+                }
+              </span>
+            }
+          </div>
+          <button
+            mat-stroked-button
+            color="warn"
+            class="btn-sm p-loop-stop-btn"
+            (click)="loopTrainer.stopLoop()"
+          >
+            Detener Loop
+          </button>
+        </div>
+      }
 
       <div class="p-kicker">NOW PLAYING</div>
 

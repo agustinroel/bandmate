@@ -77,7 +77,7 @@ export async function createArrangementForWork(
 
   const payload = {
     work_id: workId,
-    author_user_id: userId, // por ahora userId string (uuid supabase normalmente)
+    author_user_id: userId && userId.trim() ? userId : null,
     version: 1,
     sections: dto.sections ?? [],
     key: dto.key ?? null,

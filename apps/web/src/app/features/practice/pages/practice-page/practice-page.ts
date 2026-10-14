@@ -32,6 +32,7 @@ import { PracticeSessionService } from '../../../../core/services/practice-sessi
 import { AnimationService } from '../../../../core/services/animation.service';
 import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-progress-ring/practice-progress-ring';
 import { PedalListenerService } from '../../../../core/services/pedal-listener.service';
+import { LoopTrainerService } from '../../services/loop-trainer.service';
 
 @Component({
   standalone: true,
@@ -61,6 +62,7 @@ export class PracticePageComponent {
   readonly metronome = inject(MetronomeService);
   readonly wakeLock = inject(WakeLockService);
   readonly pedal = inject(PedalListenerService);
+  readonly loopTrainer = inject(LoopTrainerService);
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
   private readonly sessionService = inject(PracticeSessionService);
@@ -122,8 +124,13 @@ export class PracticePageComponent {
     this.destroyRef.onDestroy(() => {
       this.wakeLock.disable();
       this.metronome.stop();
+      this.loopTrainer.stopLoop();
       this.stopScroll();
       if (this._overlayTimeout) clearTimeout(this._overlayTimeout);
+    });
+
+    this.loopTrainer.registerLoopScrollHandler((secId) => {
+      this.scrollToSection(secId);
     });
 
     effect(() => {
@@ -178,9 +185,10 @@ export class PracticePageComponent {
           this.metronome.setBpm(bpm);
         }
 
-        // 3. Detener scroll anterior y ocultar overlay al cambiar de canción
+        // 3. Detener scroll anterior, bucle y ocultar overlay al cambiar de canción
         this.stopScroll();
         this.closeScrollOverlay();
+        this.loopTrainer.stopLoop();
       }
     });
 
@@ -319,6 +327,7 @@ export class PracticePageComponent {
     const id = this.id();
     this.wakeLock.disable();
     this.metronome.stop();
+    this.loopTrainer.stopLoop();
     this.p.stop();
     this.stopScroll();
     this.closeScrollOverlay();
@@ -333,6 +342,7 @@ export class PracticePageComponent {
   goSetlists() {
     this.wakeLock.disable();
     this.metronome.stop();
+    this.loopTrainer.stopLoop();
     this.p.stop();
     this.stopScroll();
     this.closeScrollOverlay();
@@ -564,5 +574,46 @@ export class PracticePageComponent {
     if (hasOverlay) return true;
 
     return false;
+  }
+
+  // ---- Loop Trainer Event Handlers ----
+  onSelectSectionA(event: Event) {
+    const val = (event.target as HTMLSelectElement).value || null;
+    this.loopTrainer.setSectionA(val);
+  }
+
+  onSelectSectionB(event: Event) {
+    const val = (event.target as HTMLSelectElement).value || null;
+    this.loopTrainer.setSectionB(val);
+  }
+
+  onBarsChange(event: Event) {
+    const val = Number((event.target as HTMLInputElement).value);
+    this.loopTrainer.setBarsPerLoop(val);
+  }
+
+  toggleSpeedTrainer(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.loopTrainer.setSpeedTrainer(checked);
+  }
+
+  onInitialBpmChange(event: Event) {
+    const val = Number((event.target as HTMLInputElement).value);
+    this.loopTrainer.setInitialBpm(val);
+  }
+
+  onTargetBpmChange(event: Event) {
+    const val = Number((event.target as HTMLInputElement).value);
+    this.loopTrainer.setTargetBpm(val);
+  }
+
+  onIncrementChange(event: Event) {
+    const val = Number((event.target as HTMLSelectElement).value);
+    this.loopTrainer.setBpmIncrement(val);
+  }
+
+  onRepsPerIncrementChange(event: Event) {
+    const val = Number((event.target as HTMLSelectElement).value);
+    this.loopTrainer.setRepsPerIncrement(val);
   }
 }
