@@ -66,6 +66,117 @@
   --bm-gradient-studio: linear-gradient(135deg, #ff0080, #7928ca);
 }
 
+/* ---------- Dark Theme Tokens ---------- */
+[data-bs-theme="dark"],
+.theme-dark,
+:root.theme-dark {
+  --bm-bg: #090d16;
+  --bm-surface: #111827;
+  --bm-border: rgba(255, 255, 255, 0.08);
+  --bm-text: #f8fafc;
+  --bm-muted: #94a3b8;
+  color-scheme: dark;
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+
+  .bm-card,
+  .cm-composer-card,
+  .cm-post-card,
+  .cm-sidebar-card,
+  .cm-nav-switcher,
+  .cm-feed-empty-state,
+  .cm-comment-bubble {
+    background-color: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+  }
+
+  .cm-composer-input {
+    color: #f8fafc !important;
+    &::placeholder {
+      color: #64748b !important;
+    }
+  }
+
+  .cm-comment-input {
+    background: #1f2937 !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .cm-post-song-box {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    .text-dark {
+      color: #f8fafc !important;
+    }
+  }
+
+  .cm-action-btn {
+    color: #94a3b8 !important;
+    &:hover {
+      background: rgba(255, 255, 255, 0.06) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .mat-mdc-card {
+    background-color: #111827 !important;
+    color: #f8fafc !important;
+  }
+
+  .cm-publish-btn:disabled {
+    background-color: #334155 !important;
+    color: #94a3b8 !important;
+  }
+
+  .cm-band-pill {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .cm-repost-header {
+    color: #94a3b8 !important;
+  }
+
+  .cm-inst-guitar {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fcd34d !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+  .cm-inst-bass {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+  }
+  .cm-inst-drums {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+  }
+  .cm-inst-keys {
+    background: rgba(14, 165, 233, 0.2) !important;
+    color: #7dd3fc !important;
+    border-color: rgba(14, 165, 233, 0.4) !important;
+  }
+  .cm-inst-vocals {
+    background: rgba(244, 63, 94, 0.2) !important;
+    color: #fda4af !important;
+    border-color: rgba(244, 63, 94, 0.4) !important;
+  }
+  .cm-inst-brass {
+    background: rgba(234, 179, 8, 0.2) !important;
+    color: #fde047 !important;
+    border-color: rgba(234, 179, 8, 0.4) !important;
+  }
+  .cm-inst-default {
+    background: rgba(148, 163, 184, 0.2) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148, 163, 184, 0.4) !important;
+  }
+}
+
 /* Ambient Surface Mixin (Chiaroscuro) */
 @mixin bm-ambient-surface {
   background: var(--bm-surface);

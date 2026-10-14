@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, ViewChild, DestroyRef } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, finalize, map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,7 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { CreateSongDto, UpdateSongDto, SongDetail, SongPolicy } from '@bandmate/shared';
-import { TitleCasePipe, Location } from '@angular/common';
+import { TitleCasePipe, DecimalPipe } from '@angular/common';
 import { GuitarChordDiagramComponent } from '../../../shared/ui/guitar-chord-diagram/guitar-chord-diagram';
 import { SongsStore } from '../../songs/state/songs-store';
 import { SongFormComponent } from '../../songs/features/songs/components/song-form/song-form';
@@ -29,6 +29,7 @@ import { useSkeletonUx } from '../../../shared/utils/skeleton-ux';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 import { ChordLineViewComponent } from '../../../shared/ui/chord-line-view/chord-line-view';
 import { TransposeBarComponent } from '../../../shared/ui/transpose-bar/transpose-bar';
+import { MetronomeService } from '../../practice/services/metronome.service';
 
 type SongMetaSnapshot = {
   title: string;
@@ -90,6 +91,7 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
     MatTooltipModule,
     SongFormComponent,
     TitleCasePipe,
+    DecimalPipe,
     MatMenuModule,
     MatSliderModule,
     FormsModule,
@@ -103,6 +105,8 @@ export class SongEditorPageComponent {
   @ViewChild('scrollHost', { read: ElementRef }) scrollHost?: ElementRef<HTMLElement>;
 
   private readonly el = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly metronome = inject(MetronomeService);
 
   SongPolicy = SongPolicy;
   readonly route = inject(ActivatedRoute);
@@ -121,12 +125,22 @@ export class SongEditorPageComponent {
   readonly isPracticeMode = signal(false);
 
   enterPracticeMode() {
+    const bpm = Number(this.currentDetail()?.bpm) || 120;
+    this.metronome.setBpm(bpm);
     const el = this.el.nativeElement;
     if (el.requestFullscreen) {
       el.requestFullscreen().catch((err: any) => {
         console.warn('Error attempting to enable fullscreen:', err);
       });
     }
+  }
+
+  toggleMetronome() {
+    const bpm = Number(this.currentDetail()?.bpm) || 120;
+    if (!this.metronome.isPlaying()) {
+      this.metronome.setBpm(bpm);
+    }
+    this.metronome.toggle();
   }
 
   readonly viewMode = computed<ViewMode>(() => {
@@ -376,6 +390,11 @@ export class SongEditorPageComponent {
         this.stopAutoScroll();
       }
     });
+
+    this.destroyRef.onDestroy(() => {
+      this.metronome.stop();
+      this.stopAutoScroll();
+    });
   }
 
   toggleMode() {
@@ -454,6 +473,7 @@ export class SongEditorPageComponent {
   }
 
   goBack = () => {
+    this.metronome.stop();
     if (this.isPracticeMode()) {
       document.exitFullscreen().catch((err) => console.warn('Exit FS error:', err));
     } else {

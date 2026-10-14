@@ -29,12 +29,10 @@ export class TransposeBarComponent {
 
   down() {
     this.set(this.value - 1);
-    this.notify.info(`Transpose: ${this.value > 0 ? '-' : ''}${this.value - 1}`);
   }
 
   up() {
     this.set(this.value + 1);
-    this.notify.info(`Transpose: ${this.value > 0 ? '+' : ''}${this.value + 1}`);
   }
 
   reset() {
@@ -46,5 +44,7 @@ export class TransposeBarComponent {
 
     const clamped = Math.min(this.max, Math.max(this.min, next));
     this.onChange.set(clamped);
+    const sign = clamped > 0 ? '+' : '';
+    this.notify.info(`Transpose: ${sign}${clamped}`);
   }
 }

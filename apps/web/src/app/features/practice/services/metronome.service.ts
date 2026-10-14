@@ -59,7 +59,10 @@ export class MetronomeService {
     this.initSynth();
 
     // Synchronize Tone.Transport tempo
-    Tone.getTransport().bpm.value = this.bpm();
+    const transport = Tone.getTransport() as any;
+    if (transport?.bpm) {
+      transport.bpm.value = this.bpm();
+    }
 
     // Reset beat counts
     this.beat.set(0);
@@ -67,42 +70,49 @@ export class MetronomeService {
     this.beatInBar.set(1);
 
     // Schedule strict clock ticks via Tone.Transport with 0 audio-visual latency
-    if (this.repeatEventId !== null) {
-      Tone.getTransport().clear(this.repeatEventId);
+    if (this.repeatEventId !== null && typeof transport?.clear === 'function') {
+      transport.clear(this.repeatEventId);
     }
 
-    this.repeatEventId = Tone.getTransport().scheduleRepeat((time) => {
-      const currentBeat = this.beat();
-      const currentBeatInBar = (currentBeat % 4) + 1;
-      const currentBar = Math.floor(currentBeat / 4) + 1;
-      const isDownbeat = currentBeatInBar === 1;
+    if (typeof transport?.scheduleRepeat === 'function') {
+      this.repeatEventId = transport.scheduleRepeat((time: any) => {
+        const currentBeat = this.beat();
+        const currentBeatInBar = (currentBeat % 4) + 1;
+        const currentBar = Math.floor(currentBeat / 4) + 1;
+        const isDownbeat = currentBeatInBar === 1;
 
-      // Click sound: higher pitch for downbeat
-      const note = isDownbeat ? 'C5' : 'G4';
-      this.synth?.triggerAttackRelease(note, '32n', time);
+        // Click sound: higher pitch for downbeat
+        const note = isDownbeat ? 'C5' : 'G4';
+        this.synth?.triggerAttackRelease(note, '32n', time);
 
-      // Use Tone.Draw to fire GSAP / Signal visual updates strictly on the next animation frame
-      // synchronized with the audio clock (zero latency)
-      Tone.getDraw().schedule(() => {
-        if (this.isPlaying()) {
-          this.beat.set(currentBeat + 1);
-          this.beatInBar.set(currentBeatInBar);
-          this.bar.set(currentBar);
-        }
-      }, time);
-    }, '4n');
+        // Use Tone.Draw to fire GSAP / Signal visual updates strictly on the next animation frame
+        // synchronized with the audio clock (zero latency)
+        Tone.getDraw().schedule(() => {
+          if (this.isPlaying()) {
+            this.beat.set(currentBeat + 1);
+            this.beatInBar.set(currentBeatInBar);
+            this.bar.set(currentBar);
+          }
+        }, time);
+      }, '4n');
+    }
 
-    Tone.getTransport().start();
+    if (typeof transport?.start === 'function') {
+      transport.start();
+    }
     this.isPlaying.set(true);
   }
 
   stop() {
     this.isPlaying.set(false);
-    if (this.repeatEventId !== null) {
-      Tone.getTransport().clear(this.repeatEventId);
+    const transport = Tone.getTransport() as any;
+    if (this.repeatEventId !== null && typeof transport?.clear === 'function') {
+      transport.clear(this.repeatEventId);
       this.repeatEventId = null;
     }
-    Tone.getTransport().stop();
+    if (typeof transport?.stop === 'function') {
+      transport.stop();
+    }
     this.beat.set(0);
     this.beatInBar.set(1);
   }
@@ -110,6 +120,9 @@ export class MetronomeService {
   setBpm(val: number) {
     const safe = Math.max(30, Math.min(300, val));
     this.bpm.set(safe);
-    Tone.getTransport().bpm.value = safe;
+    const transport = Tone.getTransport() as any;
+    if (transport?.bpm) {
+      transport.bpm.value = safe;
+    }
   }
 }

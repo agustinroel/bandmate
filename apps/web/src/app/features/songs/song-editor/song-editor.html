@@ -89,6 +89,18 @@
             </div>
           }
 
+          <!-- Metronome (Audio rítmico estricto acoplado a Tone.Transport) -->
+          <button
+            mat-stroked-button
+            class="bm-metronome-btn"
+            [class.is-active]="metronome.isPlaying()"
+            (click)="toggleMetronome()"
+            [matTooltip]="metronome.isPlaying() ? 'Stop metronome' : 'Start metronome (' + (currentDetail()?.bpm || 120) + ' BPM)'"
+          >
+            <mat-icon>{{ metronome.isPlaying() ? 'volume_up' : 'timer' }}</mat-icon>
+            <span class="bm-metro-label">{{ metronome.isPlaying() ? metronome.bpm() + ' BPM' : 'Metronome' }}</span>
+          </button>
+
           <!-- 3. Publish (Tertiary) -->
           @if (currentDetail()?.workId) {
             <button
@@ -214,6 +226,31 @@
                 <div class="bm-meta-notes-t">{{ d.notes }}</div>
               </div>
             }
+
+            <!-- Community / Song Rating -->
+            <div class="bm-meta-rating d-flex align-items-center gap-1 mt-2">
+              <span class="small opacity-75 me-1">Rating:</span>
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="bm-star-btn"
+                  [attr.aria-label]="'Rate ' + star + ' stars'"
+                  (click)="rate(star)"
+                  [matTooltip]="'Rate ' + star + ' / 5'"
+                >
+                  <mat-icon [class.text-warning]="(userRating() || d.ratingAvg || 0) >= star">
+                    {{ (userRating() || d.ratingAvg || 0) >= star ? 'star' : 'star_border' }}
+                  </mat-icon>
+                </button>
+              }
+              @if (d.ratingAvg) {
+                <span class="small fw-semibold ms-1">{{ d.ratingAvg | number:'1.1-1' }}</span>
+                @if (d.ratingCount) {
+                  <span class="small opacity-50">({{ d.ratingCount }})</span>
+                }
+              }
+            </div>
           </div>
         } @else {
           <app-song-form
@@ -348,6 +385,7 @@
                           <bm-chord-line-view
                             [source]="line.source ?? ''"
                             [transpose]="transpose()"
+                            [key]="currentDetail()?.key"
                             mode="auto"
                             [interactive]="true"
                           />

@@ -119,6 +119,85 @@
         </mat-card>
       </section>
 
+      <!-- Preferences (Theme & Language) Section -->
+      <section class="settings-section">
+        <mat-card class="bm-card glass">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>palette</mat-icon>
+            <mat-card-title>{{ i18n.t('settings.preferences') }}</mat-card-title>
+            <mat-card-subtitle>{{ i18n.t('settings.preferences.desc') }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <!-- Visual Theme -->
+            <div class="mb-4">
+              <label class="form-label fw-bold mb-2 d-flex align-items-center gap-2">
+                <mat-icon class="fs-5 text-muted">brightness_medium</mat-icon>
+                <span>{{ i18n.t('settings.theme') }}</span>
+              </label>
+              <div class="bm-segmented-group">
+                <button
+                  type="button"
+                  class="bm-segmented-btn"
+                  [class.active]="theme.currentTheme() === 'light'"
+                  (click)="setTheme('light')"
+                >
+                  <mat-icon>light_mode</mat-icon>
+                  <span>{{ i18n.t('settings.theme.light') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="bm-segmented-btn"
+                  [class.active]="theme.currentTheme() === 'dark'"
+                  (click)="setTheme('dark')"
+                >
+                  <mat-icon>dark_mode</mat-icon>
+                  <span>{{ i18n.t('settings.theme.dark') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="bm-segmented-btn"
+                  [class.active]="theme.currentTheme() === 'auto'"
+                  (click)="setTheme('auto')"
+                >
+                  <mat-icon>computer</mat-icon>
+                  <span>{{ i18n.t('settings.theme.auto') }}</span>
+                </button>
+              </div>
+            </div>
+
+            <mat-divider class="my-3"></mat-divider>
+
+            <!-- Language -->
+            <div>
+              <label class="form-label fw-bold mb-2 d-flex align-items-center gap-2">
+                <mat-icon class="fs-5 text-muted">translate</mat-icon>
+                <span>{{ i18n.t('settings.language') }}</span>
+              </label>
+              <div class="bm-segmented-group">
+                <button
+                  type="button"
+                  class="bm-segmented-btn"
+                  [class.active]="i18n.currentLang() === 'es'"
+                  (click)="setLanguage('es')"
+                >
+                  <span class="fs-6 me-1">🇪🇸</span>
+                  <span>Español</span>
+                </button>
+                <button
+                  type="button"
+                  class="bm-segmented-btn"
+                  [class.active]="i18n.currentLang() === 'en'"
+                  (click)="setLanguage('en')"
+                >
+                  <span class="fs-6 me-1">🇬🇧</span>
+                  <span>English</span>
+                </button>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+
       <!-- Account Actions -->
       <section class="settings-section">
         <mat-card class="bm-card glass">

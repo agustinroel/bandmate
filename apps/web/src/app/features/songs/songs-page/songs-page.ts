@@ -23,6 +23,7 @@ import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
 import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-run-hero';
 import { AnimationService } from '../../../core/services/animation.service';
 import { SmartImportDialogComponent } from '../ui/smart-import-dialog/smart-import-dialog.component';
+import { environment } from '../../../../environments/environment';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -467,9 +468,7 @@ export class SongsPageComponent {
   }
 
   goSpotify() {
-    // Redirect to the backend spotify login
-    const apiUrl = 'http://localhost:3000'; // Should be dynamic
-    window.location.href = `${apiUrl}/auth/spotify/login`;
+    window.location.href = `${environment.apiBaseUrl}/auth/spotify/login`;
   }
 
   /** Delete */

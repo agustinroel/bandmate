@@ -23,6 +23,8 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { InvitationsDialogComponent } from '../../ui/invitations-dialog/invitations-dialog.component';
 import { SongsStore } from '../../../songs/state/songs-store';
+import { AuthStore } from '../../../../core/auth/auth.store';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 export type FeedComment = {
   id: string;
@@ -50,6 +52,10 @@ export type FeedPost = {
   authorAvatar?: string | null;
   authorInstruments: string[];
   authorTier?: string | null;
+  authorBand?: string | null;
+  isBandVerified?: boolean;
+  repostedBy?: string | null;
+  repostedByName?: string | null;
   type: 'status' | 'song_share' | 'riff' | 'looking_for_member' | 'gig';
   content: string;
   attachedSong?: {
@@ -118,6 +124,20 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   readonly bandsService = inject(BandsService);
   readonly sub = inject(SubscriptionStore);
   readonly songsStore = inject(SongsStore);
+  readonly authStore = inject(AuthStore);
+  readonly i18n = inject(I18nService);
+
+  readonly currentUserAvatar = computed(() => {
+    const u = this.authStore.user();
+    const pic = u?.user_metadata?.['avatar_url'] || u?.user_metadata?.['picture'];
+    return typeof pic === 'string' && pic ? pic : 'assets/brand/avatar-fallback.svg';
+  });
+
+  readonly currentUserLabel = computed(() => {
+    const u = this.authStore.user();
+    const name = u?.user_metadata?.['full_name'] || u?.user_metadata?.['name'];
+    return typeof name === 'string' && name.trim() ? name : 'Músico';
+  });
 
   /* ─── Tabs & Feed ─── */
   readonly activeTab = signal<'feed' | 'directory' | 'auditions'>('feed');
@@ -318,13 +338,19 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     const text = this.postContent().trim();
     if (!text) return;
 
+    const user = this.authStore.user();
+    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico Bandmate';
+    const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
+    const avatar = user?.user_metadata?.['avatar_url'] || user?.user_metadata?.['picture'] || null;
+
     this.isPosting.set(true);
     this.http.post<FeedPost>(`${environment.apiBaseUrl}/feed`, {
       content: text,
       type: this.selectedPostType(),
       attachedSong: this.selectedSongAttachment(),
-      authorName: 'Agustín Roel',
-      authorUsername: 'agustinroel',
+      authorName: fullName,
+      authorUsername: username,
+      authorAvatar: avatar,
     }).subscribe({
       next: (post) => {
         this.feedPosts.update((prev) => [post, ...prev]);
@@ -433,12 +459,47 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
 
   repost(post: FeedPost) {
     post.repostsCount += 1;
-    this.http.post<{ repostsCount: number }>(`${environment.apiBaseUrl}/feed/${post.id}/repost`, {}).subscribe({
+    const user = this.authStore.user();
+    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico Bandmate';
+    const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
+
+    this.http.post<{ repostsCount: number; repostItem?: FeedPost }>(`${environment.apiBaseUrl}/feed/${post.id}/repost`, {
+      authorName: fullName,
+      authorUsername: username,
+    }).subscribe({
       next: (res) => {
         post.repostsCount = res.repostsCount;
-        this.notify.success('Re-chord compartido!', 'OK', 1500);
+        if (res.repostItem) {
+          this.feedPosts.update((prev) => [res.repostItem!, ...prev]);
+        }
+        this.notify.success('¡Has reposteado esta publicación!', 'OK', 1500);
+      },
+      error: () => {
+        this.notify.error('No se pudo repostear', 'OK', 2000);
       },
     });
+  }
+
+  getInstrumentClass(inst: string): string {
+    const s = (inst || '').toLowerCase();
+    if (s.includes('guitar')) return 'cm-inst-guitar';
+    if (s.includes('bass') || s.includes('bajo')) return 'cm-inst-bass';
+    if (s.includes('drum') || s.includes('bater')) return 'cm-inst-drums';
+    if (s.includes('key') || s.includes('piano') || s.includes('tecl')) return 'cm-inst-keys';
+    if (s.includes('vocal') || s.includes('sing') || s.includes('voz') || s.includes('cant')) return 'cm-inst-vocals';
+    if (s.includes('sax') || s.includes('tromp') || s.includes('brass')) return 'cm-inst-brass';
+    return 'cm-inst-default';
+  }
+
+  getInstrumentIcon(inst: string): string {
+    const s = (inst || '').toLowerCase();
+    if (s.includes('guitar')) return '🎸';
+    if (s.includes('bass') || s.includes('bajo')) return '🎸';
+    if (s.includes('drum') || s.includes('bater')) return '🥁';
+    if (s.includes('key') || s.includes('piano') || s.includes('tecl')) return '🎹';
+    if (s.includes('vocal') || s.includes('sing') || s.includes('voz') || s.includes('cant')) return '🎤';
+    if (s.includes('sax') || s.includes('tromp') || s.includes('brass')) return '🎷';
+    return '🎵';
   }
 
   attachSong(song: any) {

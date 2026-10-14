@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -14,12 +13,13 @@ import { SubscriptionStore } from '../../../core/subscription/subscription.store
 import { environment } from '../../../../environments/environment';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 import { UpgradeDialogComponent } from '../../../core/subscription/upgrade-dialog/upgrade-dialog.component';
+import { ThemeService, AppTheme } from '../../../core/services/theme.service';
+import { I18nService, SupportedLang } from '../../../core/services/i18n.service';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
@@ -37,10 +37,30 @@ export class SettingsPageComponent {
   private readonly http = inject(HttpClient);
   private readonly notify = inject(NotificationsService);
   private readonly dialog = inject(MatDialog);
+  readonly theme = inject(ThemeService);
+  readonly i18n = inject(I18nService);
 
   readonly user = this.auth.user;
   readonly tier = this.subscriptionStore.tier;
   readonly loadingPortal = signal(false);
+
+  setTheme(mode: AppTheme) {
+    this.theme.setTheme(mode);
+    this.notify.success(
+      this.i18n.currentLang() === 'es' ? 'Preferencia de tema actualizada' : 'Theme preference updated',
+      'OK',
+      1500
+    );
+  }
+
+  setLanguage(lang: SupportedLang) {
+    this.i18n.setLang(lang);
+    this.notify.success(
+      lang === 'es' ? 'Idioma cambiado a Español' : 'Language changed to English',
+      'OK',
+      1500
+    );
+  }
 
   async manageSubscription() {
     this.loadingPortal.set(true);

@@ -5,7 +5,7 @@ import { ChordLyricLayout, toChordLyricLayout } from '../../utils/music/chord-in
 import { getChordInfo, ChordInfo } from '../../utils/chords/chord-info';
 import { GuitarChordDiagramComponent } from '../guitar-chord-diagram/guitar-chord-diagram';
 import type { GuitarShape } from '../../utils/music/guitar-shapes';
-import { transposeChordSymbol } from '../../utils/music/chords';
+import { transposeChordSymbol, transposeKey } from '../../utils/music/chords';
 import { AudioService } from '../../data-access/audio/audio.service';
 
 type FlowToken = { chord?: string | null; text: string };
@@ -36,6 +36,14 @@ export class ChordLineViewComponent {
     return this._transpose();
   }
 
+  private readonly _key = signal<string | null>(null);
+  @Input() set key(v: string | null | undefined) {
+    this._key.set(v ?? null);
+  }
+  get key() {
+    return this._key();
+  }
+
   @Input() mode: 'auto' | 'flow' | 'chart' = 'auto';
   @Input() interactive = true;
 
@@ -47,8 +55,16 @@ export class ChordLineViewComponent {
   // Shape carousel (por chord seleccionado)
   private readonly shapeIdx = signal(0);
 
-  // ✅ ahora SÍ reacciona porque depende de signals
-  readonly resolved = computed(() => this.transposeInlineChords(this._source(), this._transpose()));
+  readonly targetKey = computed(() => {
+    const k = this._key();
+    if (!k) return null;
+    return transposeKey(k, this._transpose());
+  });
+
+  // ✅ ahora SÍ reacciona porque depende de signals y respeta la armadura tonal
+  readonly resolved = computed(() =>
+    this.transposeInlineChords(this._source(), this._transpose(), this.targetKey() || this._key()),
+  );
   readonly built = computed(() => this.buildLayout(this.resolved()));
   readonly flow = computed(() => this.flowTokens(this.resolved()));
 
@@ -98,11 +114,11 @@ export class ChordLineViewComponent {
   }
 
   // --- core ---
-  transposeInlineChords(source: string, step: number): string {
+  transposeInlineChords(source: string, step: number, targetKey?: string | null): string {
     return (source ?? '').replace(/\[([^\]]+)\]/g, (_m, raw) => {
       const chord = String(raw ?? '').trim();
       if (!chord) return '[]';
-      return `[${transposeChordSymbol(chord, step)}]`;
+      return `[${transposeChordSymbol(chord, step, targetKey || undefined)}]`;
     });
   }
 

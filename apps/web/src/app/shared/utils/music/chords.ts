@@ -119,19 +119,119 @@ export function chordNotes(chord: ParsedChord): NoteName[] {
 }
 
 // -------------------------
-// NEW: Transposition Utils (De-duplication)
+// Transposition & Harmonic Enharmonics
 // -------------------------
 
-export function transposeRoot(root: string, step: number): string {
-  const useFlats = root.includes('b');
-  const scale = useFlats ? CHROMA_FLAT : CHROMA_SHARP;
+export const FLAT_KEYS = new Set([
+  'F',
+  'Bb',
+  'Eb',
+  'Ab',
+  'Db',
+  'Gb',
+  'Cb',
+  'Dm',
+  'Gm',
+  'Cm',
+  'Fm',
+  'Bbm',
+  'Ebm',
+]);
 
-  let idx = (CHROMA_SHARP as readonly string[]).indexOf(root);
-  if (idx === -1) idx = (CHROMA_FLAT as readonly string[]).indexOf(root);
+export const SHARP_KEYS = new Set([
+  'G',
+  'D',
+  'A',
+  'E',
+  'B',
+  'F#',
+  'C#',
+  'Em',
+  'Bm',
+  'F#m',
+  'C#m',
+  'G#m',
+  'D#m',
+]);
+
+export function isFlatKey(key: string): boolean {
+  if (!key) return false;
+  const clean = key.trim();
+  if (FLAT_KEYS.has(clean)) return true;
+  if (clean.includes('b')) return true;
+  return false;
+}
+
+export function transposeRoot(
+  root: string,
+  step: number,
+  targetKeyOrPreferFlats?: string | boolean,
+): string {
+  let preferFlats = false;
+
+  if (typeof targetKeyOrPreferFlats === 'boolean') {
+    preferFlats = targetKeyOrPreferFlats;
+  } else if (typeof targetKeyOrPreferFlats === 'string' && targetKeyOrPreferFlats.trim()) {
+    preferFlats = isFlatKey(targetKeyOrPreferFlats);
+  } else {
+    preferFlats = root.includes('b');
+  }
+
+  let idx = (CHROMA_SHARP as readonly string[]).indexOf(root as NoteName);
+  if (idx === -1) idx = (CHROMA_FLAT as readonly string[]).indexOf(root as NoteName);
   if (idx === -1) return root;
 
   const nextIdx = mod(idx + step, 12);
-  return scale[nextIdx];
+
+  // Invariant 1: Prohibido mostrar A# en contextos tonales donde corresponde Bb.
+  // When target key is specified and is a flat key, enforce flat scale:
+  if (typeof targetKeyOrPreferFlats === 'string' && targetKeyOrPreferFlats.trim()) {
+    if (isFlatKey(targetKeyOrPreferFlats)) {
+      return CHROMA_FLAT[nextIdx];
+    }
+  }
+
+  // If explicit preferFlats is requested:
+  if (preferFlats) {
+    return CHROMA_FLAT[nextIdx];
+  }
+
+  // Next note is index 10 (Bb vs A#):
+  // Universally prefer Bb across contemporary chord notation unless explicitly in sharp keys (B, E, F#, C#m, G#m)
+  if (nextIdx === 10) {
+    if (
+      typeof targetKeyOrPreferFlats === 'string' &&
+      SHARP_KEYS.has(targetKeyOrPreferFlats.trim())
+    ) {
+      return 'A#';
+    }
+    return 'Bb';
+  }
+
+  // Next note is index 3 (Eb vs D#):
+  // Default to Eb unless explicitly in sharp keys
+  if (nextIdx === 3) {
+    if (
+      typeof targetKeyOrPreferFlats === 'string' &&
+      SHARP_KEYS.has(targetKeyOrPreferFlats.trim())
+    ) {
+      return 'D#';
+    }
+    return 'Eb';
+  }
+
+  // Next note is index 8 (Ab vs G#):
+  if (nextIdx === 8) {
+    if (
+      typeof targetKeyOrPreferFlats === 'string' &&
+      SHARP_KEYS.has(targetKeyOrPreferFlats.trim())
+    ) {
+      return 'G#';
+    }
+    return 'Ab';
+  }
+
+  return (preferFlats ? CHROMA_FLAT : CHROMA_SHARP)[nextIdx];
 }
 
 export function parseChordRoot(chord: string): { root: string; rest: string } | null {
@@ -142,7 +242,23 @@ export function parseChordRoot(chord: string): { root: string; rest: string } | 
   return { root, rest };
 }
 
-export function transposeChordSymbol(symbol: string, step: number): string {
+export function transposeKey(key: string, step: number): string {
+  if (!key) return key;
+  const isMinor = key.endsWith('m') && !key.endsWith('maj');
+  const root = isMinor ? key.slice(0, -1) : key;
+  const parsed = parseChordRoot(root);
+  if (!parsed) return key;
+
+  const originalIsFlat = isFlatKey(key);
+  const nextRoot = transposeRoot(parsed.root, step, originalIsFlat);
+  return `${nextRoot}${isMinor ? 'm' : ''}`;
+}
+
+export function transposeChordSymbol(
+  symbol: string,
+  step: number,
+  targetKeyOrPreferFlats?: string | boolean,
+): string {
   const parts = symbol.split('/');
   const main = parts[0];
   const bass = parts[1];
@@ -150,13 +266,15 @@ export function transposeChordSymbol(symbol: string, step: number): string {
   const mainParsed = parseChordRoot(main);
   if (!mainParsed) return symbol;
 
-  const mainNext = transposeRoot(mainParsed.root, step) + mainParsed.rest;
+  const mainNext =
+    transposeRoot(mainParsed.root, step, targetKeyOrPreferFlats) + mainParsed.rest;
 
   if (!bass) return mainNext;
 
   const bassParsed = parseChordRoot(bass);
   if (!bassParsed) return `${mainNext}/${bass}`;
 
-  const bassNext = transposeRoot(bassParsed.root, step) + bassParsed.rest;
+  const bassNext =
+    transposeRoot(bassParsed.root, step, targetKeyOrPreferFlats) + bassParsed.rest;
   return `${mainNext}/${bassNext}`;
 }

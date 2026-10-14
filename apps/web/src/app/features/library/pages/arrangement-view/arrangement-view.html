@@ -183,6 +183,7 @@
                           <bm-chord-line-view
                             [source]="ln?.source ?? ''"
                             [transpose]="transpose()"
+                            [key]="arrangement()?.key"
                             mode="auto"
                             [interactive]="true"
                           ></bm-chord-line-view>

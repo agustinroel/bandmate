@@ -25,12 +25,34 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
         ...post,
         isLiked: userId ? userLikes.has(`${userId}:${post.id}`) || post.isLiked : post.isLiked,
     }));
-    // Sort chronological descending
-    formatted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // X.com-style ranking algorithm for "For you" / "Para ti"
+    if (filter === 'for_you') {
+        const now = Date.now();
+        formatted.sort((a, b) => {
+            // Recency decay (hours elapsed)
+            const aHours = Math.max(0.05, (now - new Date(a.createdAt).getTime()) / (1000 * 60 * 60));
+            const bHours = Math.max(0.05, (now - new Date(b.createdAt).getTime()) / (1000 * 60 * 60));
+            // Tier boost
+            const aTier = (a.authorTier || '').toLowerCase();
+            const bTier = (b.authorTier || '').toLowerCase();
+            const aTierBonus = (aTier === 'studio' || aTier === 'band') ? 25 : (aTier === 'pro' ? 15 : 0);
+            const bTierBonus = (bTier === 'studio' || bTier === 'band') ? 25 : (bTier === 'pro' ? 15 : 0);
+            // Engagement score: likes * 3 + reposts * 5 + comments * 4 + songAttached (10)
+            const aEng = (a.likesCount * 3) + (a.repostsCount * 5) + (a.commentsCount * 4) + (a.attachedSong ? 10 : 0);
+            const bEng = (b.likesCount * 3) + (b.repostsCount * 5) + (b.commentsCount * 4) + (b.attachedSong ? 10 : 0);
+            // Gravity decay formula: Score = (Engagement + TierBonus + 1) / (Hours + 2)^1.25
+            const aScore = (aEng + aTierBonus + 1) / Math.pow(aHours + 2, 1.25);
+            const bScore = (bEng + bTierBonus + 1) / Math.pow(bHours + 2, 1.25);
+            return bScore - aScore;
+        });
+    }
+    else {
+        // Chronological descending for 'following'
+        formatted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
     // Filter if needed
     let filtered = formatted;
     if (filter === 'following' && userId) {
-        // In future: filter by followed user IDs. For now, show active discussions
         filtered = formatted;
     }
     const offset = (page - 1) * limit;
@@ -53,6 +75,8 @@ export async function createFeedPost(userId, userProfile, postData) {
         authorAvatar: userProfile.avatar_url || null,
         authorInstruments: userProfile.instruments || ['Guitar'],
         authorTier: userProfile.subscription_tier || 'free',
+        authorBand: userProfile.primary_band || null,
+        isBandVerified: userProfile.is_band_verified || false,
         type: postData.type || 'status',
         content: postData.content,
         attachedSong: postData.attachedSong || null,
@@ -87,14 +111,25 @@ export async function togglePostLike(userId, postId) {
     await writeJson(POSTS_FILE, posts);
     return { isLiked: post.isLiked, likesCount: post.likesCount };
 }
-export async function repostPost(userId, postId) {
+export async function repostPost(userId, userProfile, postId) {
     const posts = await getStoredPosts();
-    const post = posts.find((p) => p.id === postId);
-    if (!post)
+    const original = posts.find((p) => p.id === postId);
+    if (!original)
         throw new Error('Post not found');
-    post.repostsCount += 1;
+    original.repostsCount = (original.repostsCount || 0) + 1;
+    // Create a repost feed entry visible in the feed with reposter attribution
+    const reposterName = userProfile.full_name || userProfile.username || 'Un músico';
+    const repostItem = {
+        ...original,
+        id: `repost-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        repostedBy: userId,
+        repostedByName: reposterName,
+        createdAt: new Date().toISOString(),
+    };
+    posts.unshift(repostItem);
+    cachedPosts = posts;
     await writeJson(POSTS_FILE, posts);
-    return { repostsCount: post.repostsCount };
+    return { repostsCount: original.repostsCount, repostItem };
 }
 export async function getPostComments(postId) {
     const comments = await getStoredComments();

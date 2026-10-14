@@ -70,10 +70,23 @@ export const feedRoutes = async (app) => {
      * POST /feed/:id/repost
      */
     app.post('/feed/:id/repost', async (req, reply) => {
-        const userId = req.user?.id || req.body?.userId || 'anon-musician';
+        let userId = req.user?.id || req.body?.userId || 'usr-agustin-roel';
         const { id } = req.params;
+        let profile = null;
         try {
-            const res = await repostPost(userId, id);
+            if (userId && !userId.startsWith('usr-') && !userId.startsWith('anon-')) {
+                profile = await getProfileById(userId);
+            }
+        }
+        catch {
+            // Fallback
+        }
+        const userProfile = {
+            full_name: profile?.full_name || req.body?.authorName || 'Agustín Roel',
+            username: profile?.username || req.body?.authorUsername || 'agustinroel',
+        };
+        try {
+            const res = await repostPost(userId, userProfile, id);
             return res;
         }
         catch (err) {

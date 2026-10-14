@@ -57,7 +57,7 @@
               [class.active]="feedFilter() === 'for_you'"
               (click)="setFeedFilter('for_you')"
             >
-              Para Ti
+              Para ti
               <div class="tab-indicator"></div>
             </button>
             <button
@@ -73,8 +73,13 @@
           <!-- X.com Style Post Composer Card -->
           <div class="cm-composer-card shadow-sm border mb-4">
             <div class="d-flex gap-3">
-              <div class="cm-composer-avatar">
-                <mat-icon>person</mat-icon>
+              <div class="cm-composer-avatar-wrap">
+                <img
+                  [src]="currentUserAvatar()"
+                  [alt]="currentUserLabel()"
+                  class="cm-composer-avatar-img"
+                  referrerpolicy="no-referrer"
+                />
               </div>
               <div class="flex-grow-1">
                 <textarea
@@ -103,8 +108,8 @@
                 }
 
                 <!-- Composer Controls & Post Types -->
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
-                  <div class="d-flex align-items-center gap-1 flex-wrap">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top mt-2">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
                     <!-- Post Type Selector -->
                     <button
                       mat-button
@@ -139,14 +144,16 @@
                       🚨 Busco Músico
                     </button>
 
-                    <!-- Attach Song Menu Button -->
+                    <!-- Attach Song Menu Button (aligned chip) -->
                     <button
-                      mat-icon-button
-                      color="primary"
+                      type="button"
+                      mat-button
+                      class="cm-type-chip cm-attach-chip"
                       [matMenuTriggerFor]="songMenu"
                       matTooltip="Adjuntar canción de tu repertorio"
                     >
-                      <mat-icon>library_add</mat-icon>
+                      <mat-icon class="me-1">library_music</mat-icon>
+                      <span>Adjuntar canción</span>
                     </button>
 
                     <mat-menu #songMenu="matMenu">
@@ -162,10 +169,9 @@
 
                   <button
                     mat-flat-button
-                    color="primary"
                     [disabled]="!postContent().trim() || isPosting()"
                     (click)="submitPost()"
-                    class="rounded-pill px-4"
+                    class="cm-publish-btn rounded-pill px-4 ms-auto"
                   >
                     <mat-icon class="me-1">send</mat-icon>
                     {{ isPosting() ? 'Publicando...' : 'Publicar' }}
@@ -198,28 +204,52 @@
           } @else {
             @for (post of (activeTab() === 'auditions' ? auditionPosts() : feedPosts()); track post.id) {
               <article class="cm-post-card shadow-sm border mb-4 feed-post-card">
+                <!-- Repost Attribution Header -->
+                @if (post.repostedByName) {
+                  <div class="cm-repost-header d-flex align-items-center gap-2 mb-2">
+                    <mat-icon class="cm-repost-icon">repeat</mat-icon>
+                    <span>{{ post.repostedByName }} ha reposteado</span>
+                  </div>
+                }
+
                 <!-- Post Header -->
                 <div class="cm-post-header d-flex align-items-center justify-content-between mb-2">
                   <div class="d-flex align-items-center gap-2">
                     <img
-                      [src]="post.authorAvatar || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150'"
+                      [src]="post.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                       [alt]="post.authorName"
                       class="cm-post-avatar"
                     />
                     <div>
-                      <div class="d-flex align-items-center gap-1">
+                      <div class="d-flex align-items-center gap-1 flex-wrap">
                         <span class="fw-bold fs-6">{{ post.authorName }}</span>
-                        @if (post.authorTier === 'pro' || post.authorTier === 'band') {
+                        @if (post.authorTier === 'pro' || post.authorTier === 'band' || post.authorTier === 'studio') {
                           <span class="cm-verified-badge" matTooltip="Músico Verificado">
                             <mat-icon>verified</mat-icon>
                           </span>
                         }
                         <span class="text-muted small">&#64;{{ post.authorUsername }}</span>
+                        @if (post.authorTier && post.authorTier !== 'free') {
+                          <span class="cm-tier-badge" [class]="'cm-tier-' + (post.authorTier.toLowerCase())">
+                            {{ post.authorTier | uppercase }}
+                          </span>
+                        }
+                        @if (post.authorBand) {
+                          <span class="cm-band-pill" matTooltip="Banda principal">
+                            <mat-icon class="cm-band-pill-icon">groups</mat-icon>
+                            <span>{{ post.authorBand }}</span>
+                            @if (post.isBandVerified) {
+                              <mat-icon class="cm-band-verified-icon">verified</mat-icon>
+                            }
+                          </span>
+                        }
                         <span class="text-muted small">• {{ post.createdAt | date:'shortTime' }}</span>
                       </div>
-                      <div class="d-flex gap-1 mt-1">
+                      <div class="d-flex gap-1 mt-1 flex-wrap align-items-center">
                         @for (inst of post.authorInstruments; track inst) {
-                          <span class="cm-instrument-tag">{{ inst }}</span>
+                          <span class="cm-instrument-chip" [ngClass]="getInstrumentClass(inst)">
+                            {{ getInstrumentIcon(inst) }} {{ inst }}
+                          </span>
                         }
                         @if (post.type === 'looking_for_member') {
                           <span class="cm-badge-audition">🚨 Audición Abierta</span>

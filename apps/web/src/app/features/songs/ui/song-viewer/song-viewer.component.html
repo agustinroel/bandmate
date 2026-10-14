@@ -259,6 +259,7 @@
                   <bm-chord-line-view
                     [source]="line.source ?? ''"
                     [transpose]="internalTranspose()"
+                    [key]="detail()?.key"
                     mode="auto"
                     [interactive]="true"
                   />

@@ -774,16 +774,18 @@
   }
 }
 
-.cm-composer-avatar {
+.cm-composer-avatar-wrap {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.cm-composer-avatar-img {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(38, 70, 83, 0.1);
-  color: var(--bm-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  object-fit: cover;
+  border: 2px solid rgba(38, 70, 83, 0.15);
 }
 
 .cm-composer-input {
@@ -816,6 +818,33 @@
   }
 }
 
+.cm-attach-chip {
+  background: rgba(42, 157, 143, 0.08) !important;
+  color: var(--bm-teal, #2A9D8F) !important;
+  border: 1px solid rgba(42, 157, 143, 0.25) !important;
+
+  &:hover {
+    background: rgba(42, 157, 143, 0.15) !important;
+  }
+}
+
+.cm-publish-btn {
+  background: var(--bm-primary, #264653) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 12px rgba(38, 70, 83, 0.2) !important;
+  transition: all 0.2s ease !important;
+
+  &:disabled {
+    background: #cbd5e1 !important;
+    color: #334155 !important;
+    opacity: 0.9 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+  }
+}
+
 .cm-attached-preview {
   background: #f8fafc;
   border: 1px dashed #cbd5e1;
@@ -830,6 +859,114 @@
 
   &:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+.cm-repost-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-left: 54px;
+  margin-bottom: 6px;
+
+  .cm-repost-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #10b981;
+  }
+}
+
+.cm-tier-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  &.cm-tier-pro {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000000;
+    box-shadow: 0 1px 4px rgba(255, 140, 0, 0.25);
+  }
+  &.cm-tier-studio,
+  &.cm-tier-band {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(139, 92, 246, 0.25);
+  }
+}
+
+.cm-band-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(38, 70, 83, 0.08);
+  color: var(--bm-primary, #264653);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid rgba(38, 70, 83, 0.15);
+
+  .cm-band-pill-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+  .cm-band-verified-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    color: #0284c7;
+  }
+}
+
+.cm-instrument-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+
+  &.cm-inst-guitar {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+  }
+  &.cm-inst-bass {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4338ca;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+  }
+  &.cm-inst-drums {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+  &.cm-inst-keys {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0369a1;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+  }
+  &.cm-inst-vocals {
+    background: rgba(244, 63, 94, 0.12);
+    color: #be123c;
+    border: 1px solid rgba(244, 63, 94, 0.25);
+  }
+  &.cm-inst-brass {
+    background: rgba(234, 179, 8, 0.12);
+    color: #a16207;
+    border: 1px solid rgba(234, 179, 8, 0.25);
+  }
+  &.cm-inst-default {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+    border: 1px solid rgba(100, 116, 139, 0.25);
   }
 }
 
