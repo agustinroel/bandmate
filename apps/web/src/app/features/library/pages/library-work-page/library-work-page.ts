@@ -151,7 +151,29 @@ export class LibraryWorkPageComponent {
       },
       error: (err) => {
         console.error('Failed to create version', err);
-        // Could show a notification here
+        this.notify.error('Failed to create song version');
+      },
+    });
+  }
+
+  generateAiArrangement() {
+    const id = this.workId();
+    if (!id || this.isGeneratingAi()) return;
+
+    this.isGeneratingAi.set(true);
+    this.http.post<ArrangementDto>(`${base}/works/${id}/generate-ai-arrangement`, {}).subscribe({
+      next: () => {
+        this.isGeneratingAi.set(false);
+        this.notify.success('AI arrangement generated with Gemini!', 'OK', 3000);
+        this.load();
+      },
+      error: (err) => {
+        this.isGeneratingAi.set(false);
+        this.notify.error(
+          err?.error?.message ?? err?.message ?? 'Failed to generate arrangement',
+          'OK',
+          4000,
+        );
       },
     });
   }

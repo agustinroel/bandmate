@@ -225,8 +225,31 @@ export class SetlistsPageComponent {
     ref.afterClosed().subscribe((result) => {
       if (!result) return;
 
-      this.store.create(result).subscribe({
-        next: () => this.notify.success('Setlist created', 'OK', 2000),
+      this.store.create({ name: result.name, notes: result.notes }).subscribe({
+        next: (created) => {
+          this.notify.success('Setlist created', 'OK', 2000);
+
+          // Si se solicitó auto-rellenar con la plantilla, poblar canciones de la biblioteca hasta la duración meta
+          if (result.autoPopulate && result.targetDurationMinutes) {
+            const targetSec = result.targetDurationMinutes * 60;
+            const availableSongs = [...this.songs.songs()];
+            let currentSec = 0;
+            const selectedSongIds: string[] = [];
+
+            for (const song of availableSongs) {
+              const dur = Number(song.durationSec) || 210; // default 3.5 min
+              if (currentSec + dur <= targetSec + 180) {
+                selectedSongIds.push(song.id);
+                currentSec += dur;
+              }
+              if (currentSec >= targetSec) break;
+            }
+
+            selectedSongIds.forEach((sId) => {
+              this.store.addSong(created.id, sId).subscribe({ error: () => {} });
+            });
+          }
+        },
         error: (err) => this.toastError(err, 'Could not create setlist'),
       });
     });

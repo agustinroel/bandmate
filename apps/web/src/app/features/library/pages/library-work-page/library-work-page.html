@@ -33,7 +33,17 @@
           </div>
         </div>
 
-        <div class="bm-header__right">
+        <div class="bm-header__right d-flex gap-2 align-items-center">
+          <button
+            mat-stroked-button
+            [disabled]="isGeneratingAi()"
+            (click)="generateAiArrangement()"
+            matTooltip="Generar nuevo arreglo con acordes y letra usando IA"
+          >
+            <mat-icon class="me-1">auto_awesome</mat-icon>
+            {{ isGeneratingAi() ? 'Generando...' : 'Arreglo con IA' }}
+          </button>
+
           <button mat-flat-button color="primary" (click)="createMyVersion()">
             <mat-icon class="me-1">edit_note</mat-icon>
             Create my version
@@ -236,9 +246,25 @@
             </div>
           </div>
         } @else {
-          <mat-card class="bm-empty">
-            <div class="bm-empty__t">No arrangements available yet</div>
-            <div class="bm-empty__s">This work doesn’t have any playable arrangement.</div>
+          <mat-card class="bm-empty text-center py-4">
+            <mat-icon style="font-size: 48px; width: 48px; height: 48px" class="opacity-50 mb-2">library_music</mat-icon>
+            <div class="bm-empty__t fw-bold fs-5">No arrangements available yet</div>
+            <div class="bm-empty__s mb-4 text-muted">This work doesn't have any playable arrangement with chords and lyrics yet.</div>
+            <div class="d-flex gap-2 flex-wrap justify-content-center">
+              <button
+                mat-flat-button
+                color="accent"
+                [disabled]="isGeneratingAi()"
+                (click)="generateAiArrangement()"
+              >
+                <mat-icon class="me-1">auto_awesome</mat-icon>
+                {{ isGeneratingAi() ? 'Generating arrangement...' : 'Generate with AI' }}
+              </button>
+              <button mat-stroked-button color="primary" (click)="createMyVersion()">
+                <mat-icon class="me-1">edit_note</mat-icon>
+                Create manual version
+              </button>
+            </div>
           </mat-card>
         }
       </div>

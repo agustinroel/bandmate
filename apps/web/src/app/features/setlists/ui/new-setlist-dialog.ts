@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,9 +7,80 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
+export interface SetlistTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  targetDurationMinutes: number;
+  description: string;
+  recommendedSongCount: string;
+  structureNotes: string;
+}
+
+export const SETLIST_TEMPLATES: SetlistTemplate[] = [
+  {
+    id: 'blank',
+    name: 'Personalizado',
+    icon: 'queue_music',
+    targetDurationMinutes: 0,
+    description: 'Comenzar con un setlist vacío desde cero.',
+    recommendedSongCount: 'Libre',
+    structureNotes: '',
+  },
+  {
+    id: 'club-45',
+    name: 'Club Set (45 min)',
+    icon: 'nightlife',
+    targetDurationMinutes: 45,
+    description: 'Bloque estándar para pubs y clubes (9-11 canciones).',
+    recommendedSongCount: '9-11 temas',
+    structureNotes:
+      '🎯 Objetivo: 45 min.\nEstructura:\n• 1-2: Apertura enérgica y enganche\n• 3-5: Desarrollo de repertorio / ritmo medio\n• 6: Balada o dinámica baja\n• 7-9: Cierre ascendente y clímax.',
+  },
+  {
+    id: 'festival-60',
+    name: 'Festival Block (60 min)',
+    icon: 'festival',
+    targetDurationMinutes: 60,
+    description: 'Set dinámico de alta intensidad sin pausas para festivales.',
+    recommendedSongCount: '12-14 temas',
+    structureNotes:
+      '🎯 Objetivo: 60 min.\nEstructura:\n• 1-3: Arranque explosivo (hits insignia)\n• 4-8: Progresión de tempo ascendente (sin pausas)\n• 9: Momento íntimo o interacción\n• 10-13: Hits principales y final demoledor.',
+  },
+  {
+    id: 'headliner-90',
+    name: 'Headliner Concert (90 min)',
+    icon: 'stadium',
+    targetDurationMinutes: 90,
+    description: 'Concierto completo con dos actos y bloque de bises (encore).',
+    recommendedSongCount: '18-22 temas',
+    structureNotes:
+      '🎯 Objetivo: 90 min.\nEstructura:\n• Acto 1 (Temas 1-8): Apertura, presentación y ritmo constante\n• Acto 2 (Temas 9-16): Transición acústica y temas épicos\n• Encore (Temas 17-20): Máximo clímax y despedida.',
+  },
+  {
+    id: 'acoustic-30',
+    name: 'Acoustic Showcase (30 min)',
+    icon: 'music_note',
+    targetDurationMinutes: 30,
+    description: 'Sesión íntima o formato acústico para radio o telonero.',
+    recommendedSongCount: '6-7 temas',
+    structureNotes:
+      '🎯 Objetivo: 30 min.\nEstructura:\n• 1-2: Tema cálido de apertura vocal\n• 3-5: Dinámica de matices y arreglos limpios\n• 6-7: Despedida emotiva.',
+  },
+];
+
+export interface NewSetlistDialogResult {
+  name: string;
+  notes?: string;
+  templateId?: string;
+  targetDurationMinutes?: number;
+  autoPopulate?: boolean;
+}
+
 @Component({
   standalone: true,
   imports: [
+    CommonModule,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
@@ -20,32 +92,75 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   template: `
     <h2 mat-dialog-title class="d-flex align-items-center gap-2">
       <mat-icon>queue_music</mat-icon>
-      New setlist
+      Nuevo Setlist
     </h2>
 
     <div mat-dialog-content class="bm-dialog-content">
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Name</mat-label>
-        <input matInput [formControl]="nameControl" placeholder="e.g. Rehearsal Friday" />
+      <!-- Selector de Plantillas Rápidas -->
+      <div class="template-section">
+        <label class="section-label">Plantillas Reutilizables de Escenario</label>
+        <div class="template-grid">
+          @for (tmpl of templates; track tmpl.id) {
+            <button
+              type="button"
+              class="tmpl-card"
+              [class.active]="selectedTemplateId() === tmpl.id"
+              (click)="applyTemplate(tmpl)"
+            >
+              <div class="tmpl-head">
+                <mat-icon class="tmpl-icon">{{ tmpl.icon }}</mat-icon>
+                <span class="tmpl-name">{{ tmpl.name }}</span>
+              </div>
+              <div class="tmpl-desc">{{ tmpl.description }}</div>
+              @if (tmpl.targetDurationMinutes > 0) {
+                <div class="tmpl-badge">
+                  <span>⏱ {{ tmpl.targetDurationMinutes }} min</span>
+                  <span>• {{ tmpl.recommendedSongCount }}</span>
+                </div>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" class="w-100 mt-2">
+        <mat-label>Nombre del Setlist</mat-label>
+        <input matInput [formControl]="nameControl" placeholder="Ej. Festival Rock 2026" />
         @if (nameControl.invalid && nameControl.touched) {
           <mat-error>{{ getNameError() }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Notes</mat-label>
+        <mat-label>Notas y Estructura de Pacing</mat-label>
         <textarea
           matInput
-          rows="3"
+          rows="4"
           [formControl]="notesControl"
-          placeholder="Optional: vibe, tempos, transitions…"
+          placeholder="Estructura de tempo, pausas, descansos o notas del director..."
         ></textarea>
-        <mat-hint>Optional</mat-hint>
+        <mat-hint>Opcional o autocompletado según la plantilla</mat-hint>
       </mat-form-field>
+
+      @if (selectedTemplate() && selectedTemplate()!.targetDurationMinutes > 0) {
+        <div class="auto-fill-opt p-2 rounded bg-light-subtle border">
+          <label class="d-flex align-items-center gap-2 cursor-pointer m-0">
+            <input
+              type="checkbox"
+              class="form-check-input mt-0"
+              [checked]="autoPopulateFromLibrary()"
+              (change)="toggleAutoPopulate($event)"
+            />
+            <span class="small fw-semibold">
+              Auto-rellenar con canciones de mi biblioteca hasta alcanzar ~{{ selectedTemplate()!.targetDurationMinutes }} min
+            </span>
+          </label>
+        </div>
+      }
     </div>
 
     <div mat-dialog-actions align="end" class="bm-dialog-actions">
-      <button mat-button type="button" (click)="close()">Cancel</button>
+      <button mat-button type="button" (click)="close()">Cancelar</button>
       <button
         mat-raised-button
         color="primary"
@@ -54,35 +169,123 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
         [disabled]="nameControl.invalid"
       >
         <mat-icon class="me-1">add</mat-icon>
-        Create
+        Crear Setlist
       </button>
     </div>
   `,
   styles: [
     `
-      /* Match Material dialog gutters */
       .bm-dialog-content {
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: 12px;
-
-        /* Misma "columna" que los form-fields */
         padding: 10px 24px 0;
+        max-height: 80vh;
       }
 
-      /* Botonera alineada con inputs + aire alrededor */
       .bm-dialog-actions {
-        padding: 12px 24px 18px;
-        margin: 0; /* a veces Material mete margin */
-        gap: 10px; /* separación entre botones */
+        padding: 16px 24px 18px;
+        gap: 10px;
+      }
+
+      .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .tmpl-card {
+        border: 1.5px solid rgba(0, 0, 0, 0.12);
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 10px 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        &:hover {
+          border-color: #2ec4b6;
+          background: #f0faf9;
+          transform: translateY(-1px);
+        }
+
+        &.active {
+          border-color: #2ec4b6;
+          background: #e6f7f5;
+          box-shadow: 0 4px 12px rgba(46, 196, 182, 0.2);
+
+          .tmpl-name {
+            color: #007769;
+          }
+        }
+      }
+
+      .tmpl-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tmpl-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #2ec4b6;
+      }
+
+      .tmpl-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1a1a1a;
+      }
+
+      .tmpl-desc {
+        font-size: 11px;
+        color: #666;
+        line-height: 1.3;
+      }
+
+      .tmpl-badge {
+        font-size: 10px;
+        font-weight: 600;
+        color: #007769;
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .cursor-pointer {
+        cursor: pointer;
       }
     `,
   ],
 })
 export class NewSetlistDialogComponent {
   private ref = inject(
-    MatDialogRef<NewSetlistDialogComponent, { name: string; notes?: string } | null>,
+    MatDialogRef<NewSetlistDialogComponent, NewSetlistDialogResult | null>,
   );
   private fb = inject(FormBuilder);
+
+  readonly templates = SETLIST_TEMPLATES;
+  readonly selectedTemplateId = signal<string>('blank');
+  readonly autoPopulateFromLibrary = signal<boolean>(false);
+
+  readonly selectedTemplate = () =>
+    this.templates.find((t) => t.id === this.selectedTemplateId()) ?? null;
 
   nameControl = this.fb.control('', [
     Validators.required,
@@ -91,15 +294,43 @@ export class NewSetlistDialogComponent {
   ]);
   notesControl = this.fb.control('');
 
+  applyTemplate(tmpl: SetlistTemplate) {
+    this.selectedTemplateId.set(tmpl.id);
+
+    if (tmpl.id === 'blank') {
+      if (this.nameControl.value?.startsWith('Set ')) {
+        this.nameControl.setValue('');
+      }
+      return;
+    }
+
+    // Set name if empty or default
+    if (!this.nameControl.value || this.templates.some((t) => t.name === this.nameControl.value)) {
+      this.nameControl.setValue(tmpl.name);
+    }
+
+    // Populate notes structure
+    this.notesControl.setValue(tmpl.structureNotes);
+  }
+
+  toggleAutoPopulate(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.autoPopulateFromLibrary.set(checked);
+  }
+
   save() {
     if (this.nameControl.invalid) return;
 
     const cleanName = this.nameControl.value?.trim() ?? '';
     const cleanNotes = this.notesControl.value?.trim();
+    const tmpl = this.selectedTemplate();
 
     this.ref.close({
       name: cleanName,
       notes: cleanNotes || undefined,
+      templateId: tmpl?.id !== 'blank' ? tmpl?.id : undefined,
+      targetDurationMinutes: tmpl && tmpl.targetDurationMinutes > 0 ? tmpl.targetDurationMinutes : undefined,
+      autoPopulate: this.autoPopulateFromLibrary(),
     });
   }
 
@@ -109,14 +340,14 @@ export class NewSetlistDialogComponent {
 
   getNameError(): string {
     if (this.nameControl.hasError('required')) {
-      return 'Name is required';
+      return 'El nombre es obligatorio';
     }
     if (this.nameControl.hasError('minlength')) {
-      return 'Name is too short';
+      return 'El nombre es demasiado corto';
     }
     if (this.nameControl.hasError('maxlength')) {
-      return 'Name is too long';
+      return 'El nombre es demasiado largo';
     }
-    return 'Invalid value';
+    return 'Valor inválido';
   }
 }

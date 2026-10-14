@@ -499,6 +499,38 @@ async function seed() {
     });
 
     console.log(`Work [${song.title}]: HTTP ${workRes.status}`);
+
+    // 3. Also insert into `arrangements` table
+    const getWorkRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/song_works?title=eq.${encodeURIComponent(song.title)}&artist=eq.${encodeURIComponent(song.artist)}&select=id`,
+      { headers }
+    );
+    const workData = await getWorkRes.json();
+    const workId = workData?.[0]?.id;
+
+    if (workId) {
+      const arrPayload = {
+        work_id: workId,
+        author_user_id: null,
+        version: 1,
+        sections: song.sections,
+        key: song.key || null,
+        bpm: song.bpm ? String(song.bpm) : null,
+        duration_sec: song.durationSec || null,
+        notes: "Official Bandmate community ChordPro arrangement.",
+        source: "community",
+        is_seed: true,
+        rating_avg: 4.8,
+        rating_count: 5
+      };
+
+      const arrRes = await fetch(`${SUPABASE_URL}/rest/v1/arrangements`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(arrPayload)
+      });
+      console.log(`Arrangement [${song.title}]: HTTP ${arrRes.status}`);
+    }
   }
 
   console.log("Seeding complete!");

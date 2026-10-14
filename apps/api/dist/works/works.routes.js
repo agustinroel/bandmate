@@ -1,5 +1,6 @@
 import { createWork, getWorkByIdWithArrangements, listWorksWithTopArrangement, } from "./works.repo.js";
 import { createArrangementForWork } from "../arrangements/arrangements.repo.js";
+import { aiService } from "../ai/ai.service.js";
 function getUserId(req) {
     const u = req.user;
     return u?.id ?? null;
@@ -58,6 +59,29 @@ export async function worksRoutes(app) {
             capo: body.capo ?? null,
             timeSignature: body.timeSignature ?? null,
             source: body.source ?? "community",
+        });
+        if (created === "WORK_NOT_FOUND") {
+            return reply.code(404).send({ message: "Work not found" });
+        }
+        return reply.code(201).send(created);
+    });
+    // GENERATE AI arrangement for a work
+    app.post("/works/:id/generate-ai-arrangement", async (req, reply) => {
+        const userId = getUserId(req);
+        const { id: workId } = req.params;
+        const workRes = await getWorkByIdWithArrangements(workId);
+        if (!workRes?.work) {
+            return reply.code(404).send({ message: "Work not found" });
+        }
+        const { title, artist } = workRes.work;
+        const aiArr = await aiService.generateArrangement({ title, artist });
+        const created = await createArrangementForWork(userId ?? "", workId, {
+            sections: aiArr.sections,
+            key: aiArr.key,
+            bpm: aiArr.bpm ? String(aiArr.bpm) : null,
+            timeSignature: aiArr.timeSignature,
+            notes: `Arrangement generated with Gemini AI (${aiArr.source || "AI Transcription"}).`,
+            source: "community",
         });
         if (created === "WORK_NOT_FOUND") {
             return reply.code(404).send({ message: "Work not found" });

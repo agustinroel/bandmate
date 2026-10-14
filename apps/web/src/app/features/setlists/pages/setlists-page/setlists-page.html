@@ -132,6 +132,12 @@
                   @if (lastEditedLabel()) {
                     <div class="sl-meta">{{ lastEditedLabel() }}</div>
                   }
+                  @if (store.selected()!.notes) {
+                    <div class="sl-meta text-primary fw-semibold d-flex align-items-center" [matTooltip]="store.selected()!.notes">
+                      <mat-icon class="icon-xs me-1">notes</mat-icon>
+                      Estructura / Notas
+                    </div>
+                  }
                 </div>
                 <!-- Long performance warning -->
                 @if (totalDurationSec() > 3600) {
