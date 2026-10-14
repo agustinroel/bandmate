@@ -6,3 +6,4 @@ export * from "./lib/songs/policies/song.policy.js";
 export * from "./adapters/song.adapters.js";
 export * from "./lib/subscriptions/subscription.model.js";
 export * from "./lib/ai/ai.schemas.js";
+export * from "./lib/songs/smart-tab-parser.js";

@@ -19,6 +19,7 @@ import { ticketingRoutes } from "./events/ticketing.routes.js";
 import { stripeWebhookRoutes } from "./events/stripe.webhook.js";
 import { subscriptionRoutes } from "./subscriptions/subscriptions.routes.js";
 import { aiRoutes } from "./ai/ai.routes.js";
+import { feedRoutes } from "./community/feed.routes.js";
 import { initAiQueue } from "./ai/ai-queue.js";
 import "./services/ingestion-queue.service.js"; // Initialize worker
 import { subscriptionHook } from "./services/subscription.middleware.js";
@@ -134,6 +135,7 @@ await app.register(registerAuth, {
         "/webhooks/stripe",
         "/bands",
         "/profiles",
+        "/feed",
     ],
 });
 app.addHook("preHandler", app.authGuardHook);
@@ -164,6 +166,7 @@ await app.register(stripeWebhookRoutes);
 await app.register(notificationsRoutes);
 await app.register(subscriptionRoutes);
 await app.register(aiRoutes);
+await app.register(feedRoutes);
 app.setErrorHandler((err, req, reply) => {
     const status = err.statusCode ?? 500;
     req.log.error({ err }, "Unhandled error");

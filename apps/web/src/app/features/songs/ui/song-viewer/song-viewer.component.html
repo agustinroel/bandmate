@@ -10,7 +10,7 @@
     <div class="small opacity-75">{{ error() }}</div>
   </div>
 } @else if (detail(); as d) {
-  <div class="sv-container">
+  <div class="sv-container" [class.sv-oled-dark]="isOledDark()" [style.--sv-font-scale]="fontScale()">
     @if (!hideHeader()) {
       <div class="sv-header mb-4">
         <h1 class="sv-title m-0">{{ d.title }}</h1>
@@ -37,12 +37,20 @@
       </div>
     }
 
+    <!-- BLUETOOTH PEDAL HUD -->
+    @if (pedal.lastPedalAction(); as pAction) {
+      <div class="sv-pedal-hud shadow-lg">
+        <mat-icon class="sv-pedal-ic">settings_remote</mat-icon>
+        <span class="sv-pedal-text">{{ pAction.label }}</span>
+      </div>
+    }
+
     <!-- LIVE CONTROLS TOOLBAR -->
     @if (!hideToolbar()) {
       <div
         class="sv-toolbar shadow-sm border rounded-4 mb-4 p-2 d-flex align-items-center justify-content-between flex-wrap gap-2"
       >
-        <div class="d-flex align-items-center gap-2 px-2">
+        <div class="d-flex align-items-center gap-2 px-2 flex-wrap">
           <!-- Transpose -->
           <div class="d-flex align-items-center bg-light rounded-pill px-1 border">
             <button
@@ -75,9 +83,9 @@
             Reset
           </button>
 
-          <div class="vr mx-2 bg-secondary opacity-25" style="height: 24px"></div>
+          <div class="vr mx-1 bg-secondary opacity-25" style="height: 24px"></div>
 
-          <!-- Metronome -->
+          <!-- Metronome & Tap Tempo -->
           <div class="d-flex align-items-center gap-1">
             <button
               mat-icon-button
@@ -96,6 +104,17 @@
             >
               {{ metronome.bpm() }}
             </button>
+
+            <!-- TAP TEMPO BUTTON -->
+            <button
+              mat-stroked-button
+              class="bm-btn-mini rounded-pill px-2 fw-bold"
+              (click)="onTapTempo()"
+              matTooltip="Toca al ritmo (Tap Tempo)"
+            >
+              TAP
+            </button>
+
             <mat-menu #bpmMenu="matMenu">
               <div class="p-3" style="min-width: 200px" (click)="$event.stopPropagation()">
                 <div class="small opacity-75 mb-2">Tempo (BPM)</div>
@@ -132,6 +151,52 @@
           >
             <mat-icon>music_note</mat-icon>
           </button>
+
+          <div class="vr mx-1 bg-secondary opacity-25" style="height: 24px"></div>
+
+          <!-- STAGE TOOLS: 2-Columns, OLED Dark, Font Zoom -->
+          <button
+            mat-icon-button
+            [color]="twoColumns() ? 'primary' : ''"
+            (click)="toggleTwoColumns()"
+            matTooltip="Alternar 2 Columnas (Tablet/Escenario)"
+          >
+            <mat-icon>{{ twoColumns() ? 'view_column' : 'view_stream' }}</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            [color]="isOledDark() ? 'accent' : ''"
+            (click)="toggleOledDark()"
+            matTooltip="Modo Escenario OLED Alto Contraste"
+          >
+            <mat-icon>{{ isOledDark() ? 'light_mode' : 'nightlife' }}</mat-icon>
+          </button>
+
+          <!-- Font Scaling -->
+          <div class="d-flex align-items-center bg-light rounded-pill px-1 border">
+            <button
+              mat-icon-button
+              (click)="adjustFontScale(-0.1)"
+              class="btn-sm-icon"
+              matTooltip="Reducir fuente"
+              [disabled]="fontScale() <= 0.7"
+            >
+              <mat-icon>text_decrease</mat-icon>
+            </button>
+            <span class="small px-1 fw-bold" style="min-width: 36px; text-align: center">
+              {{ (fontScale() * 100).toFixed(0) }}%
+            </span>
+            <button
+              mat-icon-button
+              (click)="adjustFontScale(0.1)"
+              class="btn-sm-icon"
+              matTooltip="Aumentar fuente"
+              [disabled]="fontScale() >= 1.8"
+            >
+              <mat-icon>text_increase</mat-icon>
+            </button>
+          </div>
         </div>
 
         <div class="d-flex align-items-center gap-3 px-2 flex-grow-1 justify-content-end">
@@ -157,7 +222,7 @@
             class="rounded-pill px-4 shadow-sm"
           >
             <mat-icon class="me-2">{{ isScrolling() ? 'pause' : 'play_arrow' }}</mat-icon>
-            {{ isScrolling() ? 'Stopping' : 'Auto-Scroll' }}
+            {{ isScrolling() ? 'Pausar' : 'Auto-Scroll' }}
           </button>
         </div>
       </div>
@@ -180,7 +245,7 @@
         <div class="small opacity-75">This song has no content yet.</div>
       </div>
     } @else {
-      <div class="sv-sections">
+      <div class="sv-sections" [class.two-columns]="twoColumns()">
         @for (sec of d.sections; track sec.id) {
           <div class="sv-section-card" [id]="'sec-' + sec.id">
             <div class="sv-section-head">

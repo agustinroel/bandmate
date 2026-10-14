@@ -308,3 +308,11 @@
     </div>
   </div>
 }
+
+<!-- BLUETOOTH PEDAL HUD -->
+@if (pedal.lastPedalAction(); as pAction) {
+  <div class="sv-pedal-hud shadow-lg">
+    <mat-icon class="sv-pedal-ic">settings_remote</mat-icon>
+    <span class="sv-pedal-text">{{ pAction.label }}</span>
+  </div>
+}

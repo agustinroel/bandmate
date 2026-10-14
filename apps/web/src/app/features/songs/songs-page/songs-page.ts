@@ -22,6 +22,7 @@ import { SongPolicy } from '@bandmate/shared';
 import { LibraryWorkCardComponent } from '../../library/ui/library-work-card';
 import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-run-hero';
 import { AnimationService } from '../../../core/services/animation.service';
+import { SmartImportDialogComponent } from '../ui/smart-import-dialog/smart-import-dialog.component';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -124,6 +125,13 @@ export class SongsPageComponent {
   readonly router = inject(Router);
   readonly dialog = inject(MatDialog);
   readonly animation = inject(AnimationService);
+
+  openSmartImport() {
+    this.dialog.open(SmartImportDialogComponent, {
+      width: '640px',
+      maxWidth: '95vw',
+    });
+  }
 
   readonly notify = inject(NotificationsService);
 
@@ -336,7 +344,7 @@ export class SongsPageComponent {
 
   constructor() {
     //0) Estado de los filtros en desktop y mobile
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       const mq = window.matchMedia('(min-width: 720px)');
       this.filtersOpen.set(mq.matches);
       mq.addEventListener?.('change', (e) => this.filtersOpen.set(e.matches));

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 import { SongEditorPageComponent } from './song-editor';
 
 describe('SongEditorPageComponent', () => {
@@ -8,9 +9,9 @@ describe('SongEditorPageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SongEditorPageComponent]
-    })
-    .compileComponents();
+      imports: [SongEditorPageComponent],
+      providers: [provideRouter([]), provideHttpClient()],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SongEditorPageComponent);
     component = fixture.componentInstance;

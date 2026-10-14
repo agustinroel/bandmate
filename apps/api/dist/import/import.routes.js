@@ -1,3 +1,4 @@
+import { parseSmartTab } from "@bandmate/shared";
 import { spotifyService } from "../services/spotify.service.js";
 import { musicBrainzService } from "../services/musicbrainz.service.js";
 import { createSongForUser } from "../songs/songs.repo.js";
@@ -201,5 +202,30 @@ export const importRoutes = async (app) => {
         catch (err) {
             return reply.status(500).send({ message: err.message });
         }
+    });
+    /**
+     * POST /import/smart-tab
+     * Parses raw tabs/ChordPro/UG/CifraClub and optionally creates a song for user.
+     */
+    app.post("/smart-tab", async (req, reply) => {
+        const { rawText, autoSave } = req.body || {};
+        const userId = req.user?.id;
+        if (!rawText || typeof rawText !== "string") {
+            return reply.status(400).send({ message: "rawText is required" });
+        }
+        const parsed = parseSmartTab(rawText);
+        if (autoSave && userId) {
+            const song = await createSongForUser(userId, {
+                title: parsed.title,
+                artist: parsed.artist,
+                key: parsed.key,
+                bpm: parsed.bpm,
+                sections: parsed.sections,
+                is_imported: true,
+                notes: parsed.capo ? `Capo: ${parsed.capo}. Universal Smart Importer` : "Universal Smart Importer",
+            });
+            return { success: true, song, parsed };
+        }
+        return { success: true, parsed };
     });
 };

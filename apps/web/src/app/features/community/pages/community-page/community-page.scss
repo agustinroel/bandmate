@@ -7,31 +7,79 @@
 /* ─── Hero ─── */
 .cm-hero {
   text-align: center;
-  padding: 48px 24px 32px;
-  max-width: 640px;
+  padding: 48px 24px 24px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
-.cm-hero-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+.cm-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(38, 70, 83, 0.08);
   color: var(--bm-primary, #264653);
-  margin: 0 0 12px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
 }
 
-.cm-hero-sub {
-  font-size: 1.1rem;
-  color: #6c757d;
-  margin: 0 0 28px;
-  line-height: 1.5;
+.cm-nav-switcher {
+  display: inline-flex;
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  gap: 6px;
 }
 
-.cm-hero-actions {
+.cm-nav-pill {
+  border: none;
+  background: transparent;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #64748b;
   display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &.active {
+    background: var(--bm-primary, #264653);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(38, 70, 83, 0.25);
+  }
+
+  &:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.04);
+    color: #0f172a;
+  }
+
+  .cm-pill-count {
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-weight: 800;
+  }
 }
 
 /* ─── Social Signals Bar ─── */
@@ -671,4 +719,241 @@
     font-size: 0.72rem !important;
     padding: 0 8px !important;
   }
+}
+
+/* ═══════════════════════════════════════════════ */
+/*  🌟 FEED MUSICAL & SOCIAL HUB (X.COM / SPOTIFY) */
+/* ═══════════════════════════════════════════════ */
+
+/* Feed Header Tabs */
+.cm-feed-header-tabs {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.cm-feed-tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #0f172a;
+  }
+
+  &.active {
+    color: var(--bm-primary, #264653);
+
+    .tab-indicator {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--bm-primary, #264653);
+      border-radius: 3px 3px 0 0;
+    }
+  }
+}
+
+/* Composer Card */
+.cm-composer-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  transition: box-shadow 0.2s ease;
+
+  &:focus-within {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+  }
+}
+
+.cm-composer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(38, 70, 83, 0.1);
+  color: var(--bm-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cm-composer-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 1.05rem;
+  color: #1e293b;
+  font-family: inherit;
+  margin-bottom: 12px;
+  background: transparent;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+}
+
+.cm-type-chip {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  border-radius: 9999px !important;
+  padding: 4px 12px !important;
+  min-width: auto !important;
+  color: #64748b !important;
+
+  &.active {
+    background: rgba(38, 70, 83, 0.1) !important;
+    color: var(--bm-primary) !important;
+  }
+}
+
+.cm-attached-preview {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Post Cards */
+.cm-post-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+.cm-post-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+}
+
+.cm-verified-badge {
+  color: #0284c7;
+  display: inline-flex;
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.cm-badge-audition {
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid #fecaca;
+}
+
+/* Attached Song Interactive Box */
+.cm-post-song-box {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+}
+
+.cm-vinyl-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.cm-play-song-btn {
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+/* Action Buttons (X.com Style) */
+.cm-post-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 12px;
+}
+
+.cm-action-btn {
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: auto !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease !important;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: #0f172a !important;
+  }
+
+  &.liked {
+    color: #ef4444 !important;
+    .heart-active {
+      color: #ef4444;
+      animation: bmPulse 0.35s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+    }
+  }
+}
+
+@keyframes bmPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Sidebar */
+.cm-sidebar-card {
+  background: #ffffff;
+}
+
+.cm-band-avatar-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bm-primary, #264653);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
 }

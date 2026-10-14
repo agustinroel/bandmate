@@ -30,6 +30,7 @@ import { TransposeBarComponent } from '../../../../shared/ui/transpose-bar/trans
 import { PracticeSessionService } from '../../../../core/services/practice-session.service';
 import { AnimationService } from '../../../../core/services/animation.service';
 import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-progress-ring/practice-progress-ring';
+import { PedalListenerService } from '../../../../core/services/pedal-listener.service';
 
 @Component({
   standalone: true,
@@ -58,6 +59,7 @@ export class PracticePageComponent {
   readonly songs = inject(SongsStore);
   readonly metronome = inject(MetronomeService);
   readonly wakeLock = inject(WakeLockService);
+  readonly pedal = inject(PedalListenerService);
   private readonly document = inject(DOCUMENT);
   private readonly zone = inject(NgZone);
   private readonly sessionService = inject(PracticeSessionService);
@@ -204,6 +206,27 @@ export class PracticePageComponent {
           this.toggleScroll();
         }
       });
+
+    // Listen to Bluetooth Pedal actions
+    this.pedal.actions$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((action) => {
+      if (action === 'scroll-down') {
+        const container = this.isStageMode()
+          ? document.querySelector('.stage-mode-active .p-now')
+          : document.querySelector('.app-main');
+        container?.scrollBy({ top: window.innerHeight * 0.65, behavior: 'smooth' });
+      } else if (action === 'scroll-up') {
+        const container = this.isStageMode()
+          ? document.querySelector('.stage-mode-active .p-now')
+          : document.querySelector('.app-main');
+        container?.scrollBy({ top: -window.innerHeight * 0.65, behavior: 'smooth' });
+      } else if (action === 'toggle-scroll') {
+        this.toggleScroll();
+      } else if (action === 'next-song') {
+        this.p.next();
+      } else if (action === 'prev-song') {
+        this.p.prev();
+      }
+    });
 
     // Listen for fullscreen changes (ESC key interaction)
     fromEvent(document, 'fullscreenchange')

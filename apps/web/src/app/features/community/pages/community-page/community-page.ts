@@ -22,6 +22,32 @@ import { CreateBandDialogComponent } from '../../../bands/ui/create-band-dialog/
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { ConfirmDialogComponent } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { InvitationsDialogComponent } from '../../ui/invitations-dialog/invitations-dialog.component';
+import { SongsStore } from '../../../songs/state/songs-store';
+
+export type FeedPost = {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar?: string | null;
+  authorInstruments: string[];
+  authorTier?: string | null;
+  type: 'status' | 'song_share' | 'riff' | 'looking_for_member' | 'gig';
+  content: string;
+  attachedSong?: {
+    id: string;
+    title: string;
+    artist: string;
+    key?: string;
+    bpm?: number;
+  } | null;
+  tags: string[];
+  likesCount: number;
+  repostsCount: number;
+  commentsCount: number;
+  isLiked?: boolean;
+  createdAt: string;
+};
 
 type ProfileDto = {
   id: string;
@@ -72,6 +98,21 @@ export class CommunityPageComponent {
   readonly eventsStore = inject(EventsStore);
   readonly bandsService = inject(BandsService);
   readonly sub = inject(SubscriptionStore);
+  readonly songsStore = inject(SongsStore);
+
+  /* ─── Tabs & Feed ─── */
+  readonly activeTab = signal<'feed' | 'directory' | 'auditions'>('feed');
+  readonly feedFilter = signal<'for_you' | 'following'>('for_you');
+  readonly feedPosts = signal<FeedPost[]>([]);
+  readonly feedLoading = signal(false);
+  readonly postContent = signal('');
+  readonly selectedPostType = signal<'status' | 'song_share' | 'riff' | 'looking_for_member' | 'gig'>('status');
+  readonly selectedSongAttachment = signal<{ id: string; title: string; artist: string; key?: string; bpm?: number } | null>(null);
+  readonly isPosting = signal(false);
+
+  readonly auditionPosts = computed(() =>
+    this.feedPosts().filter((p) => p.type === 'looking_for_member')
+  );
 
   /* ─── Profiles ─── */
   readonly profiles = signal<ProfileDto[]>([]);
@@ -129,11 +170,17 @@ export class CommunityPageComponent {
   });
 
   constructor() {
+    this.loadFeed();
     this.loadProfiles();
     this.loadBands();
     this.loadActivities();
     this.loadInvitationsCount();
     this.initDiscovery();
+
+    // Load user songs if not loaded for attachment picker
+    if (this.songsStore.state() === 'idle') {
+      this.songsStore.load();
+    }
 
     // Entrance animation (once)
     let animated = false;
@@ -147,6 +194,104 @@ export class CommunityPageComponent {
         }, 120);
       }
     });
+  }
+
+  /* ─── Feed Methods ─── */
+  setTab(tab: 'feed' | 'directory' | 'auditions') {
+    this.activeTab.set(tab);
+    if (tab === 'feed') {
+      setTimeout(() => {
+        const posts = document.querySelectorAll('.feed-post-card');
+        if (posts.length) this.animation.staggerList(Array.from(posts), 0.05, 0.15);
+      }, 50);
+    }
+  }
+
+  setFeedFilter(f: 'for_you' | 'following') {
+    this.feedFilter.set(f);
+    this.loadFeed();
+  }
+
+  loadFeed() {
+    this.feedLoading.set(true);
+    this.http.get<FeedPost[]>(`${environment.apiBaseUrl}/feed`, {
+      params: { filter: this.feedFilter() },
+    }).subscribe({
+      next: (posts) => {
+        this.feedPosts.set(posts);
+        this.feedLoading.set(false);
+      },
+      error: () => this.feedLoading.set(false),
+    });
+  }
+
+  submitPost() {
+    const text = this.postContent().trim();
+    if (!text) return;
+
+    this.isPosting.set(true);
+    this.http.post<FeedPost>(`${environment.apiBaseUrl}/feed`, {
+      content: text,
+      type: this.selectedPostType(),
+      attachedSong: this.selectedSongAttachment(),
+    }).subscribe({
+      next: (post) => {
+        this.feedPosts.update((prev) => [post, ...prev]);
+        this.postContent.set('');
+        this.selectedSongAttachment.set(null);
+        this.selectedPostType.set('status');
+        this.isPosting.set(false);
+        this.notify.success('¡Publicación compartida con la comunidad!', 'OK', 2000);
+      },
+      error: () => {
+        this.notify.error('No se pudo publicar', 'OK', 2000);
+        this.isPosting.set(false);
+      },
+    });
+  }
+
+  toggleLike(post: FeedPost) {
+    const nextState = !post.isLiked;
+    post.isLiked = nextState;
+    post.likesCount += nextState ? 1 : -1;
+
+    this.http.post<{ isLiked: boolean; likesCount: number }>(
+      `${environment.apiBaseUrl}/feed/${post.id}/like`,
+      {}
+    ).subscribe({
+      next: (res) => {
+        post.isLiked = res.isLiked;
+        post.likesCount = res.likesCount;
+      },
+      error: () => {
+        post.isLiked = !nextState;
+        post.likesCount += nextState ? -1 : 1;
+      },
+    });
+  }
+
+  repost(post: FeedPost) {
+    post.repostsCount += 1;
+    this.http.post<{ repostsCount: number }>(`${environment.apiBaseUrl}/feed/${post.id}/repost`, {}).subscribe({
+      next: (res) => {
+        post.repostsCount = res.repostsCount;
+        this.notify.success('Re-chord compartido!', 'OK', 1500);
+      },
+    });
+  }
+
+  attachSong(song: any) {
+    this.selectedSongAttachment.set({
+      id: song.id,
+      title: song.title,
+      artist: song.artist,
+      key: song.key,
+      bpm: song.bpm ? Number(song.bpm) : undefined,
+    });
+  }
+
+  removeAttachedSong() {
+    this.selectedSongAttachment.set(null);
   }
 
   /* ─── Data loading ─── */
@@ -362,6 +507,14 @@ export class CommunityPageComponent {
   }
 
   /* ─── Helpers ─── */
+  isInstrumentSelected(inst: string): boolean {
+    return this.selectedInstruments().includes(inst);
+  }
+
+  openInviteMenu(profile: ProfileDto) {
+    this.inviteToBand(profile.id);
+  }
+
   isInvited(userId: string): boolean {
     return this.invitedUserIds().has(userId);
   }

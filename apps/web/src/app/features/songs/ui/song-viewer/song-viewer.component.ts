@@ -24,6 +24,7 @@ import { MetronomeService } from '../../../practice/services/metronome.service';
 import { MetronomePulseComponent } from '../../../../shared/ui/metronome-pulse/metronome-pulse';
 import { TunerCompactComponent } from '../../../../shared/ui/tuner-compact/tuner-compact';
 import { AnimationService } from '../../../../core/services/animation.service';
+import { PedalListenerService, PedalAction } from '../../../../core/services/pedal-listener.service';
 
 @Component({
   selector: 'app-song-viewer',
@@ -52,14 +53,21 @@ export class SongViewerComponent implements OnDestroy {
 
   readonly store = inject(SongsStore);
   readonly metronome = inject(MetronomeService);
+  readonly pedal = inject(PedalListenerService);
   private readonly animation = inject(AnimationService);
   private readonly wakeLock = inject(WakeLockService);
   private readonly zone = inject(NgZone);
 
-  // Internal State
+  // Stage & View State
   readonly internalTranspose = signal(0);
   readonly isScrolling = signal(false);
   readonly scrollSpeed = signal(28); // px/sec
+  readonly twoColumns = signal(false);
+  readonly isOledDark = signal(false);
+  readonly fontScale = signal(1.0); // 0.8 to 1.5
+
+  // Tap Tempo state
+  private tapTimestamps: number[] = [];
 
   private scrollTween: gsap.core.Tween | null = null;
 
@@ -113,12 +121,60 @@ export class SongViewerComponent implements OnDestroy {
         this.wakeLock.enable();
       }
     });
+
+    // Subscribe to Bluetooth Pedal actions
+    this.pedal.actions$.subscribe((action: PedalAction) => {
+      if (action === 'scroll-down') {
+        this.pedalPageScroll(1);
+      } else if (action === 'scroll-up') {
+        this.pedalPageScroll(-1);
+      } else if (action === 'toggle-scroll') {
+        this.toggleScroll();
+      }
+    });
   }
 
   ngOnDestroy() {
     this.stopScroll();
     this.wakeLock.disable();
     this.metronome.stop();
+  }
+
+  pedalPageScroll(direction: 1 | -1) {
+    const container = document.querySelector('.app-main') as HTMLElement | null;
+    if (!container) return;
+    const pageJump = window.innerHeight * 0.65 * direction;
+    container.scrollBy({ top: pageJump, behavior: 'smooth' });
+  }
+
+  toggleTwoColumns() {
+    this.twoColumns.update((v) => !v);
+  }
+
+  toggleOledDark() {
+    this.isOledDark.update((v) => !v);
+  }
+
+  adjustFontScale(delta: number) {
+    this.fontScale.update((v) => Math.min(1.8, Math.max(0.7, +(v + delta).toFixed(1))));
+  }
+
+  onTapTempo() {
+    const now = Date.now();
+    this.tapTimestamps = this.tapTimestamps.filter((t) => now - t < 2500);
+    this.tapTimestamps.push(now);
+
+    if (this.tapTimestamps.length >= 2) {
+      const intervals: number[] = [];
+      for (let i = 1; i < this.tapTimestamps.length; i++) {
+        intervals.push(this.tapTimestamps[i] - this.tapTimestamps[i - 1]);
+      }
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const bpm = Math.round(60000 / avgInterval);
+      if (bpm >= 40 && bpm <= 260) {
+        this.metronome.setBpm(bpm);
+      }
+    }
   }
 
   // ---- Transpose Actions ----
