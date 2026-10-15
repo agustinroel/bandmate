@@ -8,7 +8,27 @@ const APPLICATIONS_FILE = 'audition_applications.json';
 let cachedPosts = null;
 let cachedComments = null;
 let cachedApplications = null;
-const userLikes = new Set();
+const LIKES_FILE = 'feed_likes.json';
+let cachedLikes = null;
+async function getStoredLikes() {
+    if (cachedLikes === null) {
+        cachedLikes = new Set();
+        try {
+            if (supabase) {
+                const { data, error } = await supabase.from('community_likes').select('user_id, post_id');
+                if (!error && data && data.length > 0) {
+                    data.forEach((r) => cachedLikes.add(`${r.user_id}:${r.post_id}`));
+                    await writeJson(LIKES_FILE, Array.from(cachedLikes));
+                    return cachedLikes;
+                }
+            }
+        }
+        catch (_) { }
+        const stored = await readJson(LIKES_FILE, []);
+        stored.forEach((k) => cachedLikes.add(k));
+    }
+    return cachedLikes;
+}
 async function getStoredPosts() {
     if (cachedPosts === null) {
         try {
@@ -124,10 +144,11 @@ async function getStoredApplications() {
 }
 export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit = 10, search, tag) {
     const allPosts = await getStoredPosts();
-    // Map likes for current user
+    const likes = await getStoredLikes();
+    // Map likes for current user strictly
     let formatted = allPosts.map((post) => ({
         ...post,
-        isLiked: userId ? userLikes.has(`${userId}:${post.id}`) || post.isLiked : post.isLiked,
+        isLiked: userId ? likes.has(`${userId}:${post.id}`) : false,
     }));
     // Filter by following if requested
     if (filter === 'following' && userId) {
@@ -239,6 +260,15 @@ export async function createFeedPost(userId, userProfile, postData) {
                 mediaUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
         }
     }
+    // Clean raw YouTube link from user content so only user commentary is shown
+    let postContent = postData.content;
+    if (youtubeId) {
+        const ytUrlRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=[a-zA-Z0-9_-]+|embed\/[a-zA-Z0-9_-]+|shorts\/[a-zA-Z0-9_-]+)|youtu\.be\/[a-zA-Z0-9_-]+)(?:&[a-zA-Z0-9_=&%-]*)?/gi;
+        const stripped = postContent.replace(ytUrlRegex, '').trim();
+        if (stripped.length > 0) {
+            postContent = stripped;
+        }
+    }
     if (mediaUrl && !mediaType) {
         mediaType = mediaUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i) || mediaUrl.startsWith('data:image/') ? 'image' : null;
     }
@@ -253,7 +283,7 @@ export async function createFeedPost(userId, userProfile, postData) {
         authorBand: userProfile.primary_band || null,
         isBandVerified: userProfile.is_band_verified || false,
         type: postData.type || 'status',
-        content: postData.content,
+        content: postContent,
         attachedSong: postData.attachedSong || null,
         mediaUrl,
         mediaType,
@@ -302,16 +332,18 @@ export async function createFeedPost(userId, userProfile, postData) {
     }
     return newPost;
 }
-export async function togglePostLike(userId, postId) {
+export async function togglePostLike(userId, postId, userProfile) {
     const posts = await getStoredPosts();
     const post = posts.find((p) => p.id === postId);
     if (!post)
         throw new Error('Post not found');
+    const likes = await getStoredLikes();
     const key = `${userId}:${postId}`;
-    if (userLikes.has(key)) {
-        userLikes.delete(key);
-        post.likesCount = Math.max(0, post.likesCount - 1);
-        post.isLiked = false;
+    let isLiked;
+    if (likes.has(key)) {
+        likes.delete(key);
+        post.likesCount = Math.max(0, (post.likesCount || 0) - 1);
+        isLiked = false;
         // Supabase DB delete like
         try {
             if (supabase) {
@@ -324,9 +356,9 @@ export async function togglePostLike(userId, postId) {
         }
     }
     else {
-        userLikes.add(key);
-        post.likesCount += 1;
-        post.isLiked = true;
+        likes.add(key);
+        post.likesCount = (post.likesCount || 0) + 1;
+        isLiked = true;
         // Supabase DB insert like
         try {
             if (supabase) {
@@ -337,9 +369,22 @@ export async function togglePostLike(userId, postId) {
         catch (e) {
             console.warn('[feed.repo] Supabase like insert warning:', e);
         }
+        // Trigger notification to post author when someone else likes it
+        const isSelfLike = post.authorId === userId || (userProfile?.username && post.authorUsername === userProfile.username);
+        if (post.authorId && !isSelfLike) {
+            try {
+                const { createNotification } = await import('../notifications/notifications.repo.js');
+                const likerName = userProfile?.full_name || userProfile?.username || 'Un músico';
+                await createNotification(post.authorId, 'like', 'Nuevo me gusta en tu publicación', `${likerName} ha indicado que le gusta tu publicación.`, { postId, likerId: userId });
+            }
+            catch (notifErr) {
+                console.warn('[feed.repo] Like notification warning:', notifErr);
+            }
+        }
     }
+    await writeJson(LIKES_FILE, Array.from(likes));
     await writeJson(POSTS_FILE, posts);
-    return { isLiked: post.isLiked, likesCount: post.likesCount };
+    return { isLiked, likesCount: post.likesCount };
 }
 export async function repostPost(userId, userProfile, postId) {
     const posts = await getStoredPosts();
@@ -419,7 +464,8 @@ export async function createPostComment(postId, userId, userProfile, content) {
         console.warn('[feed.repo] Supabase comment insert warning:', e);
     }
     // Notify post author
-    if (post.authorId && post.authorId !== userId) {
+    const isSelfComment = post.authorId === userId || (userProfile.username && post.authorUsername === userProfile.username);
+    if (post.authorId && !isSelfComment) {
         try {
             const { createNotification } = await import('../notifications/notifications.repo.js');
             const snippet = newComment.content.length > 50 ? newComment.content.slice(0, 50) + '...' : newComment.content;

@@ -119,8 +119,20 @@ export const feedRoutes: FastifyPluginAsync = async (app) => {
     const userId = req.user?.id || req.body?.userId || 'anon-musician';
     const { id } = req.params;
 
+    let profile: any = null;
     try {
-      const res = await togglePostLike(userId, id);
+      if (userId && !userId.startsWith('usr-') && !userId.startsWith('anon-')) {
+        profile = await getProfileById(userId);
+      }
+    } catch {}
+
+    const userProfile = {
+      full_name: profile?.full_name || req.body?.authorName || req.body?.userName || 'Un músico',
+      username: profile?.username || req.body?.authorUsername || req.body?.userUsername || 'musico',
+    };
+
+    try {
+      const res = await togglePostLike(userId, id, userProfile);
       return res;
     } catch (err: any) {
       return reply.status(404).send({ message: err.message });

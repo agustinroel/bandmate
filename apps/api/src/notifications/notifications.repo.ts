@@ -70,16 +70,29 @@ export async function createNotification(
 }
 
 export async function listNotifications(userId: string, limit = 20) {
+  const userAliases = [userId];
+  try {
+    const { getProfileById } = await import("../profiles/profiles.repo.js");
+    const prof = await getProfileById(userId);
+    if (prof) {
+      if (prof.username && !userAliases.includes(prof.username)) userAliases.push(prof.username);
+      if (prof.id && !userAliases.includes(prof.id)) userAliases.push(prof.id);
+      if (prof.username === 'agustinroel' && !userAliases.includes('usr-agustin-roel')) {
+        userAliases.push('usr-agustin-roel');
+      }
+    }
+  } catch (_) {}
+
   try {
     if (supabase) {
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
-        .eq("user_id", userId)
+        .in("user_id", userAliases)
         .order("created_at", { ascending: false })
         .limit(limit);
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         return data as NotificationRow[];
       }
     }
@@ -88,12 +101,12 @@ export async function listNotifications(userId: string, limit = 20) {
   }
 
   const all = await getStoredNotifications();
-  return all.filter((n) => n.user_id === userId).slice(0, limit);
+  return all.filter((n) => userAliases.includes(n.user_id)).slice(0, limit);
 }
 
 export async function markNotificationRead(id: string, userId: string) {
   const all = await getStoredNotifications();
-  const target = all.find((n) => n.id === id && n.user_id === userId);
+  const target = all.find((n) => n.id === id);
   if (target) {
     target.is_read = true;
     await writeJson(NOTIFS_FILE, all);
@@ -104,8 +117,7 @@ export async function markNotificationRead(id: string, userId: string) {
       await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("id", id)
-        .eq("user_id", userId);
+        .eq("id", id);
     }
   } catch (err) {
     console.warn("[notifications.repo] Supabase mark read warning:", err);
@@ -113,10 +125,20 @@ export async function markNotificationRead(id: string, userId: string) {
 }
 
 export async function markAllNotificationsRead(userId: string) {
+  const userAliases = [userId];
+  try {
+    const { getProfileById } = await import("../profiles/profiles.repo.js");
+    const prof = await getProfileById(userId);
+    if (prof?.username && !userAliases.includes(prof.username)) userAliases.push(prof.username);
+    if (prof?.username === 'agustinroel' && !userAliases.includes('usr-agustin-roel')) {
+      userAliases.push('usr-agustin-roel');
+    }
+  } catch (_) {}
+
   const all = await getStoredNotifications();
   let modified = false;
   for (const n of all) {
-    if (n.user_id === userId && !n.is_read) {
+    if (userAliases.includes(n.user_id) && !n.is_read) {
       n.is_read = true;
       modified = true;
     }
@@ -130,7 +152,7 @@ export async function markAllNotificationsRead(userId: string) {
       await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("user_id", userId)
+        .in("user_id", userAliases)
         .eq("is_read", false);
     }
   } catch (err) {

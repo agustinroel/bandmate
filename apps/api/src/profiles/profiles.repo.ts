@@ -29,7 +29,7 @@ export async function listPublicProfiles(
   let query = supabase
     .from("profiles")
     .select(
-      "id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public, subscription_tier",
+      "id, username, full_name, avatar_url, instruments, genres, sings, bio, about, is_public, subscription_tier",
     )
     .eq("is_public", true);
 
@@ -58,7 +58,11 @@ export async function listPublicProfiles(
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return data as any[]; // relaxed type for now
+  return (data || []).map((row: any) => ({
+    ...row,
+    bio: row.bio || row.about || null,
+    about: row.about || row.bio || null,
+  }));
 }
 
 export async function getProfileByUsername(username: string) {
@@ -71,7 +75,11 @@ export async function getProfileByUsername(username: string) {
   if (error) throw error;
   if (!data) return null;
 
-  return data as ProfileRow;
+  return {
+    ...data,
+    bio: (data as any).bio || (data as any).about || null,
+    about: (data as any).about || (data as any).bio || null,
+  } as ProfileRow;
 }
 
 export async function getProfileById(userId: string) {
@@ -84,7 +92,11 @@ export async function getProfileById(userId: string) {
   if (error) throw error;
   if (!data) return null;
 
-  return data as ProfileRow;
+  return {
+    ...data,
+    bio: (data as any).bio || (data as any).about || null,
+    about: (data as any).about || (data as any).bio || null,
+  } as ProfileRow;
 }
 
 export async function ensureProfile(userId: string, email?: string) {

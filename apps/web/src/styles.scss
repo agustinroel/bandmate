@@ -449,6 +449,137 @@ body.theme-dark {
     .mat-mdc-floating-label {
       color: #94a3b8 !important;
     }
+    .mat-mdc-select-value,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-trigger {
+      color: #f8fafc !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #94a3b8 !important;
+    }
+  }
+
+  /* Material Select Panels in Dark Mode */
+  .mat-mdc-select-panel {
+    background-color: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+
+    .mat-mdc-option {
+      color: #f8fafc !important;
+      .mdc-list-item__primary-text {
+        color: #f8fafc !important;
+      }
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+        background-color: rgba(233, 196, 106, 0.15) !important;
+        .mdc-list-item__primary-text {
+          color: #e9c46a !important;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  /* Material Slide Toggle & Labels in Dark Mode */
+  .mat-mdc-slide-toggle,
+  mat-slide-toggle {
+    .mdc-label,
+    label {
+      color: #f8fafc !important;
+      font-weight: 500 !important;
+    }
+  }
+
+  /* Material Chips in Dark Mode */
+  .mat-mdc-chip-set,
+  mat-chip-set {
+    .mdc-evolution-chip,
+    mat-chip {
+      background-color: #1e293b !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #f8fafc !important;
+
+      .mdc-evolution-chip__text-label {
+        color: #f8fafc !important;
+      }
+
+      button mat-icon,
+      .mat-mdc-chip-remove {
+        color: #94a3b8 !important;
+        &:hover {
+          color: #ffffff !important;
+        }
+      }
+    }
+  }
+
+  /* User Profile Cards & Buttons in Dark Mode */
+  .profile-card {
+    background: #0b1329 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+
+    .subcard {
+      background: #131f3a !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: #f8fafc !important;
+    }
+
+    .subttl, .name {
+      color: #f8fafc !important;
+    }
+
+    .subhint, .email {
+      color: #94a3b8 !important;
+    }
+
+    .public-url {
+      background: #1e293b !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #38bdf8 !important;
+    }
+  }
+
+  .profile-actions,
+  .profile-bottom-actions {
+    button[mat-stroked-button] {
+      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      color: #f8fafc !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+
+      &:hover:not([disabled]) {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+      }
+
+      &[disabled] {
+        color: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        background: transparent !important;
+      }
+    }
+
+    button[mat-raised-button][color="primary"] {
+      background-color: #e9c46a !important;
+      color: #0f172a !important;
+      font-weight: 700 !important;
+
+      .mdc-button__label, mat-icon {
+        color: #0f172a !important;
+      }
+
+      &:hover:not([disabled]) {
+        background-color: #f4a261 !important;
+        color: #0f172a !important;
+      }
+
+      &[disabled] {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: rgba(255, 255, 255, 0.35) !important;
+      }
+    }
   }
 
   /* Material Menus and Dialogs */

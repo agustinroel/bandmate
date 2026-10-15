@@ -87,6 +87,7 @@ type ProfileDto = {
   full_name?: string | null;
   avatar_url?: string | null;
   bio?: string | null;
+  about?: string | null;
   instruments?: string[];
   genres?: string[];
   subscription_tier?: string | null;
@@ -171,6 +172,52 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   readonly youtubeInputUrl = signal('');
   readonly showEmojiPicker = signal(false);
   readonly isUploadingImage = signal(false);
+  readonly previewImageUrl = signal<string | null>(null);
+
+  readonly emojiCategories = [
+    {
+      name: 'Smileys',
+      icon: 'sentiment_satisfied',
+      emojis: [
+        '😀','😃','😄','😁','😆','😅','😂','🤣','🥹','😊',
+        '😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙',
+        '😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎',
+        '🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣',
+        '😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯',
+        '😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔',
+        '🫣','🤭','🫡','🤫','🫠','😐','😑','😬','🙄','😴'
+      ]
+    },
+    {
+      name: 'Música',
+      icon: 'music_note',
+      emojis: [
+        '🎸','🥁','🎹','🎤','🎧','🎼','🎵','🎶','🎙️','🎷',
+        '🎺','🎻','🪕','🪗','📻','🔊','🔉','🔈','📢','📣',
+        '💿','📀','📼','🎚️','🎛️','🪘'
+      ]
+    },
+    {
+      name: 'Gestos',
+      icon: 'pan_tool',
+      emojis: [
+        '👍','👎','👏','🙌','👐','🤝','🤘','🤟','✌️','🤞',
+        '🫰','🤌','🤏','👌','👈','👉','👆','👇','✋','🖐️',
+        '🖖','👋','🤙','💪','🙏','✍️','🤳'
+      ]
+    },
+    {
+      name: 'Símbolos',
+      icon: 'favorite',
+      emojis: [
+        '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔',
+        '❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝',
+        '🔥','✨','⚡','💥','💫','🌟','⭐','💯','🎉','🎊',
+        '🏆','🥇','🎯','💎','💡','🔑'
+      ]
+    }
+  ];
+  readonly selectedEmojiCategoryIndex = signal(0);
   readonly quickEmojis = ['🎸', '🥁', '🎹', '🎤', '🔥', '🤘', '🎵', '🎶', '👏', '❤️', '✨', '⚡'];
 
   /* ─── Tabs & Feed ─── */
@@ -483,23 +530,37 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   }
 
   submitPost() {
-    const text = this.postContent().trim();
+    let text = this.postContent().trim();
     if (!text && !this.attachedMediaUrl() && !this.attachedYoutubeId()) return;
 
+    if (!this.attachedYoutubeId()) {
+      const match = text.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (match && match[1]) {
+        this.attachedYoutubeId.set(match[1]);
+        this.attachedMediaType.set('youtube');
+        this.attachedMediaUrl.set(`https://www.youtube.com/watch?v=${match[1]}`);
+      }
+    }
+
+    if (this.attachedYoutubeId()) {
+      text = text.replace(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=[a-zA-Z0-9_-]+|embed\/[a-zA-Z0-9_-]+|shorts\/[a-zA-Z0-9_-]+)|youtu\.be\/[a-zA-Z0-9_-]+)[^\s]*/gi, '').trim();
+    }
+
     const user = this.authStore.user();
-    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico Bandmate';
+    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || user?.email?.split('@')?.[0] || 'Músico Bandmate';
     const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
     const avatar = user?.user_metadata?.['avatar_url'] || user?.user_metadata?.['picture'] || null;
     const tier = this.sub.tier() || 'free';
 
     this.isPosting.set(true);
     this.http.post<FeedPost>(`${environment.apiBaseUrl}/feed`, {
-      content: text || 'Publicación compartida con la comunidad',
+      content: text || (this.attachedYoutubeId() ? 'Compartió un video de YouTube' : (this.attachedMediaUrl() ? 'Compartió una imagen' : 'Publicación compartida con la comunidad')),
       type: this.selectedPostType(),
       attachedSong: this.selectedSongAttachment(),
       mediaUrl: this.attachedMediaUrl(),
       mediaType: this.attachedMediaType(),
       youtubeId: this.attachedYoutubeId(),
+      authorId: user?.id,
       authorName: fullName,
       authorUsername: username,
       authorAvatar: avatar,
@@ -557,11 +618,18 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     const text = (this.commentInputs()[postId] || '').trim();
     if (!text) return;
 
+    const user = this.authStore.user();
+    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || user?.email?.split('@')?.[0] || 'Músico Bandmate';
+    const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
+    const avatar = user?.user_metadata?.['avatar_url'] || user?.user_metadata?.['picture'] || null;
+
     this.isSubmittingComment.update((m) => ({ ...m, [postId]: true }));
     this.http.post<FeedComment>(`${environment.apiBaseUrl}/feed/${postId}/comments`, {
       content: text,
-      authorName: 'Agustín Roel',
-      authorUsername: 'agustinroel',
+      authorId: user?.id,
+      authorName: fullName,
+      authorUsername: username,
+      authorAvatar: avatar,
     }).subscribe({
       next: (newCmt) => {
         this.commentsByPost.update((m) => ({
@@ -596,13 +664,21 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   }
 
   toggleLike(post: FeedPost) {
+    const user = this.authStore.user();
     const nextState = !post.isLiked;
     post.isLiked = nextState;
     post.likesCount += nextState ? 1 : -1;
 
+    const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico';
+    const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
+
     this.http.post<{ isLiked: boolean; likesCount: number }>(
       `${environment.apiBaseUrl}/feed/${post.id}/like`,
-      {}
+      {
+        userId: user?.id,
+        authorName: fullName,
+        authorUsername: username,
+      }
     ).subscribe({
       next: (res) => {
         post.isLiked = res.isLiked;
@@ -623,6 +699,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     const username = user?.user_metadata?.['user_name'] || user?.email?.split('@')?.[0] || 'musico';
 
     this.http.post<{ repostsCount: number; repostItem?: FeedPost }>(`${environment.apiBaseUrl}/feed/${post.id}/repost`, {
+      userId: user?.id,
       authorName: fullName,
       authorUsername: username,
     }).subscribe({
@@ -755,11 +832,47 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     this.isUploadingImage.set(true);
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      this.attachedMediaUrl.set(dataUrl);
-      this.attachedMediaType.set('image');
-      this.attachedYoutubeId.set(null);
-      this.isUploadingImage.set(false);
+      const rawData = reader.result as string;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 1280;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+            this.attachedMediaUrl.set(compressed);
+          } else {
+            this.attachedMediaUrl.set(rawData);
+          }
+        } catch {
+          this.attachedMediaUrl.set(rawData);
+        }
+        this.attachedMediaType.set('image');
+        this.attachedYoutubeId.set(null);
+        this.isUploadingImage.set(false);
+      };
+      img.onerror = () => {
+        this.attachedMediaUrl.set(rawData);
+        this.attachedMediaType.set('image');
+        this.attachedYoutubeId.set(null);
+        this.isUploadingImage.set(false);
+      };
+      img.src = rawData;
     };
     reader.onerror = () => {
       this.isUploadingImage.set(false);
@@ -795,26 +908,38 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
           subscription_tier: post.authorTier,
           isFollowing: post.isAuthorFollowed || this.isFollowing(post.authorId),
           mainBand: post.authorBand,
-          bio: 'Músico en Bandmate',
+          bio: null,
+          about: null,
           followersCount: 0,
           followingCount: 0,
         };
-
-        this.http.get<ProfileDto>(`${environment.apiBaseUrl}/profiles/${post.authorUsername}`).subscribe({
-          next: (full) => {
-            if (this.hoveredUser()?.username === post.authorUsername) {
-              this.hoveredUser.set({
-                ...p,
-                ...full,
-                isFollowing: full.isFollowing ?? this.isFollowing(full.id),
-              });
-            }
-          },
-          error: () => {},
-        });
+      } else {
+        const desc = p.about || p.bio || null;
+        p = {
+          ...p,
+          bio: desc,
+          about: desc,
+        };
       }
 
-      const cardWidth = 320;
+      // Always fetch latest full profile to ensure bio/about & counts are accurate
+      this.http.get<ProfileDto>(`${environment.apiBaseUrl}/profiles/${post.authorUsername}`).subscribe({
+        next: (full: any) => {
+          if (this.hoveredUser()?.username === post.authorUsername) {
+            const desc = full.about || full.bio || p!.about || p!.bio || 'Músico en Bandmate';
+            this.hoveredUser.set({
+              ...p,
+              ...full,
+              bio: desc,
+              about: desc,
+              isFollowing: full.isFollowing ?? this.isFollowing(full.id),
+            });
+          }
+        },
+        error: () => {},
+      });
+
+      const cardWidth = 340;
       const cardHeight = 220;
       let left = rect.left;
       if (typeof window !== 'undefined') {

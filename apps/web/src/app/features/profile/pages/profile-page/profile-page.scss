@@ -130,3 +130,145 @@
     }
   }
 }
+
+/* ═══════════════════════════════════════════════ */
+/*  🌙 DARK MODE PROFILE STYLES                   */
+/* ═══════════════════════════════════════════════ */
+:host-context(.theme-dark) {
+  .profile-head h2 {
+    color: #f8fafc !important;
+  }
+  .profile-head .opacity-75 {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+  }
+
+  .profile-card {
+    background: #0b1329 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+  }
+
+  .profile-ident .name {
+    color: #f8fafc !important;
+  }
+
+  .profile-ident .email,
+  .profile-ident .opacity-75 {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+  }
+
+  .public-url {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #38bdf8 !important;
+  }
+
+  .copy-btn {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #f8fafc !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .subcard {
+    background: #131f3a !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+  }
+
+  .subttl {
+    color: #f8fafc !important;
+  }
+
+  .subhint {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+  }
+
+  /* Slide toggles */
+  mat-slide-toggle,
+  .mdc-form-field,
+  .mdc-label,
+  label {
+    color: #f8fafc !important;
+  }
+
+  /* Chips */
+  .mdc-evolution-chip,
+  mat-chip {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #f8fafc !important;
+
+    .mdc-evolution-chip__text-label {
+      color: #f8fafc !important;
+    }
+
+    button mat-icon {
+      color: #94a3b8 !important;
+      &:hover {
+        color: #f8fafc !important;
+      }
+    }
+  }
+
+  /* Buttons: Reset and Save */
+  button[mat-stroked-button] {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #f8fafc !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+
+    &:hover:not([disabled]) {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #ffffff !important;
+    }
+
+    &[disabled] {
+      color: rgba(255, 255, 255, 0.3) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      background: transparent !important;
+    }
+  }
+
+  button[mat-raised-button][color="primary"] {
+    background: #e9c46a !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+
+    &:hover:not([disabled]) {
+      background: #f4a261 !important;
+      color: #0f172a !important;
+    }
+
+    &[disabled] {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: rgba(255, 255, 255, 0.35) !important;
+    }
+  }
+
+  /* Form Fields inputs and selects */
+  .mat-mdc-form-field {
+    .mat-mdc-input-element,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-trigger,
+    .mat-mdc-floating-label {
+      color: #f8fafc !important;
+    }
+
+    .mat-mdc-form-field-hint {
+      color: #94a3b8 !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+  }
+}

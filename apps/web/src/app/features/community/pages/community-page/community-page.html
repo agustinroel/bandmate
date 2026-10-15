@@ -162,14 +162,34 @@
                   </div>
                 }
 
-                <!-- Quick Emoji Picker -->
+                <!-- Categorized WhatsApp/X.com Emoji Palette -->
                 @if (showEmojiPicker()) {
-                  <div class="cm-emoji-bar d-flex align-items-center gap-1 mb-2 p-2 rounded-3 border flex-wrap">
-                    @for (em of quickEmojis; track em) {
-                      <button type="button" class="btn btn-sm btn-light fs-5 p-1 px-2 border-0" (click)="insertEmoji(em)">
-                        {{ em }}
-                      </button>
-                    }
+                  <div class="cm-emoji-palette shadow-sm border rounded-4 p-2 mb-3">
+                    <div class="cm-emoji-cat-tabs d-flex gap-1 pb-2 mb-2 border-bottom overflow-x-auto">
+                      @for (cat of emojiCategories; track cat.name; let idx = $index) {
+                        <button
+                          type="button"
+                          class="cm-emoji-cat-btn btn btn-sm rounded-pill d-flex align-items-center gap-1"
+                          [class.cm-emoji-cat-btn--active]="selectedEmojiCategoryIndex() === idx"
+                          (click)="selectedEmojiCategoryIndex.set(idx)"
+                        >
+                          <mat-icon style="font-size: 15px; width: 15px; height: 15px;">{{ cat.icon }}</mat-icon>
+                          <span>{{ cat.name }}</span>
+                        </button>
+                      }
+                    </div>
+                    <div class="cm-emoji-grid">
+                      @for (em of emojiCategories[selectedEmojiCategoryIndex()].emojis; track em) {
+                        <button
+                          type="button"
+                          class="cm-emoji-single-btn"
+                          (click)="insertEmoji(em)"
+                          [matTooltip]="em"
+                        >
+                          {{ em }}
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
 
@@ -287,16 +307,16 @@
                       <span>YouTube</span>
                     </button>
 
-                    <!-- Emoji Button -->
+                    <!-- Emoji Button (icon-only WhatsApp/X.com style) -->
                     <button
                       type="button"
                       mat-button
-                      class="cm-type-chip cm-attach-chip"
+                      class="cm-type-chip cm-attach-chip cm-emoji-trigger-btn px-2"
                       (click)="toggleEmojiPicker()"
-                      matTooltip="Insertar emojis musicales"
+                      matTooltip="Insertar emojis"
+                      aria-label="Insertar emojis"
                     >
-                      <mat-icon class="me-1 text-warning">sentiment_satisfied_alt</mat-icon>
-                      <span>Emoji</span>
+                      <mat-icon class="text-warning m-0">sentiment_satisfied_alt</mat-icon>
                     </button>
                   </div>
 
@@ -430,10 +450,19 @@
                   }
                 </div>
 
-                <!-- Attached Image in Post -->
+                <!-- Attached Image in Post (Click to expand in Lightbox) -->
                 @if (post.mediaType === 'image' && post.mediaUrl) {
-                  <div class="cm-post-media-box mb-3 rounded-4 overflow-hidden border">
+                  <div
+                    class="cm-post-media-box mb-3 rounded-4 overflow-hidden border position-relative cursor-pointer"
+                    (click)="previewImageUrl.set(post.mediaUrl)"
+                    role="button"
+                    tabindex="0"
+                    matTooltip="Click para ampliar imagen"
+                  >
                     <img [src]="post.mediaUrl" [alt]="post.content" class="cm-post-attached-image" loading="lazy" />
+                    <div class="cm-image-zoom-overlay">
+                      <mat-icon>fullscreen</mat-icon>
+                    </div>
                   </div>
                 }
 
@@ -864,17 +893,17 @@
       (mouseleave)="onHovercardLeave()"
     >
       <div class="cm-hovercard-header d-flex align-items-center justify-content-between mb-2 gap-2">
-        <div class="d-flex align-items-center gap-2 cm-hovercard-author cursor-pointer" (click)="navigateToProfile(hoveredUser()!.username, $event)">
+        <div class="d-flex align-items-center gap-2 cm-hovercard-author cursor-pointer flex-grow-1 overflow-hidden" (click)="navigateToProfile(hoveredUser()!.username, $event)">
           <img
             [src]="hoveredUser()?.avatar_url || 'assets/brand/avatar-fallback.svg'"
             [alt]="hoveredUser()?.full_name || hoveredUser()?.username"
-            class="cm-hovercard-avatar"
+            class="cm-hovercard-avatar flex-shrink-0"
           />
-          <div class="overflow-hidden">
-            <div class="fw-bold fs-6 text-truncate" style="max-width: 140px;">
+          <div class="overflow-hidden min-w-0 flex-grow-1">
+            <div class="fw-bold fs-6 text-truncate">
               {{ hoveredUser()?.full_name || hoveredUser()?.username }}
             </div>
-            <div class="text-muted small">&#64;{{ hoveredUser()?.username }}</div>
+            <div class="text-muted small text-truncate">&#64;{{ hoveredUser()?.username }}</div>
           </div>
         </div>
 
@@ -885,7 +914,7 @@
             [class.cm-following-btn]="hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)"
             (click)="toggleFollowFromHovercard(hoveredUser()!)"
           >
-            <mat-icon class="cm-follow-btn-icon" style="font-size: 16px; width: 16px; height: 16px;">
+            <mat-icon class="cm-follow-btn-icon" style="font-size: 15px; width: 15px; height: 15px;">
               {{ (hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)) ? 'check' : 'person_add' }}
             </mat-icon>
             <span>{{ (hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)) ? 'Siguiendo' : 'Seguir' }}</span>
@@ -893,8 +922,8 @@
         }
       </div>
 
-      @if (hoveredUser()?.bio) {
-        <p class="cm-hovercard-bio small mb-2 text-secondary">{{ hoveredUser()?.bio }}</p>
+      @if (hoveredUser()?.about || hoveredUser()?.bio) {
+        <p class="cm-hovercard-bio small mb-2 text-secondary">{{ hoveredUser()?.about || hoveredUser()?.bio }}</p>
       }
 
       <div class="d-flex align-items-center gap-3 mb-2 small">
@@ -918,6 +947,18 @@
           }
         </div>
       }
+    </div>
+  }
+
+  <!-- Fullscreen Image Lightbox Modal (X.com Style) -->
+  @if (previewImageUrl()) {
+    <div class="cm-lightbox-backdrop" (click)="previewImageUrl.set(null)">
+      <div class="cm-lightbox-container" (click)="$event.stopPropagation()">
+        <img [src]="previewImageUrl()!" alt="Vista ampliada" class="cm-lightbox-img" />
+        <button mat-icon-button class="cm-lightbox-close" (click)="previewImageUrl.set(null)" matTooltip="Cerrar imagen">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
     </div>
   }
 </div>

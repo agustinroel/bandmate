@@ -35,6 +35,7 @@ if (process.env.SEED_LIBRARY === "true") {
 const app = Fastify({
   logger: true,
   ignoreTrailingSlash: true,
+  bodyLimit: 15 * 1024 * 1024,
 });
 
 // Rate limiting: 100 requests per minute per IP

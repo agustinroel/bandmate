@@ -70,7 +70,28 @@ const APPLICATIONS_FILE = 'audition_applications.json';
 let cachedPosts: FeedPost[] | null = null;
 let cachedComments: FeedComment[] | null = null;
 let cachedApplications: AuditionApplication[] | null = null;
-const userLikes = new Set<string>();
+const LIKES_FILE = 'feed_likes.json';
+let cachedLikes: Set<string> | null = null;
+
+async function getStoredLikes(): Promise<Set<string>> {
+  if (cachedLikes === null) {
+    cachedLikes = new Set<string>();
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.from('community_likes').select('user_id, post_id');
+        if (!error && data && data.length > 0) {
+          data.forEach((r: any) => cachedLikes!.add(`${r.user_id}:${r.post_id}`));
+          await writeJson(LIKES_FILE, Array.from(cachedLikes));
+          return cachedLikes;
+        }
+      }
+    } catch (_) {}
+
+    const stored = await readJson<string[]>(LIKES_FILE, []);
+    stored.forEach((k) => cachedLikes!.add(k));
+  }
+  return cachedLikes;
+}
 
 async function getStoredPosts(): Promise<FeedPost[]> {
   if (cachedPosts === null) {
@@ -197,11 +218,12 @@ export async function getFeedPosts(
   tag?: string
 ): Promise<{ posts: FeedPost[]; page: number; total: number; hasMore: boolean }> {
   const allPosts = await getStoredPosts();
+  const likes = await getStoredLikes();
 
-  // Map likes for current user
+  // Map likes for current user strictly
   let formatted = allPosts.map((post) => ({
     ...post,
-    isLiked: userId ? userLikes.has(`${userId}:${post.id}`) || post.isLiked : post.isLiked,
+    isLiked: userId ? likes.has(`${userId}:${post.id}`) : false,
   }));
 
   // Filter by following if requested
@@ -358,6 +380,16 @@ export async function createFeedPost(
     }
   }
 
+  // Clean raw YouTube link from user content so only user commentary is shown
+  let postContent = postData.content;
+  if (youtubeId) {
+    const ytUrlRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=[a-zA-Z0-9_-]+|embed\/[a-zA-Z0-9_-]+|shorts\/[a-zA-Z0-9_-]+)|youtu\.be\/[a-zA-Z0-9_-]+)(?:&[a-zA-Z0-9_=&%-]*)?/gi;
+    const stripped = postContent.replace(ytUrlRegex, '').trim();
+    if (stripped.length > 0) {
+      postContent = stripped;
+    }
+  }
+
   if (mediaUrl && !mediaType) {
     mediaType = mediaUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i) || mediaUrl.startsWith('data:image/') ? 'image' : null;
   }
@@ -373,7 +405,7 @@ export async function createFeedPost(
     authorBand: userProfile.primary_band || null,
     isBandVerified: userProfile.is_band_verified || false,
     type: postData.type || 'status',
-    content: postData.content,
+    content: postContent,
     attachedSong: postData.attachedSong || null,
     mediaUrl,
     mediaType,
@@ -427,17 +459,21 @@ export async function createFeedPost(
 
 export async function togglePostLike(
   userId: string,
-  postId: string
+  postId: string,
+  userProfile?: { full_name?: string | null; username?: string | null }
 ): Promise<{ isLiked: boolean; likesCount: number }> {
   const posts = await getStoredPosts();
   const post = posts.find((p) => p.id === postId);
   if (!post) throw new Error('Post not found');
 
+  const likes = await getStoredLikes();
   const key = `${userId}:${postId}`;
-  if (userLikes.has(key)) {
-    userLikes.delete(key);
-    post.likesCount = Math.max(0, post.likesCount - 1);
-    post.isLiked = false;
+  let isLiked: boolean;
+
+  if (likes.has(key)) {
+    likes.delete(key);
+    post.likesCount = Math.max(0, (post.likesCount || 0) - 1);
+    isLiked = false;
 
     // Supabase DB delete like
     try {
@@ -449,9 +485,9 @@ export async function togglePostLike(
       console.warn('[feed.repo] Supabase like delete warning:', e);
     }
   } else {
-    userLikes.add(key);
-    post.likesCount += 1;
-    post.isLiked = true;
+    likes.add(key);
+    post.likesCount = (post.likesCount || 0) + 1;
+    isLiked = true;
 
     // Supabase DB insert like
     try {
@@ -462,10 +498,29 @@ export async function togglePostLike(
     } catch (e) {
       console.warn('[feed.repo] Supabase like insert warning:', e);
     }
+
+    // Trigger notification to post author when someone else likes it
+    const isSelfLike = post.authorId === userId || (userProfile?.username && post.authorUsername === userProfile.username);
+    if (post.authorId && !isSelfLike) {
+      try {
+        const { createNotification } = await import('../notifications/notifications.repo.js');
+        const likerName = userProfile?.full_name || userProfile?.username || 'Un músico';
+        await createNotification(
+          post.authorId,
+          'like',
+          'Nuevo me gusta en tu publicación',
+          `${likerName} ha indicado que le gusta tu publicación.`,
+          { postId, likerId: userId }
+        );
+      } catch (notifErr) {
+        console.warn('[feed.repo] Like notification warning:', notifErr);
+      }
+    }
   }
 
+  await writeJson(LIKES_FILE, Array.from(likes));
   await writeJson(POSTS_FILE, posts);
-  return { isLiked: post.isLiked, likesCount: post.likesCount };
+  return { isLiked, likesCount: post.likesCount };
 }
 
 export async function repostPost(
@@ -576,7 +631,8 @@ export async function createPostComment(
   }
 
   // Notify post author
-  if (post.authorId && post.authorId !== userId) {
+  const isSelfComment = post.authorId === userId || (userProfile.username && post.authorUsername === userProfile.username);
+  if (post.authorId && !isSelfComment) {
     try {
       const { createNotification } = await import('../notifications/notifications.repo.js');
       const snippet = newComment.content.length > 50 ? newComment.content.slice(0, 50) + '...' : newComment.content;

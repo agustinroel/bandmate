@@ -5,10 +5,11 @@ import { AuthStore } from '../../../core/auth/auth.store';
 import { BandsService } from '../../bands/services/bands.service';
 
 import { Router } from '@angular/router';
+import { supabase } from '../../../core/supabase/supabase.client';
 
 export interface Notification {
   id: string;
-  type: 'band_invite' | 'band_joined' | 'follow' | 'comment' | 'repost' | 'info';
+  type: 'band_invite' | 'band_joined' | 'follow' | 'comment' | 'like' | 'repost' | 'info';
   title: string;
   message: string;
   data?: any;
@@ -34,8 +35,22 @@ export class UserNotificationsService {
         // Polling (simple version: interval)
         const interval = setInterval(() => this.load(), 30000); // 30s
 
+        // Real-time listener for instant notification updates
+        let channel: any = null;
+        try {
+          channel = supabase.channel('community_live_feed')
+            .on('broadcast', { event: 'new_comment' }, () => this.load())
+            .on('broadcast', { event: 'like_update' }, () => this.load())
+            .on('broadcast', { event: 'new_repost' }, () => this.load())
+            .on('broadcast', { event: 'notif_update' }, () => this.load())
+            .subscribe();
+        } catch (_) {}
+
         onCleanup(() => {
           clearInterval(interval);
+          if (channel) {
+            try { supabase.removeChannel(channel); } catch (_) {}
+          }
         });
       } else {
         this.notifications.set([]);
@@ -101,6 +116,8 @@ export class UserNotificationsService {
         return 'groups';
       case 'comment':
         return 'chat_bubble';
+      case 'like':
+        return 'favorite';
       case 'repost':
         return 'repeat';
       default:
@@ -127,8 +144,13 @@ export class UserNotificationsService {
       } else {
         router.navigate(['/bands']);
       }
-    } else if (n.type === 'comment' || n.type === 'repost') {
-      router.navigate(['/community']);
+    } else if (n.type === 'comment' || n.type === 'like' || n.type === 'repost') {
+      const postId = n.data?.postId;
+      if (postId) {
+        router.navigate(['/community'], { fragment: postId });
+      } else {
+        router.navigate(['/community']);
+      }
     }
   }
 }

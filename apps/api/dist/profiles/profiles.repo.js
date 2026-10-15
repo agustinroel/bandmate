@@ -2,7 +2,7 @@ import { supabase } from "../lib/supabase.js";
 export async function listPublicProfiles(filters = {}, limit = 50, offset = 0) {
     let query = supabase
         .from("profiles")
-        .select("id, username, full_name, avatar_url, instruments, genres, sings, bio, is_public, subscription_tier")
+        .select("id, username, full_name, avatar_url, instruments, genres, sings, bio, about, is_public, subscription_tier")
         .eq("is_public", true);
     if (filters.query) {
         // Search in username OR full_name
@@ -25,7 +25,11 @@ export async function listPublicProfiles(filters = {}, limit = 50, offset = 0) {
         .order("updated_at", { ascending: false });
     if (error)
         throw error;
-    return data; // relaxed type for now
+    return (data || []).map((row) => ({
+        ...row,
+        bio: row.bio || row.about || null,
+        about: row.about || row.bio || null,
+    }));
 }
 export async function getProfileByUsername(username) {
     const { data, error } = await supabase
@@ -37,7 +41,11 @@ export async function getProfileByUsername(username) {
         throw error;
     if (!data)
         return null;
-    return data;
+    return {
+        ...data,
+        bio: data.bio || data.about || null,
+        about: data.about || data.bio || null,
+    };
 }
 export async function getProfileById(userId) {
     const { data, error } = await supabase
@@ -49,7 +57,11 @@ export async function getProfileById(userId) {
         throw error;
     if (!data)
         return null;
-    return data;
+    return {
+        ...data,
+        bio: data.bio || data.about || null,
+        about: data.about || data.bio || null,
+    };
 }
 export async function ensureProfile(userId, email) {
     const { data: existing, error: e1 } = await supabase
