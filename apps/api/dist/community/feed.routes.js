@@ -56,7 +56,7 @@ export const feedRoutes = async (app) => {
         if (!userId) {
             userId = body.authorId || 'usr-agustin-roel';
         }
-        const { content, type, attachedSong, tags } = body;
+        const { content, type, attachedSong, tags, mediaUrl, mediaType, youtubeId } = body;
         if (!content || !content.trim()) {
             return reply.status(400).send({ message: 'Post content is required' });
         }
@@ -81,6 +81,9 @@ export const feedRoutes = async (app) => {
             type: type || 'status',
             attachedSong,
             tags: tags || [],
+            mediaUrl,
+            mediaType,
+            youtubeId,
         });
         return reply.status(201).send(post);
     });

@@ -31,6 +31,9 @@ create table if not exists public.community_posts (
   type text not null default 'status',
   content text not null,
   attached_song jsonb null,
+  media_url text null,
+  media_type text null,
+  youtube_id text null,
   tags jsonb not null default '[]'::jsonb,
   likes_count int not null default 0,
   reposts_count int not null default 0,
@@ -132,3 +135,28 @@ begin
     create policy audition_applications_all on public.audition_applications for all using (true) with check (true);
   end if;
 end $$;
+
+-- 6. User Notifications
+create table if not exists public.notifications (
+  id text primary key default gen_random_uuid()::text,
+  user_id text not null,
+  type text not null,
+  title text not null,
+  message text null,
+  data jsonb null,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_notifications_user on public.notifications(user_id);
+create index if not exists idx_notifications_created on public.notifications(created_at desc);
+
+alter table public.notifications enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'notifications_all') then
+    create policy notifications_all on public.notifications for all using (true) with check (true);
+  end if;
+end $$;
+

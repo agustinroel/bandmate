@@ -130,11 +130,16 @@ import { I18nService } from '../../core/services/i18n.service';
                     <div class="p-4 text-center opacity-50 small text-white">No notifications</div>
                   } @else {
                     @for (n of notifService.notifications(); track n.id) {
-                      <div class="bm-notif-item p-3 border-bottom" [class.unread]="!n.is_read">
+                      <div
+                        class="bm-notif-item p-3 border-bottom"
+                        [class.unread]="!n.is_read"
+                        (click)="onNotifClick(n)"
+                        style="cursor: pointer;"
+                      >
                         <div class="d-flex align-items-start gap-3">
                           <div class="bm-notif-icon-wrapper">
                             <mat-icon>
-                              {{ n.type === 'band_invite' ? 'mail' : 'info' }}
+                              {{ notifService.getNotificationIcon(n.type) }}
                             </mat-icon>
                           </div>
 
@@ -538,6 +543,10 @@ export class TopbarComponent implements AfterViewInit {
   private setTopbarHeightVar() {
     const h = this.el.nativeElement.getBoundingClientRect().height;
     document.documentElement.style.setProperty('--bm-topbar-h', `${Math.ceil(h)}px`);
+  }
+
+  onNotifClick(n: any) {
+    this.notifService.handleNotificationClick(n, this.router);
   }
 
   accept(n: any) {

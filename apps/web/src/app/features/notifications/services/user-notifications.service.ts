@@ -4,9 +4,11 @@ import { environment } from '../../../../environments/environment';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { BandsService } from '../../bands/services/bands.service';
 
+import { Router } from '@angular/router';
+
 export interface Notification {
   id: string;
-  type: 'band_invite' | 'info';
+  type: 'band_invite' | 'band_joined' | 'follow' | 'comment' | 'repost' | 'info';
   title: string;
   message: string;
   data?: any;
@@ -87,5 +89,46 @@ export class UserNotificationsService {
     const inviteId = notification.data.inviteId;
 
     return this.bandsService.respondToInvitation(inviteId, accept);
+  }
+
+  getNotificationIcon(type: string): string {
+    switch (type) {
+      case 'follow':
+        return 'person_add';
+      case 'band_invite':
+        return 'group_add';
+      case 'band_joined':
+        return 'groups';
+      case 'comment':
+        return 'chat_bubble';
+      case 'repost':
+        return 'repeat';
+      default:
+        return 'notifications';
+    }
+  }
+
+  handleNotificationClick(n: Notification, router: Router) {
+    if (!n.is_read) {
+      this.markRead(n.id);
+    }
+
+    if (n.type === 'follow') {
+      const username = n.data?.followerUsername;
+      if (username) {
+        router.navigate(['/u', username]);
+      } else {
+        router.navigate(['/community']);
+      }
+    } else if (n.type === 'band_invite' || n.type === 'band_joined') {
+      const bandId = n.data?.bandId;
+      if (bandId) {
+        router.navigate(['/bands', bandId]);
+      } else {
+        router.navigate(['/bands']);
+      }
+    } else if (n.type === 'comment' || n.type === 'repost') {
+      router.navigate(['/community']);
+    }
   }
 }

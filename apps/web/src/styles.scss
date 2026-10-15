@@ -258,6 +258,121 @@ body.theme-dark {
     }
   }
 
+  /* Community follow buttons & chips global high contrast */
+  .cm-follow-sm-btn {
+    background: #e9c46a !important;
+    color: #090d16 !important;
+    --mdc-filled-button-label-text-color: #090d16 !important;
+
+    .mdc-button__label,
+    span {
+      color: #090d16 !important;
+      font-weight: 700 !important;
+    }
+
+    &:hover {
+      background: #ffffff !important;
+      color: #090d16 !important;
+    }
+
+    &.cm-following-sm-btn {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      color: #f8fafc !important;
+      --mdc-filled-button-label-text-color: #f8fafc !important;
+
+      .mdc-button__label,
+      span {
+        color: #f8fafc !important;
+      }
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.25) !important;
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+
+        .mdc-button__label,
+        span {
+          color: #ef4444 !important;
+        }
+      }
+    }
+  }
+
+  .cm-follow-btn {
+    border: 1.5px solid var(--bm-accent, #e9c46a) !important;
+    color: var(--bm-accent, #e9c46a) !important;
+    background: transparent !important;
+    --mdc-outlined-button-label-text-color: var(--bm-accent, #e9c46a) !important;
+
+    .cm-follow-btn-icon,
+    span,
+    .mdc-button__label {
+      color: var(--bm-accent, #e9c46a) !important;
+    }
+
+    &:hover {
+      background: rgba(233, 196, 106, 0.15) !important;
+      border-color: #ffffff !important;
+      color: #ffffff !important;
+
+      .cm-follow-btn-icon,
+      span,
+      .mdc-button__label {
+        color: #ffffff !important;
+      }
+    }
+
+    &.cm-following-btn {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+      --mdc-outlined-button-label-text-color: #f8fafc !important;
+
+      .cm-follow-btn-icon,
+      span,
+      .mdc-button__label {
+        color: #f8fafc !important;
+      }
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.25) !important;
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+
+        .cm-follow-btn-icon,
+        span,
+        .mdc-button__label {
+          color: #ef4444 !important;
+        }
+      }
+    }
+  }
+
+  .cm-chip {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #f1f5f9 !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.14) !important;
+      border-color: rgba(255, 255, 255, 0.35) !important;
+      color: #ffffff !important;
+    }
+
+    &.cm-chip--active {
+      background: var(--bm-accent, #e9c46a) !important;
+      border-color: var(--bm-accent, #e9c46a) !important;
+      color: #090d16 !important;
+      font-weight: 700 !important;
+    }
+  }
+
+  .cm-band-avatar-mini {
+    background: linear-gradient(135deg, #1f4b50 0%, #264653 100%) !important;
+    color: #ffffff !important;
+  }
+
   .cm-type-chip {
     color: #cbd5e1 !important;
     background: rgba(255, 255, 255, 0.06) !important;

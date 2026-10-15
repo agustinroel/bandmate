@@ -75,6 +75,17 @@ export async function toggleFollow(followerId, followedId) {
         catch (e) {
             console.warn('[follows.repo] Supabase insert warning:', e);
         }
+        // Notify followed user
+        try {
+            const { createNotification } = await import('../notifications/notifications.repo.js');
+            const { getProfileById } = await import('../profiles/profiles.repo.js');
+            const followerProfile = await getProfileById(followerId);
+            const followerName = followerProfile?.full_name || followerProfile?.username || 'Un músico';
+            await createNotification(followedId, 'follow', 'Nuevo seguidor', `${followerName} ha comenzado a seguirte.`, { followerId, followerUsername: followerProfile?.username });
+        }
+        catch (notifErr) {
+            console.warn('[follows.repo] Follow notification warning:', notifErr);
+        }
     }
     cachedFollows = follows;
     await writeJson(FOLLOWS_FILE, follows);

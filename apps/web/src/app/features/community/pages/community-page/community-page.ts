@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,8 @@ import { SongsStore } from '../../../songs/state/songs-store';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { I18nService } from '../../../../core/services/i18n.service';
 import { AuditionDialogComponent } from '../../ui/audition-dialog/audition-dialog.component';
+import { supabase } from '../../../../core/supabase/supabase.client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export type FeedComment = {
   id: string;
@@ -66,6 +69,9 @@ export type FeedPost = {
     key?: string;
     bpm?: number;
   } | null;
+  mediaUrl?: string | null;
+  mediaType?: 'image' | 'video' | 'youtube' | null;
+  youtubeId?: string | null;
   tags: string[];
   likesCount: number;
   repostsCount: number;
@@ -87,6 +93,7 @@ type ProfileDto = {
   followersCount?: number;
   followingCount?: number;
   isFollowing?: boolean;
+  mainBand?: string | null;
 };
 
 type ActiveFilter = { type: string; label: string; value: string };
@@ -125,6 +132,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   private notify = inject(NotificationsService);
   private animation = inject(AnimationService);
   private router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
 
   readonly eventsStore = inject(EventsStore);
   readonly bandsService = inject(BandsService);
@@ -144,6 +152,26 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     const name = u?.user_metadata?.['full_name'] || u?.user_metadata?.['name'];
     return typeof name === 'string' && name.trim() ? name : 'Músico';
   });
+
+  /* ─── Real-time Live Feed ─── */
+  private liveChannel?: RealtimeChannel;
+
+  /* ─── Hovercard State ─── */
+  readonly hoveredUser = signal<ProfileDto | null>(null);
+  readonly hovercardPosition = signal<{ top: number; left: number } | null>(null);
+  readonly isHoveringCard = signal(false);
+  private hoverTimer: any = null;
+  private hoverLeaveTimer: any = null;
+
+  /* ─── Post Composer Attachments ─── */
+  readonly attachedMediaUrl = signal<string | null>(null);
+  readonly attachedMediaType = signal<'image' | 'youtube' | null>(null);
+  readonly attachedYoutubeId = signal<string | null>(null);
+  readonly showYoutubeInput = signal(false);
+  readonly youtubeInputUrl = signal('');
+  readonly showEmojiPicker = signal(false);
+  readonly isUploadingImage = signal(false);
+  readonly quickEmojis = ['🎸', '🥁', '🎹', '🎤', '🔥', '🤘', '🎵', '🎶', '👏', '❤️', '✨', '⚡'];
 
   /* ─── Tabs & Feed ─── */
   readonly activeTab = signal<'feed' | 'directory' | 'auditions'>('feed');
@@ -248,6 +276,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
     this.loadActivities();
     this.loadInvitationsCount();
     this.initDiscovery();
+    this.setupRealtimeFeed();
 
     // Load user songs if not loaded for attachment picker
     if (this.songsStore.state() === 'idle') {
@@ -274,6 +303,11 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.scrollObserver?.disconnect();
+    if (this.hoverTimer) clearTimeout(this.hoverTimer);
+    if (this.hoverLeaveTimer) clearTimeout(this.hoverLeaveTimer);
+    if (this.liveChannel) {
+      supabase.removeChannel(this.liveChannel);
+    }
   }
 
   private setupInfiniteScroll() {
@@ -450,7 +484,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
 
   submitPost() {
     const text = this.postContent().trim();
-    if (!text) return;
+    if (!text && !this.attachedMediaUrl() && !this.attachedYoutubeId()) return;
 
     const user = this.authStore.user();
     const fullName = user?.user_metadata?.['full_name'] || user?.user_metadata?.['name'] || 'Músico Bandmate';
@@ -460,9 +494,12 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
 
     this.isPosting.set(true);
     this.http.post<FeedPost>(`${environment.apiBaseUrl}/feed`, {
-      content: text,
+      content: text || 'Publicación compartida con la comunidad',
       type: this.selectedPostType(),
       attachedSong: this.selectedSongAttachment(),
+      mediaUrl: this.attachedMediaUrl(),
+      mediaType: this.attachedMediaType(),
+      youtubeId: this.attachedYoutubeId(),
       authorName: fullName,
       authorUsername: username,
       authorAvatar: avatar,
@@ -472,9 +509,12 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
         this.feedPosts.update((prev) => [post, ...prev]);
         this.postContent.set('');
         this.selectedSongAttachment.set(null);
+        this.removeAttachedMedia();
+        this.showEmojiPicker.set(false);
         this.selectedPostType.set('status');
         this.isPosting.set(false);
         this.notify.success('¡Publicación compartida con la comunidad!', 'OK', 2000);
+        this.broadcastLiveEvent('new_post', post);
         this.loadTrends();
       },
       error: () => {
@@ -534,6 +574,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
         this.feedPosts.update((posts) =>
           posts.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p))
         );
+        this.broadcastLiveEvent('new_comment', { postId, comment: newCmt });
         this.notify.success('Comentario publicado', 'OK', 1500);
       },
       error: () => {
@@ -566,6 +607,7 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
       next: (res) => {
         post.isLiked = res.isLiked;
         post.likesCount = res.likesCount;
+        this.broadcastLiveEvent('like_update', { postId: post.id, likesCount: res.likesCount });
       },
       error: () => {
         post.isLiked = !nextState;
@@ -589,12 +631,251 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
         if (res.repostItem) {
           this.feedPosts.update((prev) => [res.repostItem!, ...prev]);
         }
+        this.broadcastLiveEvent('new_repost', { postId: post.id, repostsCount: res.repostsCount, repostItem: res.repostItem });
         this.notify.success('¡Has reposteado esta publicación!', 'OK', 1500);
       },
       error: () => {
         this.notify.error('No se pudo repostear', 'OK', 2000);
       },
     });
+  }
+
+  /* ─── Realtime Setup & Broadcast ─── */
+  private setupRealtimeFeed() {
+    try {
+      this.liveChannel = supabase.channel('community_live_feed', {
+        config: { broadcast: { self: false } },
+      });
+
+      this.liveChannel
+        .on('broadcast', { event: 'new_post' }, ({ payload }) => {
+          if (!payload || !payload.id) return;
+          this.feedPosts.update((current) => {
+            if (current.some((p) => p.id === payload.id)) return current;
+            return [payload, ...current];
+          });
+        })
+        .on('broadcast', { event: 'like_update' }, ({ payload }) => {
+          if (!payload || !payload.postId) return;
+          this.feedPosts.update((current) =>
+            current.map((p) =>
+              p.id === payload.postId
+                ? { ...p, likesCount: payload.likesCount }
+                : p
+            )
+          );
+        })
+        .on('broadcast', { event: 'new_comment' }, ({ payload }) => {
+          if (!payload || !payload.postId) return;
+          const { postId, comment } = payload;
+          this.feedPosts.update((current) =>
+            current.map((p) =>
+              p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
+            )
+          );
+          if (this.openCommentsPostId() === postId && comment) {
+            this.commentsByPost.update((m) => {
+              const list = m[postId] || [];
+              if (list.some((c) => c.id === comment.id)) return m;
+              return { ...m, [postId]: [...list, comment] };
+            });
+          }
+        })
+        .on('broadcast', { event: 'new_repost' }, ({ payload }) => {
+          if (!payload || !payload.postId) return;
+          this.feedPosts.update((current) => {
+            let updated = current.map((p) =>
+              p.id === payload.postId
+                ? { ...p, repostsCount: payload.repostsCount }
+                : p
+            );
+            if (payload.repostItem && !updated.some((p) => p.id === payload.repostItem.id)) {
+              updated = [payload.repostItem, ...updated];
+            }
+            return updated;
+          });
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('[Community] Realtime channel setup error:', err);
+    }
+  }
+
+  private broadcastLiveEvent(event: string, payload: any) {
+    if (this.liveChannel) {
+      try {
+        this.liveChannel.send({
+          type: 'broadcast',
+          event,
+          payload,
+        });
+      } catch (_) {}
+    }
+  }
+
+  /* ─── Media & Attachments ─── */
+  getYoutubeSafeUrl(youtubeId: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${youtubeId}`);
+  }
+
+  toggleEmojiPicker() {
+    this.showEmojiPicker.update((v) => !v);
+  }
+
+  insertEmoji(emoji: string) {
+    this.postContent.update((c) => c + emoji);
+  }
+
+  toggleYoutubeInput() {
+    this.showYoutubeInput.update((v) => !v);
+  }
+
+  confirmYoutubeUrl() {
+    const val = this.youtubeInputUrl().trim();
+    const match = val.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) {
+      this.attachedYoutubeId.set(match[1]);
+      this.attachedMediaType.set('youtube');
+      this.attachedMediaUrl.set(`https://www.youtube.com/watch?v=${match[1]}`);
+      this.showYoutubeInput.set(false);
+      this.youtubeInputUrl.set('');
+    } else {
+      this.notify.warning('URL de YouTube no válida', 'OK', 2000);
+    }
+  }
+
+  onImageFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      this.notify.warning('Por favor selecciona un archivo de imagen', 'OK', 2000);
+      return;
+    }
+    this.isUploadingImage.set(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      this.attachedMediaUrl.set(dataUrl);
+      this.attachedMediaType.set('image');
+      this.attachedYoutubeId.set(null);
+      this.isUploadingImage.set(false);
+    };
+    reader.onerror = () => {
+      this.isUploadingImage.set(false);
+      this.notify.error('Error al cargar la imagen', 'OK', 2000);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeAttachedMedia() {
+    this.attachedMediaUrl.set(null);
+    this.attachedMediaType.set(null);
+    this.attachedYoutubeId.set(null);
+  }
+
+  /* ─── Hovercard & Navigation ─── */
+  onAuthorMouseEnter(event: MouseEvent, post: FeedPost) {
+    clearTimeout(this.hoverLeaveTimer);
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    this.hoverTimer = setTimeout(() => {
+      let p = this.profiles().find(
+        (pr) => pr.username.toLowerCase() === post.authorUsername.toLowerCase() || pr.id === post.authorId
+      );
+
+      if (!p) {
+        p = {
+          id: post.authorId,
+          username: post.authorUsername,
+          full_name: post.authorName,
+          avatar_url: post.authorAvatar,
+          instruments: post.authorInstruments,
+          subscription_tier: post.authorTier,
+          isFollowing: post.isAuthorFollowed || this.isFollowing(post.authorId),
+          mainBand: post.authorBand,
+          bio: 'Músico en Bandmate',
+          followersCount: 0,
+          followingCount: 0,
+        };
+
+        this.http.get<ProfileDto>(`${environment.apiBaseUrl}/profiles/${post.authorUsername}`).subscribe({
+          next: (full) => {
+            if (this.hoveredUser()?.username === post.authorUsername) {
+              this.hoveredUser.set({
+                ...p,
+                ...full,
+                isFollowing: full.isFollowing ?? this.isFollowing(full.id),
+              });
+            }
+          },
+          error: () => {},
+        });
+      }
+
+      const cardWidth = 320;
+      const cardHeight = 220;
+      let left = rect.left;
+      if (typeof window !== 'undefined') {
+        if (left + cardWidth > window.innerWidth - 16) {
+          left = window.innerWidth - cardWidth - 16;
+        }
+        if (left < 16) left = 16;
+      }
+
+      let top = rect.bottom + 8;
+      if (typeof window !== 'undefined' && rect.bottom + cardHeight > window.innerHeight && rect.top > cardHeight) {
+        top = rect.top - cardHeight - 8;
+      }
+
+      this.hovercardPosition.set({ top, left });
+      this.hoveredUser.set(p);
+    }, 250);
+  }
+
+  onAuthorMouseLeave() {
+    clearTimeout(this.hoverTimer);
+    this.hoverLeaveTimer = setTimeout(() => {
+      if (!this.isHoveringCard()) {
+        this.hoveredUser.set(null);
+        this.hovercardPosition.set(null);
+      }
+    }, 200);
+  }
+
+  onHovercardEnter() {
+    clearTimeout(this.hoverLeaveTimer);
+    this.isHoveringCard.set(true);
+  }
+
+  onHovercardLeave() {
+    this.isHoveringCard.set(false);
+    this.hoveredUser.set(null);
+    this.hovercardPosition.set(null);
+  }
+
+  navigateToProfile(username: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.hoveredUser.set(null);
+    this.hovercardPosition.set(null);
+    this.router.navigate(['/u', username]);
+  }
+
+  toggleFollowFromHovercard(user: ProfileDto) {
+    this.toggleFollow(user.id, user.full_name || user.username);
+    const next = !(user.isFollowing || this.isFollowing(user.id));
+    this.hoveredUser.update((u) =>
+      u
+        ? {
+            ...u,
+            isFollowing: next,
+            followersCount: Math.max(0, (u.followersCount || 0) + (next ? 1 : -1)),
+          }
+        : null
+    );
   }
 
   getInstrumentClass(inst: string): string {

@@ -33,6 +33,9 @@ async function getStoredPosts() {
                         type: r.type,
                         content: r.content,
                         attachedSong: r.attached_song,
+                        mediaUrl: r.media_url,
+                        mediaType: r.media_type,
+                        youtubeId: r.youtube_id,
                         tags: r.tags || [],
                         likesCount: r.likes_count ?? 0,
                         repostsCount: r.reposts_count ?? 0,
@@ -222,6 +225,23 @@ export async function createFeedPost(userId, userProfile, postData) {
     const regex = /#([a-zA-Z0-9_\u00C0-\u017F]+)/g;
     const inTextTags = (postData.content.match(regex) || []).map((t) => t.slice(1).toLowerCase());
     const allTags = Array.from(new Set([...(postData.tags || []), ...inTextTags]));
+    // Auto-detect YouTube URL if not explicitly specified
+    let mediaType = postData.mediaType || null;
+    let mediaUrl = postData.mediaUrl || null;
+    let youtubeId = postData.youtubeId || null;
+    if (!youtubeId) {
+        const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const ytMatch = (postData.content || '').match(ytRegex) || (mediaUrl || '').match(ytRegex);
+        if (ytMatch && ytMatch[1]) {
+            youtubeId = ytMatch[1];
+            mediaType = 'youtube';
+            if (!mediaUrl)
+                mediaUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
+        }
+    }
+    if (mediaUrl && !mediaType) {
+        mediaType = mediaUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i) || mediaUrl.startsWith('data:image/') ? 'image' : null;
+    }
     const newPost = {
         id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         authorId: userId,
@@ -235,6 +255,9 @@ export async function createFeedPost(userId, userProfile, postData) {
         type: postData.type || 'status',
         content: postData.content,
         attachedSong: postData.attachedSong || null,
+        mediaUrl,
+        mediaType,
+        youtubeId,
         tags: allTags,
         likesCount: 0,
         repostsCount: 0,
@@ -263,6 +286,9 @@ export async function createFeedPost(userId, userProfile, postData) {
                 type: newPost.type,
                 content: newPost.content,
                 attached_song: newPost.attachedSong,
+                media_url: newPost.mediaUrl,
+                media_type: newPost.mediaType,
+                youtube_id: newPost.youtubeId,
                 tags: newPost.tags,
                 likes_count: newPost.likesCount,
                 reposts_count: newPost.repostsCount,
@@ -333,6 +359,16 @@ export async function repostPost(userId, userProfile, postId) {
     posts.unshift(repostItem);
     cachedPosts = posts;
     await writeJson(POSTS_FILE, posts);
+    // Notify original author
+    if (original.authorId && original.authorId !== userId) {
+        try {
+            const { createNotification } = await import('../notifications/notifications.repo.js');
+            await createNotification(original.authorId, 'repost', 'Tu publicación ha sido republicada', `${reposterName} ha compartido tu publicación en la comunidad.`, { postId, reposterId: userId });
+        }
+        catch (notifErr) {
+            console.warn('[feed.repo] Repost notification warning:', notifErr);
+        }
+    }
     return { repostsCount: original.repostsCount, repostItem };
 }
 export async function getPostComments(postId) {
@@ -381,6 +417,17 @@ export async function createPostComment(postId, userId, userProfile, content) {
     }
     catch (e) {
         console.warn('[feed.repo] Supabase comment insert warning:', e);
+    }
+    // Notify post author
+    if (post.authorId && post.authorId !== userId) {
+        try {
+            const { createNotification } = await import('../notifications/notifications.repo.js');
+            const snippet = newComment.content.length > 50 ? newComment.content.slice(0, 50) + '...' : newComment.content;
+            await createNotification(post.authorId, 'comment', 'Nuevo comentario en tu publicación', `${newComment.authorName} comentó: "${snippet}"`, { postId, commentId: newComment.id, authorId: userId });
+        }
+        catch (notifErr) {
+            console.warn('[feed.repo] Comment notification warning:', notifErr);
+        }
     }
     return newComment;
 }

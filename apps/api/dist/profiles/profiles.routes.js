@@ -44,12 +44,36 @@ export async function profilesRoutes(app) {
             return reply.code(404).send({ message: "Profile not found" });
         }
         if (!profile.is_public) {
-            // If not public, maybe 404 or 403?
-            // Requirement: "filter all, but only see info if public".
-            // So if I know the username but it's private, I should probably not see details.
             return reply.code(403).send({ message: "This profile is private." });
         }
-        return profile;
+        let followersCount = 0;
+        let followingCount = 0;
+        let isFollowing = false;
+        let mainBand = null;
+        try {
+            const { getFollowStatus } = await import("../community/follows.repo.js");
+            const callerId = req.user?.id;
+            const stats = await getFollowStatus(callerId, profile.id);
+            followersCount = stats.followersCount;
+            followingCount = stats.followingCount;
+            isFollowing = stats.isFollowing;
+        }
+        catch (_) { }
+        try {
+            const { listBandsForUser } = await import("../bands/bands.repo.js");
+            const bands = await listBandsForUser(profile.id);
+            if (bands && bands.length > 0) {
+                mainBand = bands[0]?.name || null;
+            }
+        }
+        catch (_) { }
+        return {
+            ...profile,
+            followersCount,
+            followingCount,
+            isFollowing,
+            mainBand,
+        };
     });
     // GET current user's profile (authenticated)
     app.get("/profiles/me", { preHandler: [app.requireAuth] }, async (req, reply) => {

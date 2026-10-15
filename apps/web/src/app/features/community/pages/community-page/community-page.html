@@ -41,7 +41,7 @@
   </div>
 </section>
 
-<div class="main-content px-3 px-md-5 mt-4">
+<div class="main-content container-xl px-2 px-sm-3 px-md-4 mt-3 mt-md-4">
 
   <!-- ═══════════════════════════════════════════════ -->
   <!--  TAB 1: 🌟 SOCIAL FEED (X.COM / INSTAGRAM HUB)   -->
@@ -142,6 +142,61 @@
                   </div>
                 }
 
+                <!-- Inline YouTube Input -->
+                @if (showYoutubeInput()) {
+                  <div class="cm-inline-attach-bar d-flex align-items-center gap-2 mb-2 p-2 rounded-3 border">
+                    <mat-icon class="text-danger">smart_display</mat-icon>
+                    <input
+                      type="text"
+                      class="form-control form-control-sm border-0 bg-transparent flex-grow-1"
+                      placeholder="Pega el enlace de YouTube (ej. https://youtube.com/watch?v=...)"
+                      [(ngModel)]="youtubeInputUrl"
+                      (keydown.enter)="confirmYoutubeUrl()"
+                    />
+                    <button mat-flat-button color="primary" class="btn-sm rounded-pill px-3" (click)="confirmYoutubeUrl()">
+                      Adjuntar
+                    </button>
+                    <button mat-icon-button class="btn-sm-icon" (click)="showYoutubeInput.set(false)">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+
+                <!-- Quick Emoji Picker -->
+                @if (showEmojiPicker()) {
+                  <div class="cm-emoji-bar d-flex align-items-center gap-1 mb-2 p-2 rounded-3 border flex-wrap">
+                    @for (em of quickEmojis; track em) {
+                      <button type="button" class="btn btn-sm btn-light fs-5 p-1 px-2 border-0" (click)="insertEmoji(em)">
+                        {{ em }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                <!-- Attachment Previews in Composer -->
+                @if (attachedMediaUrl() && attachedMediaType() === 'image') {
+                  <div class="cm-composer-attachment-preview mb-3 position-relative rounded-3 overflow-hidden border">
+                    <img [src]="attachedMediaUrl()" alt="Attached image preview" class="w-100" style="max-height: 200px; object-fit: cover;" />
+                    <button mat-icon-button class="cm-preview-remove-btn" (click)="removeAttachedMedia()" matTooltip="Quitar imagen">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+                @if (attachedYoutubeId()) {
+                  <div class="cm-composer-attachment-preview mb-3 p-3 rounded-3 border bg-danger-subtle d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon class="text-danger">smart_display</mat-icon>
+                      <div>
+                        <div class="fw-bold small text-dark">Video de YouTube adjuntado</div>
+                        <div class="small text-muted">ID: {{ attachedYoutubeId() }}</div>
+                      </div>
+                    </div>
+                    <button mat-icon-button class="btn-sm-icon" (click)="removeAttachedMedia()" matTooltip="Quitar video">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+
                 <!-- Composer Controls & Post Types -->
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top mt-2">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -200,11 +255,54 @@
                         </button>
                       }
                     </mat-menu>
+
+                    <!-- Attach Image Button -->
+                    <button
+                      type="button"
+                      mat-button
+                      class="cm-type-chip cm-attach-chip"
+                      (click)="imageFileInput.click()"
+                      matTooltip="Adjuntar foto o imagen"
+                    >
+                      <mat-icon class="me-1 text-info">image</mat-icon>
+                      <span>Imagen</span>
+                    </button>
+                    <input
+                      type="file"
+                      #imageFileInput
+                      hidden
+                      accept="image/*"
+                      (change)="onImageFileSelected($event)"
+                    />
+
+                    <!-- Attach YouTube Button -->
+                    <button
+                      type="button"
+                      mat-button
+                      class="cm-type-chip cm-attach-chip"
+                      (click)="toggleYoutubeInput()"
+                      matTooltip="Adjuntar video de YouTube"
+                    >
+                      <mat-icon class="me-1 text-danger">smart_display</mat-icon>
+                      <span>YouTube</span>
+                    </button>
+
+                    <!-- Emoji Button -->
+                    <button
+                      type="button"
+                      mat-button
+                      class="cm-type-chip cm-attach-chip"
+                      (click)="toggleEmojiPicker()"
+                      matTooltip="Insertar emojis musicales"
+                    >
+                      <mat-icon class="me-1 text-warning">sentiment_satisfied_alt</mat-icon>
+                      <span>Emoji</span>
+                    </button>
                   </div>
 
                   <button
                     mat-flat-button
-                    [disabled]="!postContent().trim() || isPosting()"
+                    [disabled]="(!postContent().trim() && !attachedMediaUrl() && !attachedYoutubeId()) || isPosting()"
                     (click)="submitPost()"
                     class="cm-publish-btn rounded-pill px-4 ms-auto"
                   >
@@ -249,15 +347,20 @@
 
                 <!-- Post Header -->
                 <div class="cm-post-header d-flex align-items-center justify-content-between mb-2">
-                  <div class="d-flex align-items-center gap-2">
+                  <div
+                    class="d-flex align-items-center gap-2 cm-post-author-link cursor-pointer"
+                    (click)="navigateToProfile(post.authorUsername, $event)"
+                    (mouseenter)="onAuthorMouseEnter($event, post)"
+                    (mouseleave)="onAuthorMouseLeave()"
+                  >
                     <img
                       [src]="post.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                       [alt]="post.authorName"
-                      class="cm-post-avatar"
+                      class="cm-post-avatar cursor-pointer"
                     />
                     <div>
                       <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="fw-bold fs-6">{{ post.authorName }}</span>
+                        <span class="fw-bold fs-6 cm-author-hover-name">{{ post.authorName }}</span>
                         @if (post.authorTier === 'pro' || post.authorTier === 'band' || post.authorTier === 'studio') {
                           <span class="cm-verified-badge" matTooltip="Músico Verificado">
                             <mat-icon>verified</mat-icon>
@@ -326,6 +429,27 @@
                     </div>
                   }
                 </div>
+
+                <!-- Attached Image in Post -->
+                @if (post.mediaType === 'image' && post.mediaUrl) {
+                  <div class="cm-post-media-box mb-3 rounded-4 overflow-hidden border">
+                    <img [src]="post.mediaUrl" [alt]="post.content" class="cm-post-attached-image" loading="lazy" />
+                  </div>
+                }
+
+                <!-- Attached YouTube Video in Post -->
+                @if (post.youtubeId) {
+                  <div class="cm-post-media-box cm-youtube-box mb-3 rounded-4 overflow-hidden shadow-sm">
+                    <iframe
+                      class="cm-youtube-iframe"
+                      [src]="getYoutubeSafeUrl(post.youtubeId)"
+                      title="YouTube video player"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                }
 
                 <!-- Attached Song Interactive Box -->
                 @if (post.attachedSong; as song) {
@@ -549,16 +673,22 @@
           } @else {
             @for (b of myBands().slice(0, 3); track b.id) {
               <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="cm-band-avatar-mini">{{ b.name[0] }}</div>
-                  <div>
-                    <div class="fw-bold small">{{ b.name }}</div>
+                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                  <div class="cm-band-avatar-mini flex-shrink-0">
+                    @if (b.avatar_url) {
+                      <img [src]="b.avatar_url" [alt]="b.name" />
+                    } @else {
+                      <span>{{ b.name[0] | uppercase }}</span>
+                    }
+                  </div>
+                  <div class="overflow-hidden">
+                    <div class="fw-bold small text-truncate">{{ b.name }}</div>
                     <div class="text-muted" style="font-size: 11px;">Banda Activa</div>
                   </div>
                 </div>
-                <button mat-stroked-button class="btn-sm rounded-pill" [routerLink]="['/bands', b.id]">
+                <a mat-stroked-button class="btn-sm rounded-pill flex-shrink-0 ms-2" [routerLink]="['/bands', b.id]">
                   Ver
-                </button>
+                </a>
               </div>
             }
           }
@@ -722,5 +852,72 @@
         </div>
       }
     </section>
+  }
+
+  <!-- Floating Musician Hovercard (X.com / GitHub style) -->
+  @if (hoveredUser() && hovercardPosition()) {
+    <div
+      class="cm-hovercard shadow-lg border rounded-4 p-3"
+      [style.top.px]="hovercardPosition()?.top"
+      [style.left.px]="hovercardPosition()?.left"
+      (mouseenter)="onHovercardEnter()"
+      (mouseleave)="onHovercardLeave()"
+    >
+      <div class="cm-hovercard-header d-flex align-items-center justify-content-between mb-2 gap-2">
+        <div class="d-flex align-items-center gap-2 cm-hovercard-author cursor-pointer" (click)="navigateToProfile(hoveredUser()!.username, $event)">
+          <img
+            [src]="hoveredUser()?.avatar_url || 'assets/brand/avatar-fallback.svg'"
+            [alt]="hoveredUser()?.full_name || hoveredUser()?.username"
+            class="cm-hovercard-avatar"
+          />
+          <div class="overflow-hidden">
+            <div class="fw-bold fs-6 text-truncate" style="max-width: 140px;">
+              {{ hoveredUser()?.full_name || hoveredUser()?.username }}
+            </div>
+            <div class="text-muted small">&#64;{{ hoveredUser()?.username }}</div>
+          </div>
+        </div>
+
+        @if (hoveredUser()?.id && hoveredUser()?.id !== authStore.user()?.id) {
+          <button
+            mat-flat-button
+            class="cm-follow-btn btn-sm rounded-pill flex-shrink-0"
+            [class.cm-following-btn]="hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)"
+            (click)="toggleFollowFromHovercard(hoveredUser()!)"
+          >
+            <mat-icon class="cm-follow-btn-icon" style="font-size: 16px; width: 16px; height: 16px;">
+              {{ (hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)) ? 'check' : 'person_add' }}
+            </mat-icon>
+            <span>{{ (hoveredUser()?.isFollowing || isFollowing(hoveredUser()!.id)) ? 'Siguiendo' : 'Seguir' }}</span>
+          </button>
+        }
+      </div>
+
+      @if (hoveredUser()?.bio) {
+        <p class="cm-hovercard-bio small mb-2 text-secondary">{{ hoveredUser()?.bio }}</p>
+      }
+
+      <div class="d-flex align-items-center gap-3 mb-2 small">
+        <div><strong class="text-dark cm-hovercard-num">{{ hoveredUser()?.followersCount ?? 0 }}</strong> <span class="text-muted">Seguidores</span></div>
+        <div><strong class="text-dark cm-hovercard-num">{{ hoveredUser()?.followingCount ?? 0 }}</strong> <span class="text-muted">Siguiendo</span></div>
+      </div>
+
+      @if (hoveredUser()?.mainBand) {
+        <div class="cm-hovercard-band mb-2 small d-flex align-items-center gap-1 text-primary">
+          <mat-icon style="font-size: 16px; width: 16px; height: 16px;">groups</mat-icon>
+          <span class="fw-semibold">{{ hoveredUser()?.mainBand }}</span>
+        </div>
+      }
+
+      @if (hoveredUser()?.instruments && hoveredUser()!.instruments!.length > 0) {
+        <div class="d-flex flex-wrap gap-1 mt-1">
+          @for (inst of hoveredUser()!.instruments; track inst) {
+            <span class="cm-instrument-chip small py-0 px-2" [ngClass]="getInstrumentClass(inst)">
+              {{ getInstrumentIcon(inst) }} {{ inst }}
+            </span>
+          }
+        </div>
+      }
+    </div>
   }
 </div>

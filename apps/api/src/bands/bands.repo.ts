@@ -330,6 +330,22 @@ export async function respondToInvite(
       roles: ["member"],
     });
     if (e3) throw e3;
+
+    // Notify inviter
+    try {
+      const { data: band } = await supabase.from("bands").select("name").eq("id", invite.band_id).single();
+      const { data: memberProfile } = await supabase.from("profiles").select("username, full_name").eq("id", userId).maybeSingle();
+      const memberName = memberProfile?.full_name || memberProfile?.username || "Un músico";
+      await createNotification(
+        invite.invited_by,
+        "band_joined",
+        "¡Unión a la banda confirmada!",
+        `${memberName} ha aceptado tu invitación y se ha unido a ${band?.name || "tu banda"}.`,
+        { bandId: invite.band_id, bandName: band?.name, memberId: userId }
+      );
+    } catch (notifErr) {
+      console.warn("[bands.repo] Notification warning on band_joined:", notifErr);
+    }
   }
 
   return { success: true, status: newStatus };
