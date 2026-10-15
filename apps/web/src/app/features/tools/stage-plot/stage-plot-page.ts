@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 import {
   StageElement,
@@ -17,6 +18,7 @@ import {
   STAGE_ELEMENT_TEMPLATES,
   TechRiderMeta,
 } from './stage-plot.model';
+import { TechRiderExportDialogComponent } from './ui/tech-rider-export-dialog/tech-rider-export-dialog';
 
 const STORAGE_KEY = 'bandmate_stage_plot_data';
 
@@ -35,12 +37,14 @@ const STORAGE_KEY = 'bandmate_stage_plot_data';
     MatCheckboxModule,
     MatTooltipModule,
     MatTabsModule,
+    MatDialogModule,
   ],
   templateUrl: './stage-plot-page.html',
   styleUrl: './stage-plot-page.scss',
 })
 export class StagePlotPageComponent {
   private readonly notify = inject(NotificationsService);
+  private readonly dialog = inject(MatDialog);
 
   readonly templates = STAGE_ELEMENT_TEMPLATES;
 
@@ -383,6 +387,19 @@ export class StagePlotPageComponent {
   }
 
   // --- Export and Printing ---
+
+  openExportDialog() {
+    this.dialog.open(TechRiderExportDialogComponent, {
+      width: '920px',
+      maxWidth: '96vw',
+      data: {
+        meta: this.meta(),
+        elements: this.elements(),
+        channelInputList: this.channelInputList(),
+        stageDimensions: '8m x 6m (Mínimo recomendado)',
+      },
+    });
+  }
 
   printTechRider() {
     if (typeof window !== 'undefined') {

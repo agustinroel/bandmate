@@ -33,7 +33,7 @@ import { AnimationService } from '../../../../core/services/animation.service';
 import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-progress-ring/practice-progress-ring';
 import { PedalListenerService } from '../../../../core/services/pedal-listener.service';
 import { LoopTrainerService } from '../../services/loop-trainer.service';
-import { LiveBandSyncService } from '../../../../core/services/live-band-sync.service';
+import { LiveBandSyncService, StageRole } from '../../../../core/services/live-band-sync.service';
 
 @Component({
   standalone: true,
@@ -89,6 +89,13 @@ export class PracticePageComponent {
 
   readonly isScrolling = signal(false);
   readonly isStageMode = signal(false);
+
+  // Live Band Stage Sync State
+  readonly sessionCode = signal('');
+  readonly selectedRole = signal<StageRole>('follower');
+  readonly selectedInstrument = signal('Guitarra');
+  readonly customCueText = signal('');
+  private lastBroadcastScrollTs = 0;
 
   // Floating mini-control for autoscroll (Touch/Swipe-up overlay with 1-second auto-hide)
   readonly scrollOverlayVisible = signal(false);
@@ -172,6 +179,44 @@ export class PracticePageComponent {
         });
       }
     });
+
+    // Realtime stage sync: Follower receives leader scroll
+    effect(() => {
+      const scroll = this.liveSync.remoteScroll();
+      if (
+        scroll &&
+        this.liveSync.isConnected() &&
+        !this.liveSync.isLeader() &&
+        !this.isScrolling()
+      ) {
+        const container = this.getScrollContainer();
+        if (container) {
+          const maxScroll = container.scrollHeight - container.clientHeight;
+          const targetTop =
+            scroll.scrollRatio > 0 && maxScroll > 0
+              ? scroll.scrollRatio * maxScroll
+              : scroll.scrollTop;
+          container.scrollTo({ top: targetTop, behavior: 'smooth' });
+        }
+      }
+    });
+
+    // Realtime stage sync: Leader broadcasts throttled scroll on document/container scroll
+    fromEvent(this.document, 'scroll', { passive: true, capture: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        if (!this.liveSync.isConnected() || !this.liveSync.isLeader()) return;
+        const container = this.getScrollContainer();
+        if (!container) return;
+        const target = e.target;
+        if (
+          target === container ||
+          target === this.document ||
+          target === (this.document as any).defaultView
+        ) {
+          this.broadcastCurrentScroll(container);
+        }
+      });
 
     effect(() => {
       if (this.songs.state() === 'idle') this.songs.load();
@@ -494,6 +539,11 @@ export class PracticePageComponent {
         scrollTo: { y: maxScroll },
         duration,
         ease: 'none',
+        onUpdate: () => {
+          if (this.liveSync.isConnected() && this.liveSync.isLeader()) {
+            this.broadcastCurrentScroll(container as HTMLElement);
+          }
+        },
         onComplete: () => {
           this.zone.run(() => this.stopScroll());
         },
@@ -649,17 +699,58 @@ export class PracticePageComponent {
   }
 
   // ---- Live Band Mesh Synchronization ----
+  getScrollContainer(): HTMLElement | null {
+    if (this.isStageMode()) {
+      return (
+        this.document.querySelector('.stage-mode-active .p-now') ||
+        this.document.querySelector('.p-now')
+      );
+    }
+    return (
+      this.document.querySelector('.app-main') ||
+      (this.document.scrollingElement as HTMLElement) ||
+      this.document.documentElement
+    );
+  }
+
+  broadcastCurrentScroll(container: HTMLElement) {
+    if (!this.liveSync.isConnected() || !this.liveSync.isLeader()) return;
+    const now = Date.now();
+    if (now - this.lastBroadcastScrollTs < 80) return;
+    this.lastBroadcastScrollTs = now;
+
+    const scrollTop = container.scrollTop;
+    const maxScroll = container.scrollHeight - container.clientHeight;
+    const scrollRatio = maxScroll > 0 ? scrollTop / maxScroll : 0;
+    this.liveSync.broadcastScroll(scrollTop, scrollRatio);
+  }
+
+  getDefaultSessionId(): string {
+    const currentSetlist = this.p.setlist();
+    return (currentSetlist as any)?.bandId || currentSetlist?.id || 'live-stage-session';
+  }
+
+  joinLiveSession() {
+    const code = this.sessionCode().trim() || this.getDefaultSessionId();
+    this.liveSync.joinSession(code, this.selectedRole(), this.selectedInstrument());
+  }
+
   toggleLiveSession() {
     if (this.liveSync.isConnected()) {
       this.liveSync.leaveSession();
     } else {
-      const currentSetlist = this.p.setlist();
-      const bandId = (currentSetlist as any)?.bandId || currentSetlist?.id || 'live-stage-session';
-      this.liveSync.joinSession(bandId, 'leader');
+      this.joinLiveSession();
     }
   }
 
   sendCue(text: string, type: 'solo' | 'repeat' | 'ending' | 'next' | 'custom' = 'custom') {
     this.liveSync.broadcastStageCue(text, type);
+  }
+
+  sendCustomCue() {
+    const text = this.customCueText().trim();
+    if (!text) return;
+    this.sendCue(text, 'custom');
+    this.customCueText.set('');
   }
 }

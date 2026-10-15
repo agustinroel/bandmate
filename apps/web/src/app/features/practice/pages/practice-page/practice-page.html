@@ -13,6 +13,20 @@
   </div>
 }
 
+<!-- TOP PERSISTENT STAGE HUD PILL -->
+@if (liveSync.isConnected()) {
+  <div
+    class="p-live-hud-pill shadow-sm"
+    [matMenuTriggerFor]="syncMenu"
+    matTooltip="Sala en vivo: clic para ver miembros y señas"
+    aria-label="Indicador de sala en vivo de banda"
+  >
+    <span class="p-status-dot online"></span>
+    <span class="p-hud-title">{{ liveSync.isLeader() ? 'LÍDER' : 'EN VIVO' }}</span>
+    <span class="p-hud-peers" matTooltip="Músicos conectados">{{ liveSync.peerCount() }}</span>
+  </div>
+}
+
 <header class="d-flex align-items-start gap-3 mb-3">
   <div class="bm-mark" aria-hidden="true">
     <mat-icon>sports_guitar</mat-icon>
@@ -290,9 +304,62 @@
           </div>
 
           @if (!liveSync.isConnected()) {
-            <button mat-flat-button color="primary" class="w-100 mb-2" (click)="toggleLiveSession()">
-              <mat-icon>broadcast_on_personal</mat-icon> Iniciar Sala de Escenario
-            </button>
+            <div class="mb-3">
+              <label class="p-sync-label">Código de Sala / Banda</label>
+              <div class="input-group input-group-sm mb-2">
+                <input
+                  type="text"
+                  class="form-control"
+                  [placeholder]="getDefaultSessionId()"
+                  [value]="sessionCode()"
+                  (input)="sessionCode.set($any($event.target).value)"
+                  aria-label="Código de sala de banda"
+                />
+              </div>
+
+              <label class="p-sync-label">Mi Rol en Escenario</label>
+              <div class="btn-group w-100 mb-2" role="group">
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="selectedRole() === 'leader'"
+                  [class.btn-outline-secondary]="selectedRole() !== 'leader'"
+                  (click)="selectedRole.set('leader')"
+                >
+                  <mat-icon class="icon-xs">star</mat-icon> Líder
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="selectedRole() === 'follower'"
+                  [class.btn-outline-secondary]="selectedRole() !== 'follower'"
+                  (click)="selectedRole.set('follower')"
+                >
+                  <mat-icon class="icon-xs">groups</mat-icon> Seguidor
+                </button>
+              </div>
+
+              <label class="p-sync-label">Mi Instrumento</label>
+              <select
+                class="form-select form-select-sm mb-3"
+                [value]="selectedInstrument()"
+                (change)="selectedInstrument.set($any($event.target).value)"
+              >
+                <option value="Guitarra">Guitarra</option>
+                <option value="Bajo">Bajo</option>
+                <option value="Batería">Batería</option>
+                <option value="Teclados">Teclados</option>
+                <option value="Voz">Voz</option>
+                <option value="Viento / Bronce">Viento / Bronce</option>
+                <option value="Percusión">Percusión</option>
+                <option value="Músico">Otro</option>
+              </select>
+
+              <button mat-flat-button color="primary" class="w-100" (click)="joinLiveSession()">
+                <mat-icon>{{ selectedRole() === 'leader' ? 'broadcast_on_personal' : 'login' }}</mat-icon>
+                {{ selectedRole() === 'leader' ? 'Iniciar Sala de Escenario' : 'Unirse a la Sesión' }}
+              </button>
+            </div>
           } @else {
             <div class="d-flex align-items-center justify-content-between p-2 rounded bg-success-subtle border border-success-subtle mb-3">
               <div class="d-flex align-items-center gap-2">
@@ -332,11 +399,30 @@
               </small>
             </div>
 
+            <!-- Instrument Selector -->
+            <div class="mb-3">
+              <label class="p-sync-label">Mi Instrumento</label>
+              <select
+                class="form-select form-select-sm"
+                [value]="liveSync.myInstrument()"
+                (change)="liveSync.setInstrument($any($event.target).value)"
+              >
+                <option value="Guitarra">Guitarra</option>
+                <option value="Bajo">Bajo</option>
+                <option value="Batería">Batería</option>
+                <option value="Teclados">Teclados</option>
+                <option value="Voz">Voz</option>
+                <option value="Viento / Bronce">Viento / Bronce</option>
+                <option value="Percusión">Percusión</option>
+                <option value="Músico">Otro</option>
+              </select>
+            </div>
+
             <!-- Visual Stage Cues (Available for Leader) -->
             @if (liveSync.isLeader()) {
               <div class="mb-3">
                 <label class="p-sync-label">Señas Visuales de Escenario</label>
-                <div class="d-flex flex-wrap gap-1">
+                <div class="d-flex flex-wrap gap-1 mb-2">
                   <button class="btn btn-outline-warning btn-sm" (click)="sendCue('⚡ SOLO EN 4 COMPASES', 'solo')">
                     ⚡ Solo en 4
                   </button>
@@ -350,6 +436,30 @@
                     ⏩ Siguiente
                   </button>
                 </div>
+
+                <!-- Custom Stage Cue Text Input -->
+                <div class="pt-2 border-top border-secondary-subtle">
+                  <label class="p-sync-label mb-1">Seña Personalizada</label>
+                  <div class="input-group input-group-sm">
+                    <input
+                      type="text"
+                      class="form-control"
+                      placeholder="Ej: Coro suave, bajar dinámica..."
+                      [value]="customCueText()"
+                      (input)="customCueText.set($any($event.target).value)"
+                      (keydown.enter)="sendCustomCue()"
+                      aria-label="Mensaje de seña personalizado"
+                    />
+                    <button
+                      class="btn btn-warning"
+                      type="button"
+                      (click)="sendCustomCue()"
+                      [disabled]="!customCueText().trim()"
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                </div>
               </div>
             }
 
@@ -359,7 +469,12 @@
               <div class="p-peers-list">
                 @for (peer of liveSync.peers(); track peer.userId) {
                   <div class="p-peer-row">
-                    <span class="p-peer-name">{{ peer.userName }}</span>
+                    <div class="p-peer-info d-flex align-items-center gap-1">
+                      <span class="p-peer-name">{{ peer.userName }}</span>
+                      <span class="p-peer-inst badge bg-dark-subtle text-secondary-emphasis">
+                        {{ peer.instrument || 'Músico' }}
+                      </span>
+                    </div>
                     <span class="p-peer-role badge" [class.bg-warning]="peer.role === 'leader'" [class.bg-secondary]="peer.role === 'follower'">
                       {{ peer.role === 'leader' ? 'Líder' : 'Seguidor' }}
                     </span>
@@ -436,6 +551,9 @@
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <mat-icon class="p-loop-active-ic">all_inclusive</mat-icon>
             <span class="fw-bold">Bucle A-B Activo</span>
+            @if (loopTrainer.isPaused()) {
+              <span class="p-loop-chip badge-paused text-warning fw-bold">PAUSADO</span>
+            }
             <span class="p-loop-chip">Reps: {{ loopStatus.rep }}</span>
             @if (loopStatus.speedActive) {
               <span class="p-loop-chip bpm-chip">
@@ -448,14 +566,42 @@
               </span>
             }
           </div>
-          <button
-            mat-stroked-button
-            color="warn"
-            class="btn-sm p-loop-stop-btn"
-            (click)="loopTrainer.stopLoop()"
-          >
-            Detener Loop
-          </button>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            @if (loopTrainer.isPaused()) {
+              <button
+                mat-stroked-button
+                color="accent"
+                class="btn-sm p-loop-resume-btn"
+                (click)="loopTrainer.resumeLoop()"
+              >
+                <mat-icon>play_arrow</mat-icon> Reanudar
+              </button>
+            } @else {
+              <button
+                mat-stroked-button
+                class="btn-sm p-loop-pause-btn"
+                (click)="loopTrainer.pauseLoop()"
+              >
+                <mat-icon>pause</mat-icon> Pausar
+              </button>
+            }
+            <button
+              mat-stroked-button
+              class="btn-sm p-loop-reset-btn"
+              (click)="loopTrainer.resetLoop()"
+              matTooltip="Reiniciar repeticiones y BPM"
+            >
+              <mat-icon>restart_alt</mat-icon> Reiniciar
+            </button>
+            <button
+              mat-stroked-button
+              color="warn"
+              class="btn-sm p-loop-stop-btn"
+              (click)="loopTrainer.stopLoop()"
+            >
+              <mat-icon>stop</mat-icon> Detener Loop
+            </button>
+          </div>
         </div>
       }
 

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,11 +8,30 @@ import { MatDividerModule } from '@angular/material/divider';
 import { BandRow } from '../../services/bands.service';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 
+export interface StageRiderSummary {
+  totalChannels: number;
+  monitorMixes: number;
+  iemCount: number;
+  powerDrops: number;
+  minStageDimensions: string;
+}
+
+export interface BookingContact {
+  email?: string;
+  phone?: string;
+  managerName?: string;
+}
+
 export interface BandEpkDialogData {
-  band: BandRow;
+  band: Partial<BandRow> & { name: string; [key: string]: any };
   members: any[];
   songs: any[];
   events: any[];
+  genre?: string;
+  genres?: string[];
+  bookingContact?: BookingContact;
+  stageRiderSummary?: StageRiderSummary;
+  [key: string]: any;
 }
 
 @Component({
@@ -29,7 +48,7 @@ export interface BandEpkDialogData {
   template: `
     <div class="epk-container position-relative">
       <!-- Close Button -->
-      <button mat-icon-button class="epk-close-btn position-absolute top-0 end-0 m-3 z-3" mat-dialog-close>
+      <button mat-icon-button class="epk-close-btn position-absolute top-0 end-0 m-3 z-3 no-print" mat-dialog-close>
         <mat-icon>close</mat-icon>
       </button>
 
@@ -48,6 +67,16 @@ export interface BandEpkDialogData {
               OFFICIAL ELECTRONIC PRESS KIT (EPK)
             </span>
             <h1 class="display-4 fw-black m-0 mb-2">{{ data.band.name }}</h1>
+
+            <!-- Genre Tags -->
+            <div class="d-flex gap-2 flex-wrap mb-3">
+              @for (g of genres(); track g) {
+                <span class="badge bg-white text-dark fw-bold px-3 py-1 rounded-pill shadow-sm">
+                  {{ g }}
+                </span>
+              }
+            </div>
+
             <p class="fs-5 opacity-75 mb-3" style="max-width: 600px;">
               {{ data.band.description || 'Banda profesional de directo, festivales y conciertos.' }}
             </p>
@@ -60,7 +89,7 @@ export interface BandEpkDialogData {
           </div>
         </div>
 
-        <!-- Band Bio Section -->
+        <!-- Band Bio & Stage Rider Summary -->
         <div class="row g-4 mb-4">
           <div class="col-lg-8">
             <h4 class="fw-bold text-dark mb-2">Biografía & Trayectoria</h4>
@@ -92,32 +121,72 @@ export interface BandEpkDialogData {
             </div>
           </div>
 
-          <!-- Quick Facts & Booking Contact -->
+          <!-- Quick Facts, Stage Rider Summary & Booking Contact -->
           <div class="col-lg-4">
-            <div class="p-3 bg-light rounded-4 border h-100">
-              <h5 class="fw-bold text-dark mb-3">Booking & Contacto</h5>
-              <div class="mb-3 small">
-                <div class="text-muted">Representante / Contratación:</div>
-                <div class="fw-bold fs-6">booking&#64;{{ sanitizeName(data.band.name) }}.live</div>
-              </div>
-              <div class="mb-3 small">
-                <div class="text-muted">Teléfono de Producción:</div>
-                <div class="fw-bold fs-6">+34 600 000 000</div>
-              </div>
-              <div class="mb-3 small">
-                <div class="text-muted">Rider Técnico & Stage Plot:</div>
-                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-                  ✓ Disponible en Bandmate
-                </span>
+            <div class="p-3 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+              <div>
+                <!-- Dynamic Technical Stage Rider Summary -->
+                <div class="rider-summary-card p-3 bg-white rounded-3 border mb-3">
+                  <div class="small fw-bold text-uppercase text-secondary mb-2 d-flex align-items-center gap-1">
+                    <mat-icon class="fs-6">settings_input_composite</mat-icon>
+                    Ficha Técnica de Escenario
+                  </div>
+                  <div class="d-flex flex-column gap-2 small">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Canales FOH:</span>
+                      <span class="badge bg-dark text-white fw-bold">{{ stageRider().totalChannels }} Canales</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Envíos Monitor:</span>
+                      <span class="badge bg-secondary text-white">{{ stageRider().monitorMixes }} Envíos</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Líneas IEM:</span>
+                      <span class="badge bg-info-subtle text-dark border">{{ stageRider().iemCount }} In-Ear</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Tomas Corriente:</span>
+                      <span class="badge bg-warning-subtle text-dark border">{{ stageRider().powerDrops }}x 220V</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Escenario Mín.:</span>
+                      <span class="fw-bold text-dark">{{ stageRider().minStageDimensions }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Booking Contact Info -->
+                <h5 class="fw-bold text-dark mb-2">Booking & Contacto</h5>
+                <div class="mb-2 small">
+                  <div class="text-muted">Representante:</div>
+                  <div class="fw-bold fs-6">{{ bookingContact().managerName }}</div>
+                </div>
+                <div class="mb-2 small">
+                  <div class="text-muted">Email Oficial:</div>
+                  <div class="fw-bold fs-6">{{ bookingContact().email }}</div>
+                </div>
+                <div class="mb-3 small">
+                  <div class="text-muted">Teléfono de Producción:</div>
+                  <div class="fw-bold fs-6">{{ bookingContact().phone }}</div>
+                </div>
               </div>
 
-              <hr class="my-3" />
-
-              <div class="d-flex flex-column gap-2">
+              <!-- Action Buttons -->
+              <div class="d-flex flex-column gap-2 pt-2 border-top no-print">
                 <button mat-flat-button color="primary" class="w-100 rounded-pill" (click)="printEpk()">
                   <mat-icon class="me-1">print</mat-icon>
                   Imprimir / Guardar PDF
                 </button>
+                <div class="d-flex gap-2">
+                  <button mat-stroked-button class="flex-grow-1 rounded-pill" (click)="downloadEpkTxt()">
+                    <mat-icon class="me-1">download</mat-icon>
+                    Descargar .txt
+                  </button>
+                  <button mat-stroked-button class="flex-grow-1 rounded-pill" (click)="copyEpkText()">
+                    <mat-icon class="me-1">content_copy</mat-icon>
+                    Copiar Dossier
+                  </button>
+                </div>
                 <button mat-stroked-button class="w-100 rounded-pill" (click)="copyShareLink()">
                   <mat-icon class="me-1">share</mat-icon>
                   Copiar Enlace Público
@@ -218,6 +287,7 @@ export interface BandEpkDialogData {
         box-shadow: none !important;
       }
       .epk-close-btn,
+      .no-print,
       button {
         display: none !important;
       }
@@ -228,6 +298,40 @@ export class BandEpkDialogComponent {
   readonly data: BandEpkDialogData = inject(MAT_DIALOG_DATA);
   private dialogRef = inject(MatDialogRef<BandEpkDialogComponent>);
   private notify = inject(NotificationsService);
+
+  readonly genres = computed<string[]>(() => {
+    if (this.data.genres && this.data.genres.length > 0) {
+      return this.data.genres;
+    }
+    if (this.data.genre) {
+      return this.data.genre.split(/[,/|]/).map((g) => g.trim()).filter(Boolean);
+    }
+    return ['Rock / Alternativo', 'Indie', 'Directo'];
+  });
+
+  readonly stageRider = computed<StageRiderSummary>(() => {
+    if (this.data.stageRiderSummary) {
+      return this.data.stageRiderSummary;
+    }
+    const count = this.data.members?.length || 4;
+    return {
+      totalChannels: Math.max(6, count * 3),
+      monitorMixes: Math.max(2, Math.min(6, count)),
+      iemCount: Math.max(1, count),
+      powerDrops: Math.max(2, Math.ceil(count / 2)),
+      minStageDimensions: '8m x 6m (Mínimo)',
+    };
+  });
+
+  readonly bookingContact = computed<Required<BookingContact>>(() => {
+    const b = this.data.bookingContact;
+    const fallbackEmail = `booking@${this.sanitizeName(this.data.band.name)}.live`;
+    return {
+      email: b?.email || fallbackEmail,
+      phone: b?.phone || '+34 600 000 000',
+      managerName: b?.managerName || 'Producción & Booking',
+    };
+  });
 
   sanitizeName(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -245,5 +349,77 @@ export class BandEpkDialogComponent {
     navigator.clipboard?.writeText(url).then(() => {
       this.notify.success('¡Enlace público del EPK copiado al portapapeles!');
     });
+  }
+
+  generateEpkPlainText(): string {
+    const b = this.data.band;
+    const rider = this.stageRider();
+    const contact = this.bookingContact();
+    const lines: string[] = [
+      '================================================================================',
+      `${b.name.toUpperCase()} — OFFICIAL ELECTRONIC PRESS KIT (EPK)`,
+      '================================================================================',
+      `Estilo / Géneros: ${this.genres().join(' • ')}`,
+      `Descripción: ${b.description || 'Banda profesional de directo, festivales y salas.'}`,
+      `Contacto Booking: ${contact.managerName} (${contact.email} / ${contact.phone})`,
+      '================================================================================',
+      '',
+      '--- FORMACIÓN / MÚSICOS ---',
+    ];
+
+    (this.data.members || []).forEach((m) => {
+      const name = m.full_name || m.username || 'Músico';
+      const inst = m.instruments?.join(', ') || m.roles?.join(', ') || 'Instrumentista';
+      lines.push(`• ${name} — ${inst}`);
+    });
+
+    lines.push('');
+    lines.push('--- FICHA TÉCNICA RESUMIDA (STAGE RIDER SUMMARY) ---');
+    lines.push(`• Canales de Entrada FOH: ${rider.totalChannels}`);
+    lines.push(`• Envíos de Monitores: ${rider.monitorMixes}`);
+    lines.push(`• Sistemas In-Ear Monitor (IEM): ${rider.iemCount}`);
+    lines.push(`• Tomas de Corriente: ${rider.powerDrops}x 220V Schuko`);
+    lines.push(`• Dimensiones de Escenario Mínimas: ${rider.minStageDimensions}`);
+
+    if (this.data.events && this.data.events.length > 0) {
+      lines.push('');
+      lines.push('--- PRÓXIMOS CONCIERTOS & GIRA ---');
+      this.data.events.slice(0, 5).forEach((ev) => {
+        lines.push(`• ${ev.event_date || ''} | ${ev.title} — ${ev.location_name || ''}`);
+      });
+    }
+
+    if (this.data.songs && this.data.songs.length > 0) {
+      lines.push('');
+      lines.push('--- REPERTORIO DESTACADO ---');
+      this.data.songs.slice(0, 6).forEach((s) => {
+        lines.push(`• "${s.title}" — ${s.artist || b.name}`);
+      });
+    }
+
+    lines.push('');
+    lines.push('================================================================================');
+    lines.push('Documento Oficial generado por Bandmate Live • www.bandmate.live');
+    return lines.join('\n');
+  }
+
+  copyEpkText() {
+    const text = this.generateEpkPlainText();
+    navigator.clipboard?.writeText(text).then(() => {
+      this.notify.success('Dossier EPK copiado al portapapeles');
+    });
+  }
+
+  downloadEpkTxt() {
+    const text = this.generateEpkPlainText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const slug = this.sanitizeName(this.data.band.name) || 'band';
+    a.download = `${slug}_epk_dossier.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.notify.success('Dossier EPK descargado correctamente');
   }
 }

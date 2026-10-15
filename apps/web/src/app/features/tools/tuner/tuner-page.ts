@@ -942,15 +942,82 @@ export class TunerPageComponent implements OnDestroy {
 
   readonly strobeCanvasRef = viewChild<ElementRef<HTMLCanvasElement>>('strobeCanvas');
 
+  private readonly STORAGE_KEY_A4 = 'bandmate_tuner_a4';
+  private readonly STORAGE_KEY_PRESET = 'bandmate_tuner_preset';
+  private readonly STORAGE_KEY_MODE = 'bandmate_tuner_mode';
+
+  private getInitialA4(): number {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const val = localStorage.getItem(this.STORAGE_KEY_A4);
+        if (val) {
+          const parsed = Number(val);
+          if (!isNaN(parsed) && parsed >= this.minA4 && parsed <= this.maxA4) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+    return 440;
+  }
+
+  private getInitialPresetId(): string {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const val = localStorage.getItem(this.STORAGE_KEY_PRESET);
+        if (val && this.presets.some((p) => p.id === val)) {
+          return val;
+        }
+      }
+    } catch {}
+    return 'guitar-standard';
+  }
+
+  private getInitialMode(): 'needle' | 'strobe' {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const val = localStorage.getItem(this.STORAGE_KEY_MODE);
+        if (val === 'needle' || val === 'strobe') {
+          return val;
+        }
+      }
+    } catch {}
+    return 'needle';
+  }
+
+  private persistA4(val: number) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY_A4, String(val));
+      }
+    } catch {}
+  }
+
+  private persistPreset(presetId: string) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY_PRESET, presetId);
+      }
+    } catch {}
+  }
+
+  private persistMode(mode: 'needle' | 'strobe') {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY_MODE, mode);
+      }
+    } catch {}
+  }
+
   // State Signals
   readonly isListening = signal(false);
   readonly currentNote = signal<string | null>(null);
   readonly currentCents = signal<number>(0);
   readonly detectedPitch = signal<number | null>(null);
   readonly targetFrequency = signal<number | null>(null);
-  readonly tunerMode = signal<'needle' | 'strobe'>('needle');
-  readonly selectedPresetId = signal<string>('guitar-standard');
-  readonly a4Frequency = signal<number>(440);
+  readonly tunerMode = signal<'needle' | 'strobe'>(this.getInitialMode());
+  readonly selectedPresetId = signal<string>(this.getInitialPresetId());
+  readonly a4Frequency = signal<number>(this.getInitialA4());
 
   // Computed Values
   readonly activePreset = computed(() => {
@@ -994,6 +1061,7 @@ export class TunerPageComponent implements OnDestroy {
 
   setTunerMode(mode: 'needle' | 'strobe') {
     this.tunerMode.set(mode);
+    this.persistMode(mode);
     if (mode === 'strobe') {
       // Allow DOM to render canvas before starting loop
       setTimeout(() => this.startStrobeRenderLoop(), 50);
@@ -1002,22 +1070,27 @@ export class TunerPageComponent implements OnDestroy {
 
   selectPreset(presetId: string) {
     this.selectedPresetId.set(presetId);
+    this.persistPreset(presetId);
   }
 
   adjustA4(delta: number) {
     const next = Math.min(this.maxA4, Math.max(this.minA4, this.a4Frequency() + delta));
     this.a4Frequency.set(next);
+    this.persistA4(next);
   }
 
   onA4SliderChange(event: Event) {
     const val = Number((event.target as HTMLInputElement).value);
     if (!isNaN(val)) {
-      this.a4Frequency.set(Math.min(this.maxA4, Math.max(this.minA4, val)));
+      const clamped = Math.min(this.maxA4, Math.max(this.minA4, val));
+      this.a4Frequency.set(clamped);
+      this.persistA4(clamped);
     }
   }
 
   resetA4() {
     this.a4Frequency.set(440);
+    this.persistA4(440);
   }
 
   async startTuner() {

@@ -9,6 +9,7 @@ describe('TunerPageComponent', () => {
   let fixture: ComponentFixture<TunerPageComponent>;
 
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [TunerPageComponent],
       providers: [provideRouter([]), provideHttpClient()],
@@ -21,6 +22,7 @@ describe('TunerPageComponent', () => {
 
   afterEach(() => {
     component.ngOnDestroy();
+    localStorage.clear();
   });
 
   it('should create the tuner component', () => {
@@ -104,5 +106,68 @@ describe('TunerPageComponent', () => {
     // Slightly flat A (437.5 Hz) -> negative cents
     const centsFlat = component.centsOffFromPitch(437.5, 69, 440);
     expect(centsFlat).toBeLessThan(0);
+  });
+
+  it('should persist A4 frequency to localStorage when adjusted, changed via slider, or reset', () => {
+    component.adjustA4(3);
+    expect(component.a4Frequency()).toBe(443);
+    expect(localStorage.getItem('bandmate_tuner_a4')).toBe('443');
+
+    component.onA4SliderChange({ target: { value: '435' } } as unknown as Event);
+    expect(component.a4Frequency()).toBe(435);
+    expect(localStorage.getItem('bandmate_tuner_a4')).toBe('435');
+
+    component.resetA4();
+    expect(component.a4Frequency()).toBe(440);
+    expect(localStorage.getItem('bandmate_tuner_a4')).toBe('440');
+  });
+
+  it('should initialize A4 frequency from localStorage if present and in valid range', async () => {
+    localStorage.setItem('bandmate_tuner_a4', '436');
+    const newFixture = TestBed.createComponent(TunerPageComponent);
+    const newComponent = newFixture.componentInstance;
+    await newFixture.whenStable();
+
+    expect(newComponent.a4Frequency()).toBe(436);
+    newComponent.ngOnDestroy();
+  });
+
+  it('should ignore invalid or out-of-range A4 values in localStorage and fallback to 440 Hz', async () => {
+    localStorage.setItem('bandmate_tuner_a4', '480'); // exceeds max 446
+    const fixtureHigh = TestBed.createComponent(TunerPageComponent);
+    const compHigh = fixtureHigh.componentInstance;
+    await fixtureHigh.whenStable();
+    expect(compHigh.a4Frequency()).toBe(440);
+    compHigh.ngOnDestroy();
+
+    localStorage.setItem('bandmate_tuner_a4', '400'); // below min 432
+    const fixtureLow = TestBed.createComponent(TunerPageComponent);
+    const compLow = fixtureLow.componentInstance;
+    await fixtureLow.whenStable();
+    expect(compLow.a4Frequency()).toBe(440);
+    compLow.ngOnDestroy();
+
+    localStorage.setItem('bandmate_tuner_a4', 'non-numeric');
+    const fixtureInvalid = TestBed.createComponent(TunerPageComponent);
+    const compInvalid = fixtureInvalid.componentInstance;
+    await fixtureInvalid.whenStable();
+    expect(compInvalid.a4Frequency()).toBe(440);
+    compInvalid.ngOnDestroy();
+  });
+
+  it('should persist selected preset and tuner mode in localStorage', async () => {
+    component.selectPreset('guitar-dadgad');
+    expect(localStorage.getItem('bandmate_tuner_preset')).toBe('guitar-dadgad');
+
+    component.setTunerMode('strobe');
+    expect(localStorage.getItem('bandmate_tuner_mode')).toBe('strobe');
+
+    const newFixture = TestBed.createComponent(TunerPageComponent);
+    const newComponent = newFixture.componentInstance;
+    await newFixture.whenStable();
+
+    expect(newComponent.selectedPresetId()).toBe('guitar-dadgad');
+    expect(newComponent.tunerMode()).toBe('strobe');
+    newComponent.ngOnDestroy();
   });
 });

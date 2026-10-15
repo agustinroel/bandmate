@@ -101,4 +101,51 @@ describe('SetlistExportDialogComponent', () => {
     const textWithoutKeys = component.generatePlainText();
     expect(textWithoutKeys).not.toContain('[A]');
   });
+
+  it('should support custom stage font size selection (giant mode)', () => {
+    expect(component.fontSize).toBe('large');
+
+    component.fontSize = 'giant';
+    fixture.detectChanges();
+    expect(component.fontSize).toBe('giant');
+    const compiled = fixture.nativeElement as HTMLElement;
+    const listEl = compiled.querySelector('.stage-songs-list');
+    expect(listEl?.classList.contains('font-size-giant')).toBe(true);
+  });
+
+  it('should support standard stage font size selection', () => {
+    component.fontSize = 'standard';
+    fixture.detectChanges();
+    expect(component.fontSize).toBe('standard');
+    const compiled = fixture.nativeElement as HTMLElement;
+    const listEl = compiled.querySelector('.stage-songs-list');
+    expect(listEl?.classList.contains('font-size-standard')).toBe(true);
+  });
+
+  it('should prominently render watermark as header alert, high-contrast badge, and background overlay', () => {
+    component.watermark = 'ESCENARIO / DIRECTO 2026 - CONFIDENCIAL';
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const headerAlert = compiled.querySelector('.watermark-header-alert');
+    const badge = compiled.querySelector('.watermark-badge');
+    const overlay = compiled.querySelector('.stage-watermark-overlay');
+
+    expect(headerAlert).toBeTruthy();
+    expect(headerAlert?.textContent).toContain('ESCENARIO / DIRECTO 2026 - CONFIDENCIAL');
+    expect(badge).toBeTruthy();
+    expect(badge?.textContent).toContain('ESCENARIO / DIRECTO 2026 - CONFIDENCIAL');
+    expect(overlay).toBeTruthy();
+    expect(overlay?.textContent).toContain('ESCENARIO / DIRECTO 2026 - CONFIDENCIAL');
+
+    const plainText = component.generatePlainText();
+    expect(plainText).toContain('[ESCENARIO / DIRECTO 2026 - CONFIDENCIAL]');
+  });
+
+  it('should trigger window.print when printStageSheet is invoked', () => {
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    component.printStageSheet();
+    expect(printSpy).toHaveBeenCalled();
+    printSpy.mockRestore();
+  });
 });

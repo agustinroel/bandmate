@@ -28,6 +28,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/legal/pages/terms-page/terms-page').then((m) => m.TermsPageComponent),
   },
+  {
+    path: 'epk/:id',
+    loadComponent: () =>
+      import('./features/bands/pages/public-epk-page/public-epk-page').then(
+        (m) => m.PublicEpkPageComponent,
+      ),
+  },
 
   // app
   {

@@ -1028,10 +1028,93 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 8px;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.15);
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 12px;
+
+    .p-peer-info {
+      min-width: 0;
+      .p-peer-name {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .p-peer-inst {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--bm-accent, #e9c46a);
+      }
+    }
+  }
+}
+
+// Persistent Top Stage HUD Pill
+.p-live-hud-pill {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(13, 27, 42, 0.92);
+  border: 1px solid rgba(46, 196, 182, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    background: rgba(13, 27, 42, 1);
+    border-color: #2ec4b6;
+    box-shadow: 0 0 16px rgba(46, 196, 182, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .p-status-dot.online {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2ec4b6;
+    box-shadow: 0 0 8px #2ec4b6;
+    display: inline-block;
+  }
+
+  .p-hud-title {
+    letter-spacing: 0.06em;
+    font-size: 0.75rem;
+    color: #2ec4b6;
+    font-weight: 800;
+  }
+
+  .p-hud-peers {
+    background: rgba(46, 196, 182, 0.2);
+    color: #2ec4b6;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 640px) {
+  .p-live-hud-pill {
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
   }
 }
 

@@ -7,12 +7,22 @@ export interface LoopSectionOption {
   type: string;
 }
 
+export interface LoopStatusSummary {
+  rep: number;
+  currentBpm: number;
+  targetBpm: number;
+  speedActive: boolean;
+  isTargetReached: boolean;
+  isPaused: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LoopTrainerService {
   private readonly metronome = inject(MetronomeService);
 
   // Core Loop State
   readonly isEnabled = signal(false);
+  readonly isPaused = signal(false);
   readonly startSectionId = signal<string | null>(null);
   readonly endSectionId = signal<string | null>(null);
   readonly barsPerLoop = signal(4); // default 4 bars per cycle
@@ -30,7 +40,7 @@ export class LoopTrainerService {
   private onLoopCycleCallback: ((startId: string) => void) | null = null;
 
   // Status Summary for UI
-  readonly statusSummary = computed(() => {
+  readonly statusSummary = computed<LoopStatusSummary | null>(() => {
     if (!this.isEnabled()) return null;
     const currentBpm = this.metronome.bpm();
     const target = this.targetBpm();
@@ -43,8 +53,10 @@ export class LoopTrainerService {
       targetBpm: target,
       speedActive,
       isTargetReached: speedActive && currentBpm >= target,
+      isPaused: this.isPaused(),
     };
   });
+  readonly summary = this.statusSummary;
 
   constructor() {
     // Monitor Metronome bar progression strictly synchronized with Tone.Transport
@@ -52,7 +64,7 @@ export class LoopTrainerService {
       const currentBar = this.metronome.bar();
       const isPlaying = this.metronome.isPlaying();
 
-      if (this.isEnabled() && isPlaying && currentBar > this.initialBar) {
+      if (this.isEnabled() && !this.isPaused() && isPlaying && currentBar > this.initialBar) {
         const elapsedBars = currentBar - this.initialBar;
         const cycleLength = Math.max(1, this.barsPerLoop());
 
@@ -105,6 +117,7 @@ export class LoopTrainerService {
 
   startLoop() {
     this.isEnabled.set(true);
+    this.isPaused.set(false);
     this.currentRepetition.set(1);
     this.initialBar = this.metronome.bar();
 
@@ -127,6 +140,28 @@ export class LoopTrainerService {
 
   stopLoop() {
     this.isEnabled.set(false);
+    this.isPaused.set(false);
+  }
+
+  pauseLoop() {
+    if (!this.isEnabled()) return;
+    this.isPaused.set(true);
+    this.metronome.stop();
+  }
+
+  resumeLoop() {
+    if (!this.isEnabled() || !this.isPaused()) return;
+    this.isPaused.set(false);
+    this.initialBar = this.metronome.bar();
+    this.metronome.start();
+  }
+
+  resetLoop() {
+    this.currentRepetition.set(1);
+    this.initialBar = this.metronome.bar();
+    if (this.isSpeedTrainer()) {
+      this.metronome.setBpm(this.initialBpm());
+    }
   }
 
   toggleLoop() {

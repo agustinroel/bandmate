@@ -50,6 +50,7 @@ export class LiveBandSyncService implements OnDestroy {
   // State Signals
   readonly isConnected = signal(false);
   readonly myRole = signal<StageRole>('follower');
+  readonly myInstrument = signal<string>('Guitar');
   readonly peers = signal<LiveStagePeer[]>([]);
   readonly activeCue = signal<StageCue | null>(null);
 
@@ -73,6 +74,7 @@ export class LiveBandSyncService implements OnDestroy {
     this.leaveSession();
     this.currentBandId = bandId;
     this.myRole.set(initialRole);
+    this.myInstrument.set(instrument);
 
     const user = this.auth.user();
     const userId = user?.id || 'anon-' + Math.random().toString(36).substring(2, 7);
@@ -157,6 +159,20 @@ export class LiveBandSyncService implements OnDestroy {
         userId: user?.id,
         userName: user?.email?.split('@')[0],
         role,
+        instrument: this.myInstrument(),
+      });
+    }
+  }
+
+  setInstrument(instrument: string) {
+    this.myInstrument.set(instrument);
+    if (this.channel && this.isConnected()) {
+      const user = this.auth.user();
+      this.channel.track({
+        userId: user?.id,
+        userName: user?.email?.split('@')[0],
+        role: this.myRole(),
+        instrument,
       });
     }
   }
@@ -236,6 +252,9 @@ export class LiveBandSyncService implements OnDestroy {
     this.isConnected.set(false);
     this.currentBandId = null;
     this.peers.set([]);
+    this.remoteScroll.set(null);
+    this.remoteSongChange.set(null);
+    this.remoteSectionJump.set(null);
     this.dismissCue();
   }
 

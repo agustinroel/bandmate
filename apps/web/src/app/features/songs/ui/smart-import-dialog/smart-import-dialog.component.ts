@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,9 +10,15 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { parseSmartTab, ParsedSmartSong } from '@bandmate/shared';
 import { SongsStore } from '../../state/songs-store';
+import { BandsService } from '../../../bands/services/bands.service';
 import { Router } from '@angular/router';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { firstValueFrom } from 'rxjs';
+
+export interface SmartImportDialogData {
+  targetBandId?: string;
+  targetBandName?: string;
+}
 
 export interface BulkImportItem {
   id: string;
@@ -48,8 +54,22 @@ export interface BulkImportItem {
         <div class="d-flex align-items-center gap-2">
           <mat-icon class="text-primary fs-3">auto_fix_high</mat-icon>
           <div>
-            <h2 class="m-0 fs-4 fw-bold">Importador Universal & Masivo</h2>
-            <div class="text-muted small">ChordPro, OnSong, CifraClub, Ultimate Guitar y texto plano</div>
+            <div class="d-flex align-items-center gap-2">
+              <h2 class="m-0 fs-4 fw-bold">Importador Universal & Masivo</h2>
+              @if (targetBandName() || data?.targetBandId) {
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center gap-1">
+                  <mat-icon style="font-size: 14px; width: 14px; height: 14px;">groups</mat-icon>
+                  {{ targetBandName() || 'Banda Asignada' }}
+                </span>
+              }
+            </div>
+            <div class="text-muted small">
+              @if (targetBandName() || data?.targetBandId) {
+                Importando directamente para el repertorio de <strong>{{ targetBandName() || 'la banda' }}</strong>
+              } @else {
+                ChordPro, OnSong, CifraClub, Ultimate Guitar y texto plano
+              }
+            </div>
           </div>
         </div>
         <button mat-icon-button mat-dialog-close>
@@ -147,6 +167,15 @@ export interface BulkImportItem {
 
       <!-- MODE 2: BULK FILES UPLOAD -->
       @if (mode() === 'bulk') {
+        @if (targetBandName() || data?.targetBandId) {
+          <div class="alert alert-primary py-2 px-3 mb-3 d-flex align-items-center gap-2 small">
+            <mat-icon class="text-primary" style="font-size: 18px; width: 18px; height: 18px;">groups</mat-icon>
+            <span>
+              Contexto de Banda activo: Las canciones se guardarán y compartirán automáticamente en el repertorio de <strong>{{ targetBandName() || 'la banda' }}</strong>.
+            </span>
+          </div>
+        }
+
         <div
           class="bulk-upload-dropzone p-4 text-center border border-2 border-dashed rounded-3 mb-3 bg-light"
           [class.drag-active]="isDraggingOver()"
@@ -270,7 +299,11 @@ export interface BulkImportItem {
             (click)="importSelectedBulk()"
           >
             <mat-icon class="me-1">library_add</mat-icon>
-            {{ isSavingBulk() ? 'Importando canciones...' : 'Importar ' + selectedBulkCount() + ' Canciones' }}
+            {{
+              isSavingBulk()
+                ? 'Importando canciones...'
+                : 'Importar ' + selectedBulkCount() + ' Canciones' + (targetBandName() ? ' a ' + targetBandName() : '')
+            }}
           </button>
         </div>
       }
@@ -299,13 +332,31 @@ export interface BulkImportItem {
     }
   `],
 })
-export class SmartImportDialogComponent {
+export class SmartImportDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<SmartImportDialogComponent>);
+  readonly data = inject<SmartImportDialogData | null>(MAT_DIALOG_DATA, { optional: true });
   private songsStore = inject(SongsStore);
+  private bandsService = inject(BandsService);
   private router = inject(Router);
   private notify = inject(NotificationsService);
 
   readonly mode = signal<'single' | 'bulk'>('single');
+  readonly targetBandName = signal<string | undefined>(this.data?.targetBandName);
+
+  ngOnInit() {
+    if (this.data?.targetBandId && !this.targetBandName()) {
+      this.bandsService.get(this.data.targetBandId).subscribe({
+        next: (band: any) => {
+          if (band?.name) {
+            this.targetBandName.set(band.name);
+          }
+        },
+        error: (err: any) => {
+          console.warn('Could not fetch band details for import dialog:', err);
+        },
+      });
+    }
+  }
 
   // Single mode state
   rawText = '';
@@ -394,9 +445,16 @@ Oh, stand, stand by me`;
       notes: p.capo ? `Capo ${p.capo}. Importado con Smart Parser` : 'Importado con Smart Parser',
       sections: p.sections,
     }).subscribe({
-      next: (song: any) => {
+      next: async (song: any) => {
+        if (this.data?.targetBandId && song?.id) {
+          try {
+            await firstValueFrom(this.bandsService.shareSong(this.data.targetBandId, song.id));
+          } catch (bandErr) {
+            console.warn(`Failed to share song ${song.id} with band ${this.data.targetBandId}:`, bandErr);
+          }
+        }
         this.isSaving.set(false);
-        this.dialogRef.close();
+        this.dialogRef.close(song);
         if (song?.id) {
           this.router.navigate(['/songs', song.id]);
         }
@@ -518,7 +576,7 @@ Oh, stand, stand by me`;
       this.updateItemStatus(item.id, 'saving');
 
       try {
-        await firstValueFrom(
+        const createdSong: any = await firstValueFrom(
           this.songsStore.create({
             title: item.title,
             artist: item.artist,
@@ -531,6 +589,15 @@ Oh, stand, stand by me`;
             sections: item.parsed.sections,
           })
         );
+
+        if (this.data?.targetBandId && createdSong?.id) {
+          try {
+            await firstValueFrom(this.bandsService.shareSong(this.data.targetBandId, createdSong.id));
+          } catch (bandErr) {
+            console.warn(`Failed to share song ${createdSong.id} to band ${this.data.targetBandId}:`, bandErr);
+          }
+        }
+
         this.updateItemStatus(item.id, 'done');
         successCount++;
       } catch (err: any) {
@@ -542,11 +609,13 @@ Oh, stand, stand by me`;
     }
 
     this.isSavingBulk.set(false);
-    this.notify.success(`¡Se han importado ${successCount} canciones con éxito!`);
+    const bandLabel = this.targetBandName() || (this.data?.targetBandId ? 'la banda' : '');
+    const bandSuffix = bandLabel ? ` y añadidas a ${bandLabel}` : '';
+    this.notify.success(`¡Se han importado ${successCount} canciones con éxito${bandSuffix}!`);
 
     // Auto-close if all imported successfully
     if (successCount === itemsToImport.length) {
-      setTimeout(() => this.dialogRef.close(), 600);
+      setTimeout(() => this.dialogRef.close({ count: successCount, targetBandId: this.data?.targetBandId }), 600);
     }
   }
 

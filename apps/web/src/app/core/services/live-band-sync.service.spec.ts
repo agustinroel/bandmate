@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { LiveBandSyncService } from './live-band-sync.service';
 import { supabase } from '../supabase/supabase.client';
 import { AuthStore } from '../auth/auth.store';
+
+try {
+  TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+} catch {
+  // Already initialized in ng test
+}
 
 describe('LiveBandSyncService', () => {
   let service: LiveBandSyncService;
@@ -10,6 +17,7 @@ describe('LiveBandSyncService', () => {
   let handlers: Record<string, Function>;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     handlers = {};
     mockChannel = {
       on: vi.fn((type: string, filter: any, callback: Function) => {
@@ -46,6 +54,7 @@ describe('LiveBandSyncService', () => {
 
   afterEach(() => {
     service.leaveSession();
+    TestBed.resetTestingModule();
     vi.restoreAllMocks();
   });
 
@@ -171,14 +180,123 @@ describe('LiveBandSyncService', () => {
     expect(service.activeCue()?.text).toBe('ENDING ON 4');
   });
 
-  it('should disconnect cleanly and reset state on leaveSession', () => {
+  it('should handle incoming scroll_sync broadcast when follower, but ignore when leader', () => {
+    service.joinSession('band-rock-99', 'follower');
+
+    handlers['broadcast:scroll_sync']?.({
+      payload: { scrollTop: 320, scrollRatio: 0.45 },
+    });
+    expect(service.remoteScroll()).toEqual({
+      scrollTop: 320,
+      scrollRatio: 0.45,
+    });
+
+    // When leader, incoming remote scroll should NOT overwrite leader's scroll
+    service.setRole('leader');
+    handlers['broadcast:scroll_sync']?.({
+      payload: { scrollTop: 999, scrollRatio: 0.99 },
+    });
+    expect(service.remoteScroll()).toEqual({
+      scrollTop: 320,
+      scrollRatio: 0.45,
+    });
+  });
+
+  it('should broadcast custom stage cue with text and type custom', () => {
     service.joinSession('band-rock-99', 'leader');
-    expect(service.isConnected()).toBe(true);
+
+    service.broadcastStageCue('SOLO DE TECLADOS 8 BARES', 'custom');
+
+    const cue = service.activeCue();
+    expect(cue).not.toBeNull();
+    expect(cue?.text).toBe('SOLO DE TECLADOS 8 BARES');
+    expect(cue?.type).toBe('custom');
+
+    expect(mockChannel.send).toHaveBeenCalledWith({
+      type: 'broadcast',
+      event: 'stage_cue',
+      payload: expect.objectContaining({
+        text: 'SOLO DE TECLADOS 8 BARES',
+        type: 'custom',
+      }),
+    });
+  });
+
+  it('should track presence with peer instruments and reflect in peers signal', () => {
+    service.joinSession('band-rock-99', 'follower', 'Bass');
+
+    mockChannel.presenceState.mockReturnValue({
+      'usr-1': [{ userId: 'usr-1', userName: 'Alex', role: 'leader', instrument: 'Lead Guitar' }],
+      'usr-2': [{ userId: 'usr-2', userName: 'John', role: 'follower', instrument: 'Drums' }],
+    });
+
+    handlers['presence:sync']?.();
+
+    expect(service.peers()).toHaveLength(2);
+    expect(service.peers()[0]).toEqual({
+      userId: 'usr-1',
+      userName: 'Alex',
+      role: 'leader',
+      instrument: 'Lead Guitar',
+    });
+    expect(service.peers()[1]).toEqual({
+      userId: 'usr-2',
+      userName: 'John',
+      role: 'follower',
+      instrument: 'Drums',
+    });
+    expect(service.peerCount()).toBe(2);
+  });
+
+  it('should update instrument dynamically and preserve it across role changes', () => {
+    service.joinSession('band-rock-99', 'follower', 'Bass');
+    expect(service.myInstrument()).toBe('Bass');
+
+    service.setInstrument('Keys');
+    expect(service.myInstrument()).toBe('Keys');
+    expect(mockChannel.track).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: 'follower',
+        instrument: 'Keys',
+      })
+    );
+
+    service.setRole('leader');
+    expect(mockChannel.track).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: 'leader',
+        instrument: 'Keys',
+      })
+    );
+  });
+
+  it('should prevent follower from broadcasting scroll or section jump', () => {
+    service.joinSession('band-rock-99', 'follower');
+
+    service.broadcastScroll(100, 0.2);
+    expect(mockChannel.send).not.toHaveBeenCalled();
+
+    service.broadcastSectionJump('sec-intro');
+    expect(mockChannel.send).not.toHaveBeenCalled();
+  });
+
+  it('should disconnect cleanly and reset all remote streams on leaveSession', () => {
+    service.joinSession('band-rock-99', 'follower');
+    handlers['broadcast:scroll_sync']?.({ payload: { scrollTop: 100, scrollRatio: 0.2 } });
+    handlers['broadcast:song_change']?.({ payload: { songId: 's-1' } });
+    handlers['broadcast:section_jump']?.({ payload: { sectionId: 'sec-1' } });
+
+    expect(service.remoteScroll()).not.toBeNull();
+    expect(service.remoteSongChange()).not.toBeNull();
+    expect(service.remoteSectionJump()).not.toBeNull();
 
     service.leaveSession();
     expect(mockChannel.unsubscribe).toHaveBeenCalled();
     expect(service.isConnected()).toBe(false);
     expect(service.peers()).toEqual([]);
     expect(service.activeCue()).toBeNull();
+    expect(service.remoteScroll()).toBeNull();
+    expect(service.remoteSongChange()).toBeNull();
+    expect(service.remoteSectionJump()).toBeNull();
   });
 });

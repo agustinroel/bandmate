@@ -12,6 +12,18 @@ import { Setlist, Song } from '@bandmate/shared';
 import { NotificationsService } from '../../../shared/ui/notifications/notifications.service';
 
 export type StageExportLayout = 'giant' | 'structured' | 'tech';
+export type StageFontSize = 'standard' | 'large' | 'giant';
+
+export interface SetlistExportOptions {
+  bandName: string;
+  watermark: string;
+  layout: StageExportLayout;
+  fontSize: StageFontSize;
+  showKeys: boolean;
+  showBpms: boolean;
+  showDurations: boolean;
+  showNotes: boolean;
+}
 
 export interface SetlistExportDialogData {
   setlist: Setlist;
@@ -50,7 +62,7 @@ export interface SetlistExportDialogData {
 
       <!-- Settings Toolbar -->
       <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-bold mb-1">Nombre de la Banda / Cabecera</label>
           <input
             type="text"
@@ -59,7 +71,7 @@ export interface SetlistExportDialogData {
             placeholder="Ej. The Rockers Live"
           />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-bold mb-1">Diseño de Hoja de Escenario</label>
           <select class="form-select form-select-sm" [(ngModel)]="layout">
             <option value="giant">🎸 Escenario (Letra Gigante / Stand)</option>
@@ -67,7 +79,15 @@ export interface SetlistExportDialogData {
             <option value="tech">🎛️ Ficha Técnica (Sonido & Tiempos)</option>
           </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+          <label class="form-label small fw-bold mb-1">Tamaño de Fuente (Stand)</label>
+          <select class="form-select form-select-sm" [(ngModel)]="fontSize" data-testid="stage-font-size-select">
+            <option value="standard">Normal (1.0rem)</option>
+            <option value="large">Grande (1.25rem)</option>
+            <option value="giant">Gigante (1.75rem)</option>
+          </select>
+        </div>
+        <div class="col-md-3">
           <label class="form-label small fw-bold mb-1">Marca de Agua / Subtítulo</label>
           <input
             type="text"
@@ -86,39 +106,57 @@ export interface SetlistExportDialogData {
       </div>
 
       <!-- Setlist Stage Sheet Live Preview -->
-      <div class="sheet-preview-wrapper border rounded-3 p-4 mb-3 bg-white shadow-sm" #stageSheet>
+      <div class="sheet-preview-wrapper border rounded-3 p-4 mb-3 bg-white shadow-sm position-relative overflow-hidden" #stageSheet>
+        <!-- Stage Watermark Background Overlay -->
+        @if (watermark) {
+          <div class="stage-watermark-overlay" aria-hidden="true">
+            {{ watermark }}
+          </div>
+        }
+
         <!-- Print Header -->
-        <div class="d-flex justify-content-between align-items-end pb-3 mb-3 border-bottom border-dark border-2">
+        <div class="d-flex justify-content-between align-items-end pb-3 mb-3 border-bottom border-dark border-2 position-relative">
           <div>
             <div class="text-uppercase fw-bold tracking-widest text-secondary small">{{ bandName || 'BANDMATE LIVE' }}</div>
             <h1 class="m-0 fw-black display-6">{{ data.setlist.name }}</h1>
             @if (watermark) {
-              <div class="text-danger small fw-bold tracking-wider mt-1">{{ watermark }}</div>
+              <!-- Watermark Header Alert -->
+              <div class="watermark-header-alert d-flex align-items-center gap-1 text-danger fw-bold text-uppercase tracking-wider small mt-1">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px;">lock</mat-icon>
+                <span>{{ watermark }}</span>
+              </div>
             }
           </div>
-          <div class="text-end">
+          <div class="text-end d-flex flex-column align-items-end gap-2">
+            @if (watermark) {
+              <!-- High-Contrast Watermark Badge -->
+              <div class="watermark-badge badge bg-danger text-white text-uppercase fw-bold px-3 py-1 tracking-wider shadow-sm border border-light">
+                <mat-icon class="align-middle me-1" style="font-size: 14px; width: 14px; height: 14px;">security</mat-icon>
+                {{ watermark }}
+              </div>
+            }
             <div class="badge bg-dark text-white fs-6 px-3 py-2 rounded-pill">
               {{ data.songs.length }} TEMAS • {{ totalDurationLabel() }}
             </div>
           </div>
         </div>
 
-        <!-- Song Rows based on Layout -->
-        <div class="stage-songs-list">
+        <!-- Song Rows based on Layout & FontSize -->
+        <div class="stage-songs-list position-relative" [ngClass]="'font-size-' + fontSize">
           @for (song of data.songs; track song.id; let idx = $index) {
             <div
               class="song-print-row d-flex align-items-center justify-content-between py-2 border-bottom"
-              [class.py-3]="layout === 'giant'"
+              [class.py-3]="layout === 'giant' || fontSize === 'giant'"
             >
               <div class="d-flex align-items-center gap-3">
-                <span class="song-index fw-black text-secondary" [class.fs-4]="layout === 'giant'">
+                <span class="song-index fw-black text-secondary" [class.fs-4]="layout === 'giant' && fontSize === 'standard'">
                   {{ (idx + 1) < 10 ? '0' + (idx + 1) : (idx + 1) }}
                 </span>
                 <div>
                   <div
                     class="song-title fw-bold"
-                    [class.fs-4]="layout === 'giant'"
-                    [class.fs-5]="layout !== 'giant'"
+                    [class.fs-4]="layout === 'giant' && fontSize === 'standard'"
+                    [class.fs-5]="layout !== 'giant' && fontSize === 'standard'"
                   >
                     {{ song.title }}
                   </div>
@@ -140,17 +178,17 @@ export interface SetlistExportDialogData {
 
               <div class="d-flex align-items-center gap-2 text-end">
                 @if (showKeys && song.key) {
-                  <span class="badge bg-warning-subtle text-dark border border-warning fw-bold px-2 py-1" [class.fs-6]="layout === 'giant'">
+                  <span class="badge bg-warning-subtle text-dark border border-warning fw-bold px-2 py-1 stage-badge-key" [class.fs-6]="layout === 'giant' && fontSize === 'standard'">
                     {{ song.key }}
                   </span>
                 }
                 @if (showBpms && song.bpm) {
-                  <span class="badge bg-secondary-subtle text-secondary px-2 py-1" [class.fs-6]="layout === 'giant'">
+                  <span class="badge bg-secondary-subtle text-secondary px-2 py-1 stage-badge-bpm" [class.fs-6]="layout === 'giant' && fontSize === 'standard'">
                     {{ song.bpm }} BPM
                   </span>
                 }
                 @if (showDurations && song.durationSec) {
-                  <span class="badge bg-light text-muted border px-2 py-1">
+                  <span class="badge bg-light text-muted border px-2 py-1 stage-badge-dur">
                     {{ formatDuration(song.durationSec) }}
                   </span>
                 }
@@ -160,7 +198,7 @@ export interface SetlistExportDialogData {
         </div>
 
         <!-- Footer -->
-        <div class="d-flex justify-content-between align-items-center pt-3 mt-4 border-top text-muted small">
+        <div class="d-flex justify-content-between align-items-center pt-3 mt-4 border-top text-muted small position-relative">
           <span>Generado con Bandmate • www.bandmate.live</span>
           <span>Duración total estimada: <strong>{{ totalDurationLabel() }}</strong></span>
         </div>
@@ -208,8 +246,90 @@ export interface SetlistExportDialogData {
     .fw-black {
       font-weight: 900;
     }
+    .watermark-badge {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+    }
+    .watermark-header-alert {
+      letter-spacing: 0.08em;
+    }
+    .stage-watermark-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: rgba(220, 38, 38, 0.07);
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      pointer-events: none;
+      white-space: nowrap;
+      user-select: none;
+      z-index: 0;
+    }
+
+    /* Stage Font Size Independent Controls */
+    .font-size-standard .song-title {
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+    .font-size-standard .song-index {
+      font-size: 1.05rem;
+    }
+    .font-size-standard .song-sub {
+      font-size: 0.85rem;
+    }
+    .font-size-standard .stage-badge-key,
+    .font-size-standard .stage-badge-bpm {
+      font-size: 0.85rem;
+    }
+
+    .font-size-large .song-title {
+      font-size: 1.35rem;
+      line-height: 1.3;
+    }
+    .font-size-large .song-index {
+      font-size: 1.35rem;
+    }
+    .font-size-large .song-sub {
+      font-size: 0.95rem;
+    }
+    .font-size-large .stage-badge-key,
+    .font-size-large .stage-badge-bpm {
+      font-size: 0.95rem;
+      padding: 0.35rem 0.65rem !important;
+    }
+
+    .font-size-giant .song-title {
+      font-size: 1.75rem;
+      line-height: 1.25;
+    }
+    .font-size-giant .song-index {
+      font-size: 1.75rem;
+    }
+    .font-size-giant .song-sub {
+      font-size: 1.05rem;
+    }
+    .font-size-giant .stage-badge-key,
+    .font-size-giant .stage-badge-bpm {
+      font-size: 1.15rem;
+      padding: 0.4rem 0.8rem !important;
+    }
 
     @media print {
+      @page {
+        margin: 10mm;
+        size: auto;
+      }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       body * {
         visibility: hidden !important;
       }
@@ -227,6 +347,22 @@ export interface SetlistExportDialogData {
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
+        background: transparent !important;
+      }
+      .stage-watermark-overlay {
+        color: rgba(220, 38, 38, 0.12) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .watermark-badge {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .song-print-row {
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
     }
   `],
@@ -239,6 +375,7 @@ export class SetlistExportDialogComponent {
   bandName = this.data.bandName || 'Bandmate Band';
   watermark = 'ESCENARIO / DIRECTO 2026';
   layout: StageExportLayout = 'giant';
+  fontSize: StageFontSize = 'large';
 
   showKeys = true;
   showBpms = true;
@@ -246,10 +383,16 @@ export class SetlistExportDialogComponent {
   showNotes = true;
 
   totalDurationLabel(): string {
+    if (!this.data.songs || this.data.songs.length === 0) {
+      return '0m';
+    }
     const totalSec = this.data.songs.reduce((acc, s) => acc + (Number(s.durationSec) || 210), 0);
+    if (totalSec === 0) {
+      return '0m';
+    }
     const mins = Math.floor(totalSec / 60);
     const secs = totalSec % 60;
-    return `${mins}m ${secs ? secs + 's' : ''}`;
+    return `${mins}m ${secs ? secs + 's' : ''}`.trim();
   }
 
   formatDuration(sec: number | string): string {
@@ -266,13 +409,18 @@ export class SetlistExportDialogComponent {
   }
 
   generatePlainText(): string {
-    const lines: string[] = [
+    const headerLines: string[] = [
       `========================================`,
       `${this.bandName.toUpperCase()} — ${this.data.setlist.name.toUpperCase()}`,
-      `Total: ${this.data.songs.length} canciones (${this.totalDurationLabel()})`,
-      `========================================`,
-      '',
     ];
+    if (this.watermark) {
+      headerLines.push(`[${this.watermark.toUpperCase()}]`);
+    }
+    headerLines.push(`Total: ${this.data.songs.length} canciones (${this.totalDurationLabel()}) • ${this.data.songs.length} TEMAS`);
+    headerLines.push(`========================================`);
+    headerLines.push('');
+
+    const lines: string[] = [...headerLines];
 
     this.data.songs.forEach((song, idx) => {
       const num = (idx + 1 < 10 ? '0' : '') + (idx + 1);

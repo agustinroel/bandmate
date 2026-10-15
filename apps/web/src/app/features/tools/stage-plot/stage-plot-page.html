@@ -16,9 +16,13 @@
         <mat-icon class="me-1">delete_sweep</mat-icon>
         Limpiar
       </button>
-      <button mat-flat-button color="primary" (click)="printTechRider()" class="rounded-pill px-4">
+      <button mat-stroked-button (click)="printTechRider()" class="rounded-pill">
         <mat-icon class="me-1">print</mat-icon>
-        Imprimir / Exportar Rider (PDF)
+        Imprimir
+      </button>
+      <button mat-flat-button color="primary" (click)="openExportDialog()" class="rounded-pill px-4">
+        <mat-icon class="me-1">picture_as_pdf</mat-icon>
+        Exportar Tech Rider (PDF)
       </button>
     </div>
   </div>
