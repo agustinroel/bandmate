@@ -438,16 +438,30 @@ bm-error-boundary:empty {
   }
 
   ::ng-deep .bm-nav .mat-mdc-list-item {
-    color: #94a3b8 !important;
+    --mdc-list-list-item-label-text-color: #cbd5e1 !important;
+    color: #cbd5e1 !important;
+
+    span,
+    .mdc-list-item__primary-text,
+    .mat-mdc-list-item-unscoped-content {
+      color: #cbd5e1 !important;
+    }
 
     .mat-mdc-list-item-icon,
     mat-icon {
-      color: #94a3b8 !important;
+      color: #cbd5e1 !important;
     }
 
     &:hover:not(.active) {
-      background: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      --mdc-list-list-item-label-text-color: #ffffff !important;
       color: #ffffff !important;
+
+      span,
+      .mdc-list-item__primary-text,
+      .mat-mdc-list-item-unscoped-content {
+        color: #ffffff !important;
+      }
 
       .mat-mdc-list-item-icon,
       mat-icon {
@@ -456,10 +470,18 @@ bm-error-boundary:empty {
     }
 
     &.active {
-      background: rgba(233, 196, 106, 0.12) !important;
+      background: rgba(233, 196, 106, 0.16) !important;
+      --mdc-list-list-item-label-text-color: #ffffff !important;
       color: #ffffff !important;
-      border: 1px solid rgba(233, 196, 106, 0.35) !important;
+      border: 1px solid rgba(233, 196, 106, 0.4) !important;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+
+      span,
+      .mdc-list-item__primary-text,
+      .mat-mdc-list-item-unscoped-content {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+      }
 
       .mat-mdc-list-item-icon,
       mat-icon {

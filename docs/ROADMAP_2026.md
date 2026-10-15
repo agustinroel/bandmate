@@ -41,16 +41,17 @@
 - `[x]` Unlimited Cloud Songs & Setlists.
 - `[x]` Stripe Billing Integration (Customer Portal, Webhooks, Tier validation).
 - `[x]` AI Ingestion & Smart Arrangement Assistant (Gemini streaming).
-- `[~]` Advanced Practice Mode (Loops, tempo trainer, practice streaks).
-- `[ ]` Bluetooth Pedal Support (Hands-free page turning & autoscroll toggles).
+- `[x]` Practice Tracker & Streaks: Daily practice streaks, total time in flow, session counts.
+- `[x]` Bluetooth Pedal Support (Hands-free page turning & autoscroll toggles via `PedalListenerService`).
 - `[ ]` Pro Strobe Tuner with custom instrument tunings (Drop D, DADGAD, Open G).
 
 ### 🥇 Band Tier (For Teams & Live Acts)
 - `[x]` Band entity creation, custom roles (Owner, Admin, Member), and invite tokens.
 - `[x]` Shared Repertoire: Band-scoped song library and shared setlists.
 - `[x]` Event & Gig Management with QR Code Ticket check-in scanner.
+- `[x]` Interactive Stage Plot Designer (`/tools/stage-plot`).
 - `[ ]` Stage Mode & Real-time Live Band Sync (Leader-Follower broadcast via Supabase Realtime).
-- `[ ]` Stage Plot Maker & Automated Tech Rider Generator.
+- `[ ]` Automated Tech Rider & Input List PDF Generator.
 
 ---
 
@@ -89,8 +90,8 @@
 - `[x]` Band creation, roster management, and member role assignment.
 - `[x]` Multi-tenant workspace switcher (Personal View vs. Band View).
 - `[x]` Band-scoped songs and setlists with role-based editing permissions.
-- `[~]` Musician discovery directory and band recruitment ("Looking for bassist" tags).
-- `[ ]` Musician audition applications and private notes.
+- `[x]` Musician discovery directory and band recruitment ("Looking for bassist" tags).
+- `[x]` Musician audition applications, reviews, status pipeline, and private notes.
 
 ### Phase 6: Ecosystem, Audio & AI Utilities
 - `[x]` Audio Tuner with Web Audio API autocorrelation frequency detection.
@@ -103,7 +104,7 @@
 - `[x]` Gig and Event scheduling with venue, date, call times, and attached setlist.
 - `[x]` Digital ticket generator with unique QR verification codes.
 - `[x]` Native camera QR scanner for fast door check-in.
-- `[ ]` Interactive Stage Plot designer (drag-and-drop amps, drums, mics, monitors).
+- `[x]` Interactive Stage Plot designer (`/tools/stage-plot`) with export & sharing.
 - `[ ]` PDF Tech Rider & Input List exporter for sound engineers.
 - `[ ]` One-click band Electronic Press Kit (EPK) generator.
 
@@ -167,12 +168,19 @@ flowchart LR
 **Goal**: Transform the community directory into a vibrant social network for musicians and bands.
 
 - `[x]` **Social Feed Architecture & API**:
-  - `[x]` Feed store, in-memory + persistent repo (`FeedRepo`), endpoints `GET /feed`, `POST /feed`, `POST /feed/:id/like`, `POST /feed/:id/repost`.
+  - `[x]` Feed store, in-memory + persistent repo (`FeedRepo`), endpoints `GET /feed`, `POST /feed`, `POST /feed/:id/like`, `POST /feed/:id/repost`, `GET /feed/:id/comments`, `POST /feed/:id/comments`.
   - `[x]` Post types: `💬 Estado`, `🎸 Riff`, `🎵 Canción`, `🚨 Busco Músico` (Audition), `📅 Gig`.
   - `[x]` Attached interactive Bandmate song cards with direct `[▶ Tocar en Vivo]` navigation.
   - `[x]` Tier-1 UI/UX: Apple/X-inspired post composer, filter tabs ("Para ti" / "Siguiendo"), micro-interactions on Like/Repost.
+- `[x]` **Permanent PostgreSQL & Offline Persistence**:
+  - `[x]` Full Supabase PostgreSQL schema with RLS policies (`community_posts`, `community_comments`, `community_likes`, `community_follows`, `audition_applications`).
+  - `[x]` Resilient dual-layer architecture with instant JSON fallback and automatic synchronization.
+- `[x]` **Follow / Unfollow Social Graph**:
+  - `[x]` Bi-directional follow graph, live follower/following counts, and dynamic status pills across Feed, Musician Cards, and Sidebar.
 - `[x]` **Musicians Directory & Band Invitations**:
-  - `[x]` Instrument filter chips, geolocation discovery, direct band invite workflows.
+  - `[x]` Instrument filter chips with horizontal smooth scroll, geolocation discovery, direct band invite workflows.
+- `[x]` **Musician Auditions & Applications**:
+  - `[x]` Audition posting with required instruments, candidate submission modal, application management, status updates, and private review notes.
 
 ---
 

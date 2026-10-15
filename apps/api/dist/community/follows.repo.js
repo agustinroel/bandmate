@@ -1,8 +1,29 @@
 import { readJson, writeJson } from '../persistance/json.store.js';
+import { supabase } from '../lib/supabase.js';
 const FOLLOWS_FILE = 'feed_follows.json';
 let cachedFollows = null;
 async function getStoredFollows() {
     if (cachedFollows === null) {
+        // Try Supabase first if configured
+        try {
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('community_follows')
+                    .select('follower_id, followed_id, created_at');
+                if (!error && data) {
+                    cachedFollows = data.map((r) => ({
+                        followerId: r.follower_id,
+                        followedId: r.followed_id,
+                        createdAt: r.created_at,
+                    }));
+                    await writeJson(FOLLOWS_FILE, cachedFollows);
+                    return cachedFollows;
+                }
+            }
+        }
+        catch {
+            // Fallback
+        }
         cachedFollows = await readJson(FOLLOWS_FILE, []);
     }
     return cachedFollows;
@@ -14,19 +35,46 @@ export async function toggleFollow(followerId, followedId) {
     const follows = await getStoredFollows();
     const index = follows.findIndex((f) => f.followerId === followerId && f.followedId === followedId);
     let isFollowing;
+    const now = new Date().toISOString();
     if (index >= 0) {
         // Unfollow
         follows.splice(index, 1);
         isFollowing = false;
+        // Supabase DB delete
+        try {
+            if (supabase) {
+                await supabase
+                    .from('community_follows')
+                    .delete()
+                    .eq('follower_id', followerId)
+                    .eq('followed_id', followedId);
+            }
+        }
+        catch (e) {
+            console.warn('[follows.repo] Supabase delete warning:', e);
+        }
     }
     else {
         // Follow
         follows.push({
             followerId,
             followedId,
-            createdAt: new Date().toISOString(),
+            createdAt: now,
         });
         isFollowing = true;
+        // Supabase DB insert
+        try {
+            if (supabase) {
+                await supabase.from('community_follows').insert({
+                    follower_id: followerId,
+                    followed_id: followedId,
+                    created_at: now,
+                });
+            }
+        }
+        catch (e) {
+            console.warn('[follows.repo] Supabase insert warning:', e);
+        }
     }
     cachedFollows = follows;
     await writeJson(FOLLOWS_FILE, follows);

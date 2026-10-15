@@ -513,24 +513,25 @@
             <div class="small text-muted fst-italic py-2">¡Estás al día con todos los músicos!</div>
           } @else {
             @for (rec of whoToFollow(); track rec.id) {
-              <div class="d-flex align-items-center justify-content-between py-2 border-bottom cm-rec-item">
-                <div class="d-flex align-items-center gap-2 min-w-0">
+              <div class="d-flex align-items-center justify-content-between py-2 border-bottom cm-rec-item gap-2">
+                <div class="d-flex align-items-center gap-2 overflow-hidden flex-grow-1" style="min-width: 0;">
                   <img
                     [src]="rec.avatar_url || 'assets/brand/avatar-fallback.svg'"
                     [alt]="rec.username"
-                    class="cm-rec-avatar"
+                    class="cm-rec-avatar flex-shrink-0"
                   />
-                  <div class="min-w-0">
+                  <div class="overflow-hidden" style="min-width: 0;">
                     <div class="fw-bold small text-truncate">{{ rec.full_name || rec.username }}</div>
-                    <div class="text-muted" style="font-size: 11px;">&#64;{{ rec.username }}</div>
+                    <div class="text-muted text-truncate" style="font-size: 11px;">&#64;{{ rec.username }}</div>
                   </div>
                 </div>
                 <button
                   mat-flat-button
-                  class="cm-follow-sm-btn rounded-pill btn-sm"
+                  class="cm-follow-sm-btn rounded-pill flex-shrink-0"
+                  [class.cm-following-sm-btn]="followedUserIds().has(rec.id)"
                   (click)="toggleFollow(rec.id, rec.full_name || rec.username)"
                 >
-                  {{ i18n.t('community.follow', 'Seguir') }}
+                  {{ followedUserIds().has(rec.id) ? i18n.t('community.following', 'Siguiendo') : i18n.t('community.follow', 'Seguir') }}
                 </button>
               </div>
             }
@@ -694,18 +695,27 @@
                     <mat-icon class="cm-follow-btn-icon">{{ (profile.isFollowing || isFollowing(profile.id)) ? 'check' : 'person_add' }}</mat-icon>
                     <span>{{ (profile.isFollowing || isFollowing(profile.id)) ? i18n.t('community.following', 'Siguiendo') : i18n.t('community.follow', 'Seguir') }}</span>
                   </button>
-                }
 
-                <button
-                  mat-flat-button
-                  color="primary"
-                  class="rounded-pill px-3 cm-invite-btn"
-                  [disabled]="isInvited(profile.id)"
-                  (click)="openInviteMenu(profile)"
-                  matTooltip="Invitar a tu banda"
-                >
-                  <mat-icon>group_add</mat-icon>
-                </button>
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    class="rounded-pill px-3 cm-invite-btn flex-shrink-0"
+                    [disabled]="isInvited(profile.id)"
+                    (click)="openInviteMenu(profile)"
+                    matTooltip="Invitar a tu banda"
+                  >
+                    <mat-icon>group_add</mat-icon>
+                  </button>
+                } @else {
+                  <a
+                    mat-stroked-button
+                    routerLink="/profile"
+                    class="cm-follow-btn rounded-pill w-100 text-center"
+                  >
+                    <mat-icon class="cm-follow-btn-icon">account_circle</mat-icon>
+                    <span>{{ i18n.t('community.yourProfile', 'Tu Perfil') }}</span>
+                  </a>
+                }
               </div>
             </div>
           }

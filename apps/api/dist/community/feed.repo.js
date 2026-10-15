@@ -1,5 +1,6 @@
 import { readJson, writeJson } from '../persistance/json.store.js';
 import { getFollowedUserIds } from './follows.repo.js';
+import { supabase } from '../lib/supabase.js';
 const POSTS_FILE = 'feed_posts.json';
 const COMMENTS_FILE = 'feed_comments.json';
 const APPLICATIONS_FILE = 'audition_applications.json';
@@ -10,18 +11,110 @@ let cachedApplications = null;
 const userLikes = new Set();
 async function getStoredPosts() {
     if (cachedPosts === null) {
+        try {
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('community_posts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!error && data && data.length > 0) {
+                    cachedPosts = data.map((r) => ({
+                        id: r.id,
+                        authorId: r.author_id,
+                        authorName: r.author_name,
+                        authorUsername: r.author_username,
+                        authorAvatar: r.author_avatar,
+                        authorInstruments: r.author_instruments || [],
+                        authorTier: r.author_tier,
+                        authorBand: r.author_band,
+                        isBandVerified: r.is_band_verified,
+                        repostedBy: r.reposted_by,
+                        repostedByName: r.reposted_by_name,
+                        type: r.type,
+                        content: r.content,
+                        attachedSong: r.attached_song,
+                        tags: r.tags || [],
+                        likesCount: r.likes_count ?? 0,
+                        repostsCount: r.reposts_count ?? 0,
+                        commentsCount: r.comments_count ?? 0,
+                        createdAt: r.created_at,
+                    }));
+                    await writeJson(POSTS_FILE, cachedPosts);
+                    return cachedPosts;
+                }
+            }
+        }
+        catch {
+            // Fallback
+        }
         cachedPosts = await readJson(POSTS_FILE, []);
     }
     return cachedPosts;
 }
 async function getStoredComments() {
     if (cachedComments === null) {
+        try {
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('community_comments')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+                if (!error && data && data.length > 0) {
+                    cachedComments = data.map((r) => ({
+                        id: r.id,
+                        postId: r.post_id,
+                        authorId: r.author_id,
+                        authorName: r.author_name,
+                        authorUsername: r.author_username,
+                        authorAvatar: r.author_avatar,
+                        content: r.content,
+                        createdAt: r.created_at,
+                    }));
+                    await writeJson(COMMENTS_FILE, cachedComments);
+                    return cachedComments;
+                }
+            }
+        }
+        catch {
+            // Fallback
+        }
         cachedComments = await readJson(COMMENTS_FILE, []);
     }
     return cachedComments;
 }
 async function getStoredApplications() {
     if (cachedApplications === null) {
+        try {
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('audition_applications')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!error && data && data.length > 0) {
+                    cachedApplications = data.map((r) => ({
+                        id: r.id,
+                        postId: r.post_id,
+                        musicianId: r.musician_id,
+                        musicianName: r.musician_name,
+                        musicianUsername: r.musician_username,
+                        musicianAvatar: r.musician_avatar,
+                        instrument: r.instrument,
+                        experienceYears: r.experience_years ?? 0,
+                        mediaUrl: r.media_url,
+                        message: r.message,
+                        status: r.status,
+                        privateNotes: r.private_notes,
+                        createdAt: r.created_at,
+                        updatedAt: r.updated_at,
+                    }));
+                    await writeJson(APPLICATIONS_FILE, cachedApplications);
+                    return cachedApplications;
+                }
+            }
+        }
+        catch {
+            // Fallback
+        }
         cachedApplications = await readJson(APPLICATIONS_FILE, []);
     }
     return cachedApplications;
@@ -152,6 +245,35 @@ export async function createFeedPost(userId, userProfile, postData) {
     posts.unshift(newPost);
     cachedPosts = posts;
     await writeJson(POSTS_FILE, posts);
+    // Supabase PostgreSQL permanent persistence
+    try {
+        if (supabase) {
+            await supabase.from('community_posts').insert({
+                id: newPost.id,
+                author_id: newPost.authorId,
+                author_name: newPost.authorName,
+                author_username: newPost.authorUsername,
+                author_avatar: newPost.authorAvatar,
+                author_instruments: newPost.authorInstruments,
+                author_tier: newPost.authorTier,
+                author_band: newPost.authorBand,
+                is_band_verified: newPost.isBandVerified,
+                reposted_by: newPost.repostedBy,
+                reposted_by_name: newPost.repostedByName,
+                type: newPost.type,
+                content: newPost.content,
+                attached_song: newPost.attachedSong,
+                tags: newPost.tags,
+                likes_count: newPost.likesCount,
+                reposts_count: newPost.repostsCount,
+                comments_count: newPost.commentsCount,
+                created_at: newPost.createdAt,
+            });
+        }
+    }
+    catch (e) {
+        console.warn('[feed.repo] Supabase post insert warning:', e);
+    }
     return newPost;
 }
 export async function togglePostLike(userId, postId) {
@@ -164,11 +286,31 @@ export async function togglePostLike(userId, postId) {
         userLikes.delete(key);
         post.likesCount = Math.max(0, post.likesCount - 1);
         post.isLiked = false;
+        // Supabase DB delete like
+        try {
+            if (supabase) {
+                await supabase.from('community_likes').delete().eq('user_id', userId).eq('post_id', postId);
+                await supabase.from('community_posts').update({ likes_count: post.likesCount }).eq('id', postId);
+            }
+        }
+        catch (e) {
+            console.warn('[feed.repo] Supabase like delete warning:', e);
+        }
     }
     else {
         userLikes.add(key);
         post.likesCount += 1;
         post.isLiked = true;
+        // Supabase DB insert like
+        try {
+            if (supabase) {
+                await supabase.from('community_likes').insert({ user_id: userId, post_id: postId });
+                await supabase.from('community_posts').update({ likes_count: post.likesCount }).eq('id', postId);
+            }
+        }
+        catch (e) {
+            console.warn('[feed.repo] Supabase like insert warning:', e);
+        }
     }
     await writeJson(POSTS_FILE, posts);
     return { isLiked: post.isLiked, likesCount: post.likesCount };
@@ -218,6 +360,28 @@ export async function createPostComment(postId, userId, userProfile, content) {
     post.commentsCount = (post.commentsCount || 0) + 1;
     await writeJson(COMMENTS_FILE, comments);
     await writeJson(POSTS_FILE, posts);
+    // Supabase PostgreSQL permanent persistence for comment
+    try {
+        if (supabase) {
+            await supabase.from('community_comments').insert({
+                id: newComment.id,
+                post_id: newComment.postId,
+                author_id: newComment.authorId,
+                author_name: newComment.authorName,
+                author_username: newComment.authorUsername,
+                author_avatar: newComment.authorAvatar,
+                content: newComment.content,
+                created_at: newComment.createdAt,
+            });
+            await supabase
+                .from('community_posts')
+                .update({ comments_count: post.commentsCount })
+                .eq('id', postId);
+        }
+    }
+    catch (e) {
+        console.warn('[feed.repo] Supabase comment insert warning:', e);
+    }
     return newComment;
 }
 export async function createAuditionApplication(postId, musicianId, userProfile, data) {
@@ -250,6 +414,29 @@ export async function createAuditionApplication(postId, musicianId, userProfile,
     applications.push(application);
     cachedApplications = applications;
     await writeJson(APPLICATIONS_FILE, applications);
+    // Supabase DB insert for audition application
+    try {
+        if (supabase) {
+            await supabase.from('audition_applications').insert({
+                id: application.id,
+                post_id: application.postId,
+                musician_id: application.musicianId,
+                musician_name: application.musicianName,
+                musician_username: application.musicianUsername,
+                musician_avatar: application.musicianAvatar,
+                instrument: application.instrument,
+                experience_years: application.experienceYears,
+                media_url: application.mediaUrl,
+                message: application.message,
+                status: application.status,
+                created_at: application.createdAt,
+                updated_at: application.updatedAt,
+            });
+        }
+    }
+    catch (e) {
+        console.warn('[feed.repo] Supabase audition application insert warning:', e);
+    }
     return application;
 }
 export async function getAuditionApplications(postId) {
@@ -268,5 +455,21 @@ export async function updateAuditionApplication(applicationId, updates) {
     app.updatedAt = new Date().toISOString();
     cachedApplications = applications;
     await writeJson(APPLICATIONS_FILE, applications);
+    // Supabase DB update for audition application
+    try {
+        if (supabase) {
+            await supabase
+                .from('audition_applications')
+                .update({
+                status: app.status,
+                private_notes: app.privateNotes,
+                updated_at: app.updatedAt,
+            })
+                .eq('id', applicationId);
+        }
+    }
+    catch (e) {
+        console.warn('[feed.repo] Supabase audition application update warning:', e);
+    }
     return app;
 }
