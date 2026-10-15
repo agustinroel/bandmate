@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl)
-    throw new Error("SUPABASE_URL missing. Did you load dotenv?");
-if (!supabaseKey)
-    throw new Error("Missing Supabase key (SERVICE_ROLE_KEY or ANON_KEY).");
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+export const hasSupabase = Boolean(supabaseUrl && supabaseKey);
+// Use real credentials if present; otherwise fallback to safe placeholder to prevent import-time crashes in test runners
+export const supabase = hasSupabase
+    ? createClient(supabaseUrl, supabaseKey)
+    : createClient("https://placeholder.supabase.co", "placeholder-key-for-offline-and-tests");
