@@ -39,14 +39,29 @@ import { gsap } from 'gsap';
           <p class="bm-main-tagline">Prep · Rehearse · Play</p>
         </div>
 
-        <!-- Glassmorphism Card -->
+        <!-- Glassmorphism Studio Console Card -->
         <div class="bm-glass-card" #card>
           <div class="bm-card-content">
             <h2 class="card-title">Ready for the stage?</h2>
             <p class="card-desc">
-              The ultimate workspace for musicians. Organize your repertoire, perfect your timing,
-              and sync with your band.
+              The complete studio &amp; stage workspace for musicians. Organize your ChordPro
+              repertoire, lock in your timing, and synchronize live with your band.
             </p>
+
+            <div class="bm-feature-pills" aria-label="Platform capabilities">
+              <span class="bm-feature-pill">
+                <mat-icon aria-hidden="true">library_music</mat-icon>
+                ChordPro &amp; Transpose
+              </span>
+              <span class="bm-feature-pill">
+                <mat-icon aria-hidden="true">graphic_eq</mat-icon>
+                60 FPS Strobe Tuner
+              </span>
+              <span class="bm-feature-pill">
+                <mat-icon aria-hidden="true">sensors</mat-icon>
+                Live Band Sync
+              </span>
+            </div>
 
             <div class="bm-actions">
               <button
@@ -59,9 +74,9 @@ import { gsap } from 'gsap';
                 <div class="btn-inner">
                   @if (busy()) {
                     <mat-icon class="spinning">hourglass_top</mat-icon>
-                    <span>One moment...</span>
+                    <span>Connecting to studio...</span>
                   } @else {
-                    <svg class="google-logo" viewBox="0 0 24 24">
+                    <svg class="google-logo" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                         fill="#4285F4"
@@ -88,10 +103,10 @@ import { gsap } from 'gsap';
         </div>
 
         <footer class="bm-footer" #footer>
-          <div>Built with ❤️ for every musician.</div>
+          <div class="bm-footer-tagline">Crafted with precision for every musician &amp; ensemble.</div>
           <div class="legal-links">
             <a routerLink="/privacy">Privacy Policy</a>
-            <span class="sep">·</span>
+            <span class="sep" aria-hidden="true">·</span>
             <a routerLink="/terms">Terms of Service</a>
           </div>
         </footer>
@@ -102,43 +117,47 @@ import { gsap } from 'gsap';
     .bm-login-wrap {
       min-height: 100vh;
       width: 100%;
-      background: #0f1115;
-      color: #fff;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(233, 196, 106, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(42, 157, 143, 0.14) 0%, transparent 50%),
+        #030712;
+      color: #f8fafc;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       overflow: hidden;
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--bm-font-sans, 'Manrope', system-ui, -apple-system, sans-serif);
     }
 
-    /* Animated background shapes */
+    /* Ambient studio lighting shapes */
     .bg-shape {
       position: absolute;
-      filter: blur(80px);
+      filter: blur(90px);
       z-index: 1;
       border-radius: 50%;
-      opacity: 0.4;
+      opacity: 0.28;
+      pointer-events: none;
     }
     .bg-shape-1 {
-      width: 400px;
-      height: 400px;
-      background: rgba(201, 162, 39, 0.4);
+      width: 380px;
+      height: 380px;
+      background: rgba(233, 196, 106, 0.35);
       top: -100px;
       left: -100px;
     }
     .bg-shape-2 {
-      width: 500px;
-      height: 500px;
-      background: rgba(32, 82, 85, 0.4);
-      bottom: -150px;
-      right: -150px;
+      width: 460px;
+      height: 460px;
+      background: rgba(38, 70, 83, 0.45);
+      bottom: -140px;
+      right: -140px;
     }
     .bg-shape-3 {
-      width: 300px;
-      height: 300px;
-      background: rgba(144, 44, 30, 0.3);
-      top: 50%;
+      width: 280px;
+      height: 280px;
+      background: rgba(42, 157, 143, 0.22);
+      top: 48%;
       left: 50%;
     }
 
@@ -146,7 +165,7 @@ import { gsap } from 'gsap';
       position: relative;
       z-index: 10;
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       padding: 40px 20px;
       display: flex;
       flex-direction: column;
@@ -156,98 +175,138 @@ import { gsap } from 'gsap';
 
     /* Brand Hero */
     .bm-brand-hero {
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
     .logo-circle {
-      width: 80px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
+      width: 76px;
+      height: 76px;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 22px;
       display: grid;
       place-items: center;
-      margin: 0 auto 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      margin: 0 auto 18px;
+      border: 1px solid rgba(233, 196, 106, 0.35);
+      box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
     .bm-brand-logo {
-      width: 50px;
-      height: 50px;
+      width: 46px;
+      height: 46px;
     }
     .bm-main-title {
-      font-size: 3rem;
-      font-weight: 900;
-      letter-spacing: -0.04em;
+      font-size: 2.8rem;
+      font-weight: 850;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
       margin: 0;
-      background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.6));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #f8fafc;
     }
     .bm-main-tagline {
-      font-size: 1.1rem;
-      opacity: 0.6;
-      font-weight: 400;
-      letter-spacing: 0.2em;
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.82rem;
+      color: #e9c46a;
+      font-weight: 700;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      margin-top: 5px;
+      margin-top: 8px;
+      margin-bottom: 0;
     }
 
-    /* Glass Card */
+    /* Studio Console Card */
     .bm-glass-card {
       width: 100%;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 32px;
-      padding: 40px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow:
+        0 24px 48px -12px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .card-title {
-      font-size: 1.8rem;
+      font-size: 1.65rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 12px;
+      letter-spacing: -0.025em;
+      color: #ffffff;
+      margin: 0 0 10px;
     }
     .card-desc {
-      font-size: 1rem;
-      opacity: 0.7;
+      font-size: 0.96rem;
+      color: #cbd5e1;
       line-height: 1.6;
-      margin-bottom: 30px;
+      margin: 0 0 22px;
+    }
+
+    .bm-feature-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .bm-feature-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.72rem;
+      font-weight: 600;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: #e9c46a;
+      }
     }
 
     /* Actions */
     .bm-actions {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     .bm-google-btn {
-      height: 56px;
-      border-radius: 16px;
-      background: #fff;
-      color: #000;
-      font-size: 1.05rem;
-      font-weight: 700;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      height: 52px;
+      border-radius: 14px;
+      background: #f8fafc !important;
+      color: #090d16 !important;
+      font-size: 1rem;
+      font-weight: 750;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      transition:
+        transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+        background 200ms cubic-bezier(0.22, 1, 0.36, 1);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .bm-google-btn:hover {
+    .bm-google-btn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(255, 255, 255, 0.15);
-      background: #f8f8f8;
+      box-shadow: 0 12px 24px rgba(233, 196, 106, 0.22);
+      background: #ffffff !important;
     }
     .btn-inner {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
+      color: #090d16;
     }
     .google-logo {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
     }
 
     .spinning {
@@ -262,38 +321,37 @@ import { gsap } from 'gsap';
       }
     }
 
-    .bm-guest-link {
-      height: 44px;
-      font-weight: 600;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-    }
-    .bm-guest-link:hover {
-      opacity: 1;
-    }
-
     .bm-footer {
-      margin-top: 40px;
+      margin-top: 32px;
       font-size: 0.85rem;
-      opacity: 0.4;
+      color: #94a3b8;
       text-align: center;
+    }
+    .bm-footer-tagline {
+      color: #94a3b8;
+      font-weight: 500;
     }
     .legal-links {
       margin-top: 8px;
       display: flex;
       justify-content: center;
-      gap: 6px;
+      align-items: center;
+      gap: 8px;
     }
     .legal-links a {
-      color: rgba(255, 255, 255, 0.6);
+      color: #cbd5e1;
       text-decoration: none;
-      transition: color 0.2s;
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .legal-links a:hover {
-      color: #c9a227;
+      color: #e9c46a;
+      text-decoration: underline;
     }
     .sep {
-      opacity: 0.4;
+      color: #64748b;
     }
   `,
 })
@@ -323,73 +381,60 @@ export class LoginPageComponent implements AfterViewInit {
   }
 
   private initAnimations() {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    // Background shapes slow drift
     gsap.to('.bg-shape-1', {
-      x: 50,
-      y: 30,
+      x: 40,
+      y: 24,
       duration: 20,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut',
     });
     gsap.to('.bg-shape-2', {
-      x: -40,
-      y: -60,
+      x: -32,
+      y: -48,
       duration: 25,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut',
     });
     gsap.to('.bg-shape-3', {
-      x: 30,
-      y: 40,
+      x: 24,
+      y: 32,
       duration: 18,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut',
     });
 
-    // Entrance staggered
     tl.from(this.hero.nativeElement.children, {
-      y: 30,
+      y: 20,
       opacity: 0,
-      stagger: 0.2,
-      duration: 1.2,
+      stagger: 0.12,
+      duration: 0.65,
     })
       .from(
         this.card.nativeElement,
         {
-          y: 40,
+          y: 24,
           opacity: 0,
-          scale: 0.95,
-          duration: 1,
+          scale: 0.98,
+          duration: 0.6,
         },
-        '-=0.6',
+        '-=0.35',
       )
       .from(
         this.footer.nativeElement,
         {
           opacity: 0,
-          duration: 1,
+          duration: 0.5,
         },
-        '-=0.4',
+        '-=0.3',
       );
-
-    // Mouse move parallax effect (subtle)
-    this.container.nativeElement.addEventListener('mousemove', (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const xPos = (clientX / window.innerWidth - 0.5) * 20;
-      const yPos = (clientY / window.innerHeight - 0.5) * 20;
-
-      gsap.to(this.card.nativeElement, {
-        x: xPos,
-        y: yPos,
-        duration: 2,
-        ease: 'power2.out',
-      });
-    });
   }
 
   async signIn() {

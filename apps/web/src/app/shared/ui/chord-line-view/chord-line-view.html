@@ -175,7 +175,7 @@
         @let idx = chordShapeIndex();
 
         @if (total === 0) {
-          <div class="bm-shape-empty small opacity-75">No guitar shape yet for this chord (MVP).</div>
+          <div class="bm-shape-empty small">No guitar shape yet for this chord.</div>
         } @else {
           @let sh = shapeAt(shapes, idx);
 
@@ -200,15 +200,16 @@
               </button>
             }
 
-            <div class="bm-shape-diagram" 
-                 (click)="playShape(sh); $event.stopPropagation()" 
-                 title="Click to play"
-                 style="cursor: pointer; position: relative;">
+            <div
+              class="bm-shape-diagram"
+              (click)="playShape(sh); $event.stopPropagation()"
+              title="Click to hear chord voicing"
+            >
               <bm-guitar-chord-diagram
                 [shape]="sh"
                 [ariaLabel]="'Guitar chord ' + info.raw"
               ></bm-guitar-chord-diagram>
-               <mat-icon style="position: absolute; bottom: 4px; right: 4px; opacity: 0.5; font-size: 16px; width: 16px; height: 16px;">volume_up</mat-icon>
+              <mat-icon class="bm-shape-audio-icon" aria-hidden="true">volume_up</mat-icon>
             </div>
 
             @if (total > 1) {
@@ -225,7 +226,7 @@
         }
       </div>
     } @else {
-      <div style="padding: 20px;" class="small opacity-75">No chord selected</div>
+      <div class="bm-shape-empty" style="padding: 20px;">No chord selected</div>
     }
   </div>
 </mat-menu>

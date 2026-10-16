@@ -1,6 +1,6 @@
 <header class="bm-page-header">
   <div class="d-flex align-items-start gap-3">
-    <button mat-icon-button class="bm-back" (click)="goBack()" aria-label="Back">
+    <button mat-icon-button class="bm-back" (click)="goBack()" [attr.aria-label]="i18n.t('common.back', 'Back')">
       <mat-icon>arrow_back</mat-icon>
     </button>
 
@@ -13,16 +13,16 @@
         @if (viewMode() === 'view') {
           <h2 class="m-0 text-truncate">{{ d.title }}</h2>
           <div class="small opacity-75 mt-1 text-truncate">
-            {{ d.artist }} <span class="mx-1 opacity-50">·</span> Ready to practice
+            {{ d.artist }} <span class="mx-1 opacity-50">·</span> {{ i18n.t('song_editor.ready_to_practice', 'Ready to practice') }}
           </div>
         } @else {
-          <h2 class="m-0">Edit song</h2>
+          <h2 class="m-0">{{ i18n.t('song_editor.edit_title', 'Edit song') }}</h2>
           <div class="small opacity-75 mt-1 text-truncate">{{ d.title }} — {{ d.artist }}</div>
         }
       } @else {
-        <h2 class="m-0">New song</h2>
+        <h2 class="m-0">{{ i18n.t('song_editor.new_title', 'New song') }}</h2>
         <div class="small opacity-75 mt-1">
-          Add details now, and you’ll thank yourself at rehearsal.
+          {{ i18n.t('song_editor.new_desc', 'Add details now, and you’ll thank yourself at rehearsal.') }}
         </div>
       }
     </div>
@@ -39,13 +39,13 @@
           >
             @if (saveUi() === 'saving') {
               <span class="bm-dot bm-dot--spin" aria-hidden="true"></span>
-              <span>Autosaving</span>
+              <span>{{ i18n.t('song_editor.autosaving', 'Autosaving') }}</span>
             } @else if (saveUi() === 'saved') {
               <mat-icon class="bm-chip-ic">check</mat-icon>
-              <span>Saved</span>
+              <span>{{ i18n.t('song_editor.saved', 'Saved') }}</span>
             } @else if (saveUi() === 'error') {
               <mat-icon class="bm-chip-ic">error_outline</mat-icon>
-              <span>Save failed</span>
+              <span>{{ i18n.t('song_editor.save_failed', 'Save failed') }}</span>
             }
           </div>
         }
@@ -64,7 +64,7 @@
                 (click)="toggleAutoScroll()"
               >
                 <mat-icon>{{ autoScrollOn() ? 'pause' : 'play_arrow' }}</mat-icon>
-                <span class="bm-auto-label">{{ autoScrollOn() ? 'Pause' : 'Auto-scroll' }}</span>
+                <span class="bm-auto-label">{{ autoScrollOn() ? i18n.t('song_editor.pause_scroll', 'Pause') : i18n.t('song_editor.auto_scroll', 'Auto-scroll') }}</span>
               </button>
 
               @if (autoScrollOn()) {
@@ -95,10 +95,10 @@
             class="bm-metronome-btn"
             [class.is-active]="metronome.isPlaying()"
             (click)="toggleMetronome()"
-            [matTooltip]="metronome.isPlaying() ? 'Stop metronome' : 'Start metronome (' + (currentDetail()?.bpm || 120) + ' BPM)'"
+            [matTooltip]="metronome.isPlaying() ? i18n.t('song_editor.metronome_stop', 'Stop metronome') : i18n.t('song_editor.metronome_start_bpm', { bpm: (currentDetail()?.bpm || 120) })"
           >
             <mat-icon>{{ metronome.isPlaying() ? 'volume_up' : 'timer' }}</mat-icon>
-            <span class="bm-metro-label">{{ metronome.isPlaying() ? metronome.bpm() + ' BPM' : 'Metronome' }}</span>
+            <span class="bm-metro-label">{{ metronome.isPlaying() ? metronome.bpm() + ' BPM' : i18n.t('song_editor.metronome', 'Metronome') }}</span>
           </button>
 
           <!-- 3. Publish (Tertiary) -->
@@ -107,7 +107,7 @@
               mat-icon-button
               class="bm-action-icon"
               (click)="publish()"
-              matTooltip="Publish to community"
+              [matTooltip]="i18n.t('song_editor.publish_tooltip', 'Publish to community')"
             >
               <mat-icon>public</mat-icon>
             </button>
@@ -116,21 +116,21 @@
           <!-- 2. Edit (Secondary) -->
           <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
             <mat-icon class="bm-btn-ic">edit</mat-icon>
-            Edit
+            {{ i18n.t('song_editor.edit_mode', 'Edit') }}
           </button>
 
           <!-- 1. Practice (Primary) -->
           @if (!isPracticeMode()) {
             <button mat-flat-button class="bm-practice-btn" (click)="enterPracticeMode()">
               <mat-icon>play_circle</mat-icon>
-              Practice Mode
+              {{ i18n.t('song_editor.practice_mode', 'Practice Mode') }}
             </button>
           }
         } @else {
           <!-- EDIT MODE ACTIONS -->
           <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
             <mat-icon class="bm-btn-ic">visibility</mat-icon>
-            View
+            {{ i18n.t('song_editor.view_mode', 'View') }}
           </button>
         }
       }
@@ -200,7 +200,7 @@
                 @if (d.key) {
                   <span class="bm-pill">
                     <mat-icon class="bm-pill-ic">music_note</mat-icon>
-                    Key: {{ d.key }}
+                    {{ i18n.t('song_editor.key_label', 'Key') }}: {{ d.key }}
                   </span>
                 }
 
@@ -222,22 +222,22 @@
 
             @if (d.notes) {
               <div class="bm-meta-notes">
-                <div class="bm-meta-notes-h">NOTES</div>
+                <div class="bm-meta-notes-h">{{ i18n.t('song_editor.notes', 'NOTES') }}</div>
                 <div class="bm-meta-notes-t">{{ d.notes }}</div>
               </div>
             }
 
             <!-- Community / Song Rating -->
             <div class="bm-meta-rating d-flex align-items-center gap-1 mt-2">
-              <span class="small opacity-75 me-1">Rating:</span>
+              <span class="small opacity-75 me-1">{{ i18n.t('song_editor.rating', 'Rating:') }}</span>
               @for (star of [1, 2, 3, 4, 5]; track star) {
                 <button
                   mat-icon-button
                   type="button"
                   class="bm-star-btn"
-                  [attr.aria-label]="'Rate ' + star + ' stars'"
+                  [attr.aria-label]="i18n.t('song_editor.rate_stars', { star: star })"
                   (click)="rate(star)"
-                  [matTooltip]="'Rate ' + star + ' / 5'"
+                  [matTooltip]="i18n.t('song_editor.rate_tooltip', { star: star })"
                 >
                   <mat-icon [class.text-warning]="(userRating() || d.ratingAvg || 0) >= star">
                     {{ (userRating() || d.ratingAvg || 0) >= star ? 'star' : 'star_border' }}
@@ -273,14 +273,14 @@
         <div class="bm-body mt-4">
           <div class="bm-body-head">
             <div class="min-w-0">
-              <div class="bm-body-title">Song body</div>
+              <div class="bm-body-title">{{ i18n.t('song_editor.body_title', 'Song body') }}</div>
 
               @if (canEditBody()) {
                 <div class="bm-body-sub">
-                  Sections help you structure the song (Verse, Chorus, Bridge…)
+                  {{ i18n.t('song_editor.sections_help', 'Sections help you structure the song (Verse, Chorus, Bridge…)') }}
                 </div>
               } @else {
-                <div class="bm-body-sub bm-body-sub--play">Transpose & play</div>
+                <div class="bm-body-sub bm-body-sub--play">{{ i18n.t('song_editor.transpose_play', 'Transpose & play') }}</div>
               }
             </div>
 
@@ -296,7 +296,7 @@
                   (click)="addSection()"
                 >
                   <mat-icon class="bm-btn-ic">add</mat-icon>
-                  Add section
+                  {{ i18n.t('song_editor.add_section', 'Add section') }}
                 </button>
               }
             </div>
@@ -307,9 +307,9 @@
               <div class="bm-empty-ic">
                 <mat-icon>queue_music</mat-icon>
               </div>
-              <div class="bm-empty-title">No sections yet</div>
+              <div class="bm-empty-title">{{ i18n.t('song_editor.no_sections_title', 'No sections yet') }}</div>
               <div class="bm-empty-sub">
-                Start with a Verse and a Chorus, then we’ll add lines and chords.
+                {{ i18n.t('song_editor.no_sections_desc', 'Start with a Verse and a Chorus, then we’ll add lines and chords.') }}
               </div>
             </div>
           } @else {
@@ -332,14 +332,14 @@
                           (click)="addLine(sec.id)"
                         >
                           <mat-icon class="bm-btn-ic">add</mat-icon>
-                          Add line
+                          {{ i18n.t('song_editor.add_line', 'Add line') }}
                         </button>
 
                         <button
                           mat-icon-button
                           type="button"
                           class="bm-sec-edit"
-                          aria-label="Edit section"
+                          [attr.aria-label]="i18n.t('song_editor.edit_section', 'Edit section')"
                           (click)="editSection(sec); $event.stopPropagation()"
                         >
                           <mat-icon>edit</mat-icon>
@@ -349,7 +349,7 @@
                           mat-icon-button
                           type="button"
                           class="bm-sec-del"
-                          aria-label="Delete section"
+                          [attr.aria-label]="i18n.t('song_editor.delete_section', 'Delete section')"
                           (click)="deleteSection(sec.id); $event.stopPropagation()"
                         >
                           <mat-icon>delete</mat-icon>
@@ -366,7 +366,7 @@
                             <textarea
                               class="bm-line-input"
                               rows="2"
-                              placeholder="Type lyrics and chords like: [Am]Hello [G]world"
+                              [placeholder]="i18n.t('song_editor.line_placeholder', 'Type lyrics and chords like: [Am]Hello [G]world')"
                               [value]="line.source ?? ''"
                               (input)="onLineInput(sec.id, line.id, $any($event.target).value)"
                             ></textarea>
@@ -375,7 +375,7 @@
                               mat-icon-button
                               type="button"
                               class="bm-line-del"
-                              aria-label="Delete line"
+                              [attr.aria-label]="i18n.t('song_editor.delete_line', 'Delete line')"
                               (click)="deleteLine(sec.id, line.id); $event.stopPropagation()"
                             >
                               <mat-icon>close</mat-icon>
@@ -406,12 +406,12 @@
             error_outline
           </mat-icon>
 
-          <div class="mt-3 fw-semibold">Song not found</div>
+          <div class="mt-3 fw-semibold">{{ i18n.t('song_editor.not_found', 'Song not found') }}</div>
           <div class="small opacity-75 mb-3">
-            This can happen if you opened the editor directly without loading the list.
+            {{ i18n.t('song_editor.not_found_desc', 'This can happen if you opened the editor directly without loading the list.') }}
           </div>
 
-          <button mat-stroked-button color="primary" (click)="goBack()">Back to songs</button>
+          <button mat-stroked-button color="primary" (click)="goBack()">{{ i18n.t('song_editor.back_to_songs', 'Back to songs') }}</button>
         </div>
       }
     }

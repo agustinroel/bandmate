@@ -278,9 +278,7 @@
                     [interactive]="true"
                   />
                 } @else if (line.kind === 'comment') {
-                  <div
-                    class="sv-comment p-2 opacity-75 small font-monospace bg-light rounded mb-2 border-start border-4 border-primary"
-                  >
+                  <div class="sv-comment">
                     {{ line.text }}
                   </div>
                 }

@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T10:09:00.000Z",
+  "title": "Design System: Bandmate",
+  "extensions": {
+    "colorMeta": {
+      "deep-wood": {
+        "role": "primary",
+        "displayName": "Deep Wood",
+        "canonical": "#264653",
+        "tonalRamp": ["#0d191e", "#162b33", "#1e3944", "#264653", "#3b6677", "#5c8c9e", "#8fb4c2", "#d2e2e8"]
+      },
+      "warm-brass": {
+        "role": "primary",
+        "displayName": "Warm Brass",
+        "canonical": "#E9C46A",
+        "tonalRamp": ["#332607", "#59430d", "#8c6916", "#b88e28", "#e9c46a", "#f0d48d", "#f6e4b3", "#fbf4df"]
+      },
+      "studio-teal": {
+        "role": "secondary",
+        "displayName": "Studio Teal",
+        "canonical": "#2A9D8F",
+        "tonalRamp": ["#0c2e2a", "#144d46", "#1e7066", "#2a9d8f", "#45bdb0", "#72cfc4", "#a6e3dc", "#dcf5f2"]
+      },
+      "acoustic-cream": {
+        "role": "neutral",
+        "displayName": "Acoustic Cream",
+        "canonical": "#F9F7F0",
+        "tonalRamp": ["#24221a", "#423e31", "#6b6552", "#99927a", "#c7c0a9", "#e3decb", "#f4f1de", "#f9f7f0"]
+      },
+      "stage-oled-bg": {
+        "role": "neutral",
+        "displayName": "Stage OLED Background",
+        "canonical": "#030712",
+        "tonalRamp": ["#030712", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#f8fafc"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles, song titles, and live stage headers." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers, dialog headers, and module titles." },
+      "title": { "displayName": "Title", "purpose": "Card titles, song list titles, and band names." },
+      "body": { "displayName": "Body", "purpose": "Lyrics, community posts, descriptions, and form controls." },
+      "label": { "displayName": "Label / Telemetry", "purpose": "Chord symbols, BPM, Hz, key badges, and channel patch numbers." }
+    },
+    "shadows": [
+      { "name": "resting-card", "value": "0 6px 14px rgba(38, 48, 53, 0.06)", "purpose": "Default elevation for light-mode cards and song rows." },
+      { "name": "interactive-lift", "value": "0 10px 24px rgba(38, 48, 53, 0.08)", "purpose": "Hover elevation for interactive cards and setlist tiles." },
+      { "name": "brass-focus-ring", "value": "0 0 0 3px rgba(233, 196, 106, 0.5)", "purpose": "Keyboard focus-visible ring across all interactive elements." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Smooth exponential deceleration for UI transitions and micro-interactions." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Standard state interpolation for layout and opacity transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Studio Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button with Deep Wood surface and Warm Brass label.",
+      "html": "<button class=\"ds-btn-primary\">New Song</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(135deg, #1a2f38 0%, #264653 100%); color: #E9C46A; padding: 10px 20px; border-radius: 14px; border: 1px solid rgba(233, 196, 106, 0.28); font-family: var(--bm-font-sans, sans-serif); font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(38, 70, 83, 0.22); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.5); }"
+    },
+    {
+      "name": "Stage Accent Pill Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "High-visibility Warm Brass pill button for live stage actions and primary CTAs.",
+      "html": "<button class=\"ds-btn-accent\">Launch Stage Mode</button>",
+      "css": ".ds-btn-accent { background: #E9C46A; color: #090D16; padding: 10px 22px; border-radius: 9999px; border: 1px solid rgba(9, 13, 22, 0.12); font-family: var(--bm-font-sans, sans-serif); font-weight: 750; font-size: 0.92rem; cursor: pointer; transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-accent:hover { transform: translateY(-1px); filter: brightness(1.06); } .ds-btn-accent:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.5); }"
+    },
+    {
+      "name": "Repertoire Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Elevated song or band card with full-perimeter border and warm ambient depth.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Stand By Me</div><div class=\"ds-card-meta\">Ben E. King · Key of A · 118 BPM</div></div>",
+      "css": ".ds-card { background: var(--bm-surface, #FFFFFF); color: var(--bm-text, #264653); border-radius: 18px; border: 1px solid rgba(38, 70, 83, 0.12); padding: 20px 24px; box-shadow: 0 6px 14px rgba(38, 48, 53, 0.06); transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), border-color 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-card:hover { transform: translateY(-2px); border-color: rgba(233, 196, 106, 0.55); box-shadow: 0 10px 24px rgba(38, 48, 53, 0.1); } .ds-card-title { font-weight: 700; font-size: 1.125rem; margin-bottom: 4px; } .ds-card-meta { font-family: var(--bm-font-mono, monospace); font-size: 0.8rem; opacity: 0.78; }"
+    },
+    {
+      "name": "Chord Telemetry Badge",
+      "kind": "chip",
+      "refersTo": "chip-chord",
+      "description": "Monospace harmonic badge for chords, keys, and BPM indicators.",
+      "html": "<span class=\"ds-chip-chord\">F#m7 · 120 BPM</span>",
+      "css": ".ds-chip-chord { display: inline-flex; align-items: center; background: #F4F1DE; color: #264653; border: 1px solid rgba(38, 70, 83, 0.18); border-radius: 6px; padding: 2px 8px; font-family: var(--bm-font-mono, monospace); font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Studio Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "High-contrast search and filter field with brass focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search songs, artists, or lyrics...\" />",
+      "css": ".ds-input { width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(38, 70, 83, 0.2); background: var(--bm-surface, #FFFFFF); color: var(--bm-text, #264653); font-family: var(--bm-font-sans, sans-serif); font-size: 0.95rem; transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input:focus-visible { outline: none; border-color: #E9C46A; box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.45); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Luthier's Console",
+    "overview": "Bandmate's visual language merges the tactile warmth of an acoustic luthier's workshop with the high-contrast precision of a backstage mixing console. During daytime preparation and catalog management, the interface rests on Warm Acoustic Cream (#F9F7F0) and Deep Wood (#264653), reducing eye strain while reading dense chord sheets and lyrics. When the musician steps into rehearsal or onto a dark stage, the system shifts seamlessly into Stage OLED Dark Mode (#030712 and #0F172A), where illuminated Warm Brass (#E9C46A) and Studio Teal (#2A9D8F) readouts cut through stage glare without bleeding ambient light.",
+    "keyCharacteristics": [
+      "Dual-Scene Polarity: Warm Acoustic Cream (#F9F7F0) for daytime prep; Deep Stage OLED (#030712) for low-light rehearsal and live performance.",
+      "Tactile Hardware Hierarchy: Primary actions and active transport controls carry Warm Brass (#E9C46A) and Deep Wood (#264653).",
+      "Musical Typography Pairing: Manrope for humanist warmth and stage legibility; JetBrains Mono for character-exact chord positioning and tabular telemetry.",
+      "Stage-Safe Ergonomics: 44x44px minimum touch targets, WCAG 2.1 AA compliance in both themes, and full-perimeter borders instead of side-stripe bars."
+    ],
+    "rules": [
+      {
+        "name": "The Brass-On-Obsidian Rule",
+        "body": "Whenever Warm Brass (#E9C46A) is used as a solid button or badge fill, its label and icon must use Obsidian (#090D16 or #0F172A) at font-weight 700+—never white—to guarantee WCAG AA contrast above 8:1.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tinted Neutral Rule",
+        "body": "Never use pure neutral gray (#808080 or #999999) for secondary text or borders. Every neutral is tinted with either Deep Wood in light mode or cool slate (#94A3B8) in dark mode.",
+        "section": "colors"
+      },
+      {
+        "name": "The Monospace Telemetry Rule",
+        "body": "Use JetBrains Mono with font-variant-numeric: tabular-nums exclusively for musical notation (chords, keys, semitones), timing/frequency metrics (BPM, Hz, cents, durations), and technical patch indices.",
+        "section": "typography"
+      },
+      {
+        "name": "The Exponential Deceleration Rule",
+        "body": "All transitions and micro-interactions use smooth exponential easing (cubic-bezier(0.22, 1, 0.36, 1) or cubic-bezier(0.2, 0.8, 0.2, 1) over 150ms–250ms). Overshooting bounce or elastic curves are strictly forbidden.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Manrope for all UI and lyric text and JetBrains Mono (tabular-nums) for chords, keys, BPM, Hz, and channel numbers.",
+      "Do ensure every <img> tag (including dynamic user/band avatars) provides a valid fallback src and descriptive alt attribute so broken image boxes never appear.",
+      "Do keep all functional badges and micro-labels at or above 11px (0.6875rem) with WCAG AA contrast (>= 4.5:1).",
+      "Do theme browser surfaces (::selection, scrollbars, focus rings, caret) using Bandmate's Warm Brass and Deep Wood tokens."
+    ],
+    "donts": [
+      "Don't use Inter, Arial, or generic system fonts in component stylesheets.",
+      "Don't use thick 3px–4px left or top side-tab stripes (::before / ::after side bars) on cards, song sections, or nav items; use full-perimeter borders or inset highlights instead.",
+      "Don't use bounce or elastic easing curves (cubic-bezier with values > 1.0); use smooth exponential ease-out (cubic-bezier(0.22, 1, 0.36, 1)).",
+      "Don't use low-contrast gray text (#808080 on white or dark slate on dark backgrounds) or nest cards inside cards."
+    ]
+  }
+}

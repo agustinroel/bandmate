@@ -7,9 +7,9 @@
       </div>
 
       <div class="flex-grow-1">
-        <h2 class="bm-page-title">Songs</h2>
+        <h2 class="bm-page-title">{{ i18n.t('songs.title', 'Songs') }}</h2>
         <div class="small opacity-75">
-          Your: {{ grouped().mine.length }} · Library: {{ libraryWorks().length }}
+          {{ i18n.t('songs.summary', { mine: grouped().mine.length, library: libraryWorks().length }) }}
         </div>
       </div>
       <div class="d-flex gap-2">
@@ -23,15 +23,15 @@
             alt=""
             class="spotify-logo-mini me-1"
           />
-          Sync Spotify
+          {{ i18n.t('songs.sync_spotify', 'Sync Spotify') }}
         </button>
         <button mat-stroked-button color="accent" (click)="openSmartImport()">
           <mat-icon class="me-1">auto_fix_high</mat-icon>
-          Importar Tab / Cifra
+          {{ i18n.t('songs.import_tab', 'Importar Tab / Cifra') }}
         </button>
         <button mat-raised-button color="primary" (click)="goNew()">
           <mat-icon class="me-1">add</mat-icon>
-          Add song
+          {{ i18n.t('songs.add_song', 'Add song') }}
         </button>
       </div>
     </header>
@@ -39,14 +39,14 @@
     <!-- Search -->
     <div class="mt-3">
       <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Search</mat-label>
+        <mat-label>{{ i18n.t('songs.search', 'Search') }}</mat-label>
         <mat-icon matPrefix class="me-2">search</mat-icon>
 
         <input
           matInput
           [value]="query()"
           (input)="query.set($any($event.target).value)"
-          placeholder="Title, artist or key"
+          [placeholder]="i18n.t('songs.search_placeholder', 'Title, artist or key')"
         />
 
         @if (query()) {
@@ -66,7 +66,7 @@
           (click)="filtersOpen.set(!filtersOpen())"
           aria-label="Toggle filters"
         >
-          <span class="bm-filters-title">Filters</span>
+          <span class="bm-filters-title">{{ i18n.t('songs.filters', 'Filters') }}</span>
 
           @if (activeFiltersCount() > 0) {
             <span class="bm-filters-badge">{{ activeFiltersCount() }}</span>
@@ -80,7 +80,7 @@
         @if (hasActiveFilters()) {
           <button mat-stroked-button type="button" class="bm-clear" (click)="clearFilters()">
             <mat-icon class="me-1">close</mat-icon>
-            Clear
+            {{ i18n.t('songs.clear', 'Clear') }}
           </button>
         }
       </div>
@@ -88,9 +88,9 @@
       <div class="bm-filters-body" [class.is-hidden]="!filtersOpen()">
         <div class="bm-filters-row">
           <mat-form-field appearance="outline" class="bm-field">
-            <mat-label>Artist</mat-label>
+            <mat-label>{{ i18n.t('songs.artist', 'Artist') }}</mat-label>
             <mat-select [value]="filters().artist" (selectionChange)="setArtist($event.value)">
-              <mat-option [value]="null">All artists</mat-option>
+              <mat-option [value]="null">{{ i18n.t('songs.all_artists', 'All artists') }}</mat-option>
               @for (a of artistOptions(); track a) {
                 <mat-option [value]="a">{{ a }}</mat-option>
               }
@@ -98,9 +98,9 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="bm-field">
-            <mat-label>Key</mat-label>
+            <mat-label>{{ i18n.t('songs.key', 'Key') }}</mat-label>
             <mat-select [value]="filters().key" (selectionChange)="setKey($event.value)">
-              <mat-option [value]="null">All keys</mat-option>
+              <mat-option [value]="null">{{ i18n.t('songs.all_keys', 'All keys') }}</mat-option>
               @for (k of keyOptions(); track k) {
                 <mat-option [value]="k">{{ k }}</mat-option>
               }
@@ -108,21 +108,21 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Sort</mat-label>
+            <mat-label>{{ i18n.t('songs.sort', 'Sort') }}</mat-label>
             <mat-select [value]="sort()" (selectionChange)="sort.set($event.value)">
-              <mat-option value="updatedDesc">Recently updated</mat-option>
-              <mat-option value="updatedAsc">Oldest updated</mat-option>
-              <mat-option value="titleAsc">Title A–Z</mat-option>
-              <mat-option value="titleDesc">Title Z–A</mat-option>
-              <mat-option value="artistAsc">Artist A–Z</mat-option>
-              <mat-option value="artistDesc">Artist Z–A</mat-option>
+              <mat-option value="updatedDesc">{{ i18n.t('songs.sort.updated_desc', 'Recently updated') }}</mat-option>
+              <mat-option value="updatedAsc">{{ i18n.t('songs.sort.updated_asc', 'Oldest updated') }}</mat-option>
+              <mat-option value="titleAsc">{{ i18n.t('songs.sort.title_asc', 'Title A–Z') }}</mat-option>
+              <mat-option value="titleDesc">{{ i18n.t('songs.sort.title_desc', 'Title Z–A') }}</mat-option>
+              <mat-option value="artistAsc">{{ i18n.t('songs.sort.artist_asc', 'Artist A–Z') }}</mat-option>
+              <mat-option value="artistDesc">{{ i18n.t('songs.sort.artist_desc', 'Artist Z–A') }}</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="bm-field">
-            <mat-label>Genre</mat-label>
+            <mat-label>{{ i18n.t('songs.genre', 'Genre') }}</mat-label>
             <mat-select [value]="filters().genre" (selectionChange)="setGenre($event.value)">
-              <mat-option [value]="null">All genres</mat-option>
+              <mat-option [value]="null">{{ i18n.t('songs.all_genres', 'All genres') }}</mat-option>
               @for (g of genreOptions(); track g) {
                 <mat-option [value]="g">{{ g }}</mat-option>
               }
@@ -162,7 +162,7 @@
         <span>{{ store.error() }}</span>
         <button mat-stroked-button (click)="store.load()">
           <mat-icon class="me-1">refresh</mat-icon>
-          Retry
+          {{ i18n.t('common.retry', 'Retry') }}
         </button>
       </div>
     }
@@ -173,20 +173,20 @@
           queue_music
         </mat-icon>
 
-        <div class="mt-2 fw-semibold">No songs yet</div>
+        <div class="mt-2 fw-semibold">{{ i18n.t('songs.no_songs_title', 'No songs yet') }}</div>
 
         <div class="small opacity-75 mb-3">
-          Add your first song and start building your rehearsal library.
+          {{ i18n.t('songs.no_songs_desc', 'Add your first song and start building your rehearsal library.') }}
         </div>
 
         <div class="d-flex gap-2 justify-content-center">
           <button mat-stroked-button color="primary" (click)="goNew()">
             <mat-icon class="me-1">add</mat-icon>
-            Add your first song
+            {{ i18n.t('songs.add_first', 'Add your first song') }}
           </button>
           <button mat-stroked-button (click)="scrollToLibrary()">
             <mat-icon class="me-1">explore</mat-icon>
-            Browse Library
+            {{ i18n.t('songs.browse_library', 'Browse Library') }}
           </button>
         </div>
       </div>
@@ -196,9 +196,9 @@
           search_off
         </mat-icon>
 
-        <div class="mt-2 fw-semibold">No results</div>
+        <div class="mt-2 fw-semibold">{{ i18n.t('songs.no_results_title', 'No results') }}</div>
 
-        <div class="small opacity-75 mb-3">Try a different search, or clear filters.</div>
+        <div class="small opacity-75 mb-3">{{ i18n.t('songs.no_results_desc', 'Try a different search, or clear filters.') }}</div>
 
         <!-- MAGIC IMPORT TRIGGER -->
         @if (query().length > 2 && !isSearchingExternal()) {
@@ -206,10 +206,9 @@
             <mat-icon color="accent" style="font-size: 32px; width: 32px; height: 32px"
               >auto_awesome</mat-icon
             >
-            <h4 class="mt-2">Can't find "{{ query() }}"?</h4>
+            <h4 class="mt-2">{{ i18n.t('songs.magic_promo_title', { query: query() }) }}</h4>
             <p class="small text-muted mb-3">
-              Use <strong>Magic Import</strong> to search the global database and generate a pro
-              arrangement with AI in seconds.
+              {{ i18n.t('songs.magic_promo_desc', 'Use Magic Import to search the global database and generate a pro arrangement with AI in seconds.') }}
             </p>
             <button
               mat-flat-button
@@ -218,7 +217,7 @@
               (click)="searchExternal()"
             >
               <mat-icon class="me-2">cloud_download</mat-icon>
-              Search Global Cloud
+              {{ i18n.t('songs.magic_search_btn', 'Search Global Cloud') }}
             </button>
           </div>
         }
@@ -226,17 +225,17 @@
         <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
           <button mat-stroked-button type="button" (click)="clearAllSearchAndFilters()">
             <mat-icon class="me-1">close</mat-icon>
-            Clear all
+            {{ i18n.t('songs.clear_all', 'Clear all') }}
           </button>
 
           <button mat-flat-button color="primary" (click)="goNew()">
             <mat-icon class="me-1">add</mat-icon>
-            Add song
+            {{ i18n.t('songs.add_song', 'Add song') }}
           </button>
 
           <button mat-stroked-button (click)="scrollToLibrary()">
             <mat-icon class="me-1">explore</mat-icon>
-            Browse Library
+            {{ i18n.t('songs.browse_library', 'Browse Library') }}
           </button>
         </div>
       </div>
@@ -248,7 +247,7 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
           <div class="d-flex align-items-center gap-2">
             <mat-icon color="accent">auto_awesome</mat-icon>
-            <h3 class="m-0 h5 fw-bold">Magic Global Results</h3>
+            <h3 class="m-0 h5 fw-bold">{{ i18n.t('songs.magic_results_title', 'Magic Global Results') }}</h3>
           </div>
           <button mat-icon-button (click)="isSearchingExternal.set(false)">
             <mat-icon>close</mat-icon>
@@ -263,7 +262,7 @@
               class="mx-auto"
               color="accent"
             ></mat-progress-spinner>
-            <div class="mt-3 small opacity-50">Searching the global database...</div>
+            <div class="mt-3 small opacity-50">{{ i18n.t('songs.searching_global', 'Searching the global database...') }}</div>
           </div>
         }
 
@@ -276,9 +275,9 @@
               color="primary"
             ></mat-progress-spinner>
             <div class="mt-3">
-              <div class="fw-bold">Generating Arrangement...</div>
+              <div class="fw-bold">{{ i18n.t('songs.generating_arrangement', 'Generating Arrangement...') }}</div>
               <div class="small opacity-50">
-                AI is analyzing the song structure and chords. This takes about 10s.
+                {{ i18n.t('songs.generating_desc', 'AI is analyzing the song structure and chords. This takes about 10s.') }}
               </div>
             </div>
           </div>
@@ -286,7 +285,7 @@
 
         @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
           <div class="text-center py-4 opacity-50">
-            No matches found in the cloud for "{{ query() }}".
+            {{ i18n.t('songs.no_cloud_matches', { query: query() }) }}
           </div>
         }
 
@@ -306,7 +305,7 @@
                 (click)="ingest(res)"
               >
                 <mat-icon class="me-1">auto_fix_high</mat-icon>
-                Generate
+                {{ i18n.t('songs.generate', 'Generate') }}
               </button>
             </div>
           }
@@ -318,8 +317,8 @@
       <!-- ========================= -->
       @if (grouped().mine.length > 0) {
         <div class="bm-section-head" id="bm-library-section">
-          <div class="bm-section-title">Your songs</div>
-          <div class="bm-section-sub small opacity-75">{{ grouped().mine.length }} songs</div>
+          <div class="bm-section-title">{{ i18n.t('songs.your_songs', 'Your songs') }}</div>
+          <div class="bm-section-sub small opacity-75">{{ i18n.t('songs.songs_count', { count: grouped().mine.length }) }}</div>
         </div>
 
         <div class="songs-grid">
@@ -339,7 +338,7 @@
 
                     @if (s.key) {
                       <span class="bm-pill bm-pill--key" [ngClass]="keyClass(s.key)">
-                        Key {{ s.key }}
+                        {{ i18n.t('songs.key_badge', { key: s.key }) }}
                       </span>
                     }
 
@@ -370,8 +369,8 @@
                       class="song-del"
                       mat-icon-button
                       (click)="askDelete(s.id, s.title); $event.stopPropagation()"
-                      matTooltip="Delete"
-                      aria-label="Delete"
+                      [matTooltip]="i18n.t('songs.delete', 'Delete')"
+                      [attr.aria-label]="i18n.t('songs.delete', 'Delete')"
                     >
                       <mat-icon>delete</mat-icon>
                     </button>
@@ -379,8 +378,15 @@
                 </div>
               </div>
 
-              @if (s.bpm || durationLabel(s.durationSec)) {
+              @if (s.bpm || durationLabel(s.durationSec) || s.genre) {
                 <div class="song-meta">
+                  @if (s.genre) {
+                    <span class="bm-pill bm-pill--genre">
+                      <mat-icon class="pill-ic">music_note</mat-icon>
+                      <span>{{ s.genre }}</span>
+                    </span>
+                  }
+
                   @if (s.bpm) {
                     <span class="bm-pill">
                       <mat-icon class="pill-ic">speed</mat-icon>
@@ -396,9 +402,9 @@
                   }
 
                   @if (s.workId) {
-                    <span class="bm-pill" matTooltip="You created this from a Library Work">
+                    <span class="bm-pill" [matTooltip]="i18n.t('songs.linked_work_tooltip', 'You created this from a Library Work')">
                       <mat-icon class="pill-ic">link</mat-icon>
-                      <span>Linked work</span>
+                      <span>{{ i18n.t('songs.linked_work', 'Linked work') }}</span>
                     </span>
                   }
                 </div>
@@ -406,7 +412,7 @@
 
               <div class="song-updated opacity-75">
                 <mat-icon class="updated-ic">history</mat-icon>
-                Updated: {{ s.updatedAt | date: 'MMM d, y' }}
+                {{ i18n.t('songs.updated_at', { date: (s.updatedAt | date: 'MMM d, y') }) }}
               </div>
             </mat-card>
           }
@@ -423,7 +429,7 @@
       <!-- ========================= -->
 
       @if (store.libraryState() === 'loading') {
-        <div class="mt-3 small opacity-75">Loading Library…</div>
+        <div class="mt-3 small opacity-75">{{ i18n.t('songs.loading_library', 'Loading Library…') }}</div>
       }
 
       @if (store.libraryState() === 'error') {
@@ -433,15 +439,15 @@
           <span>{{ store.libraryError() }}</span>
           <button mat-stroked-button (click)="store.loadLibrary()">
             <mat-icon class="me-1">refresh</mat-icon>
-            Retry
+            {{ i18n.t('common.retry', 'Retry') }}
           </button>
         </div>
       }
 
       @if (store.libraryState() === 'ready' && libraryWorks().length === 0) {
         <div class="mt-4 text-center opacity-75">
-          <div class="fw-semibold">Library is empty (for now)</div>
-          <div class="small">Once you import works, they’ll show up here.</div>
+          <div class="fw-semibold">{{ i18n.t('songs.library_empty_title', 'Library is empty (for now)') }}</div>
+          <div class="small">{{ i18n.t('songs.library_empty_desc', 'Once you import works, they’ll show up here.') }}</div>
         </div>
       }
 
@@ -450,9 +456,9 @@
       @if (libraryWorks().length > 0) {
         <div class="bm-section-head d-flex align-items-center justify-content-between">
           <div>
-            <div class="bm-section-title">Community Library</div>
+            <div class="bm-section-title">{{ i18n.t('songs.community_library', 'Community Library') }}</div>
             <div class="bm-section-sub small opacity-75">
-              Curated arrangements from the community: {{ libraryWorks().length }} songs
+              {{ i18n.t('songs.community_curated', { count: libraryWorks().length }) }}
             </div>
           </div>
           <mat-icon class="opacity-25" style="font-size: 32px; width: 32px; height: 32px"

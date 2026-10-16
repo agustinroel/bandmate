@@ -246,10 +246,19 @@ export interface BandEpkDialogData {
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      border-radius: 24px;
+      overflow: hidden;
+    }
     .epk-container {
-      max-width: 860px;
+      max-width: 900px;
+      width: 100%;
       max-height: 90vh;
       overflow-y: auto;
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
     }
     .inset-0 {
       top: 0; left: 0; right: 0; bottom: 0;
@@ -261,12 +270,19 @@ export interface BandEpkDialogData {
       opacity: 0.35;
     }
     .epk-hero-gradient {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.85) 100%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
+    }
+    .rider-summary-card .badge {
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-variant-numeric: tabular-nums;
     }
     .fw-black {
-      font-weight: 900;
+      font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .tracking-wider {
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
       letter-spacing: 0.1em;
     }
 

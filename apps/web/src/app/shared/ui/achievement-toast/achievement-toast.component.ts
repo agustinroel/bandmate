@@ -104,9 +104,10 @@ export interface Achievement {
     }
 
     .bm-achievement-label {
-      font-size: 0.65rem;
+      font-family: var(--bm-font-mono);
+      font-size: 0.7rem;
       font-weight: 800;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
       color: #e9c46a;
       text-transform: uppercase;
     }
@@ -120,8 +121,8 @@ export interface Achievement {
 
     .bm-achievement-desc {
       font-size: 0.85rem;
-      opacity: 0.7;
-      line-height: 1.3;
+      opacity: 0.85;
+      line-height: 1.35;
     }
 
     .bm-achievement-glint {
@@ -174,12 +175,12 @@ export interface Achievement {
       transition(':enter', [
         style({ transform: 'translateX(120%)', opacity: 0 }),
         animate(
-          '500ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          '380ms cubic-bezier(0.22, 1, 0.36, 1)',
           style({ transform: 'translateX(0)', opacity: 1 }),
         ),
       ]),
       transition(':leave', [
-        animate('400ms ease-in', style({ transform: 'translateX(120%)', opacity: 0 })),
+        animate('280ms ease-in', style({ transform: 'translateX(120%)', opacity: 0 })),
       ]),
     ]),
   ],

@@ -54,19 +54,19 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: #f5f5f5;
+    background: #163e3f;
   }
 
   mat-icon {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(38, 70, 83, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 80px;
-    color: rgba(0, 0, 0, 0.15);
+    font-size: 72px;
+    color: #2a9d8f;
   }
 
   &.pro-ring {
@@ -76,15 +76,15 @@
       inset: -4px;
       border-radius: 50%;
       padding: 4px;
-      background: linear-gradient(135deg, #ffd700, #ff8c00);
-      -webkit-mask: 
-         linear-gradient(#fff 0 0) content-box, 
-         linear-gradient(#fff 0 0);
+      background: linear-gradient(135deg, #f5c84b, #c89211);
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
-              mask: 
-         linear-gradient(#fff 0 0) content-box, 
-         linear-gradient(#fff 0 0);
-              mask-composite: exclude;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
     }
   }
 
@@ -95,15 +95,15 @@
       inset: -4px;
       border-radius: 50%;
       padding: 4px;
-      background: linear-gradient(135deg, #ff0080, #7928ca);
-      -webkit-mask: 
-         linear-gradient(#fff 0 0) content-box, 
-         linear-gradient(#fff 0 0);
+      background: linear-gradient(135deg, #2ec4b6, #0f766e);
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
-              mask: 
-         linear-gradient(#fff 0 0) content-box, 
-         linear-gradient(#fff 0 0);
-              mask-composite: exclude;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
     }
   }
 }
@@ -112,8 +112,8 @@
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color: white;
+  background: linear-gradient(135deg, #f5c84b, #c89211);
+  color: #16181c;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -125,9 +125,10 @@
   z-index: 10;
 
   &.studio {
-    background: linear-gradient(135deg, #ff0080, #7928ca);
+    background: linear-gradient(135deg, #2ec4b6, #0f766e);
+    color: white;
   }
-  
+
   mat-icon {
     font-size: 18px;
     width: 18px;
@@ -140,8 +141,9 @@
 }
 
 .profile-name {
+  font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
   font-size: 2.25rem;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0;
   line-height: 1.1;
@@ -149,20 +151,21 @@
 }
 
 .pro-text-badge {
-  color: #5d4037;
-  font-size: 0.65rem;
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  color: #16181c;
+  font-size: 0.6875rem;
   font-weight: 800;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   letter-spacing: 0.05em;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
   &.tier-pro {
-    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    background: linear-gradient(135deg, #f5c84b, #c89211);
   }
 
   &.tier-studio {
-    background: linear-gradient(135deg, #ff0080, #7928ca);
+    background: linear-gradient(135deg, #2ec4b6, #0f766e);
     color: white;
   }
 }
@@ -204,13 +207,18 @@
   &.status-gigs {
     background: rgba(34, 197, 94, 0.1);
     color: #15803d;
-    .dot { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
+    .dot {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
   }
 
   &.status-band {
     background: rgba(234, 179, 8, 0.1);
     color: #a16207;
-    .dot { background: #eab308; }
+    .dot {
+      background: #eab308;
+    }
   }
 }
 
@@ -233,7 +241,7 @@
     height: 48px;
     border-radius: 12px;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
   }
 }
 
@@ -260,7 +268,7 @@
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(233, 196, 106, 0.15) 0%, transparent 70%);
       pointer-events: none;
     }
   }
@@ -272,11 +280,12 @@
 }
 
 .btn-pro-tag {
-  font-size: 0.55rem;
-  background: Gold;
-  color: Black;
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6875rem;
+  background: #e9c46a;
+  color: #16181c;
+  padding: 1px 6px;
+  border-radius: 4px;
   margin-left: 8px;
   vertical-align: middle;
 }
@@ -483,4 +492,41 @@
   opacity: 0.4;
   font-style: italic;
   padding: 8px 0;
+}
+
+:host-context([data-theme='dark']),
+:host-context([data-bs-theme='dark']),
+:host-context(.theme-dark) {
+  .profile-card {
+    background: #16181c;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .profile-avatar {
+    background: #181d28;
+
+    img {
+      background: #163e3f;
+    }
+
+    mat-icon {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+    }
+  }
+  .profile-name,
+  .primary-instrument,
+  .band-name {
+    color: #f8fafc;
+  }
+  .profile-bio {
+    color: #cbd5e1;
+  }
+  .band-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .bm-chip {
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+  }
 }

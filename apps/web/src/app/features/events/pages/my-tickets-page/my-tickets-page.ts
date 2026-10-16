@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { TicketingService, TicketRow } from '../../services/ticketing.service';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -24,17 +25,12 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
           <mat-icon>confirmation_number</mat-icon>
         </div>
         <div class="flex-grow-1">
-          <h2 class="m-0">My Tickets</h2>
+          <h2 class="m-0">{{ i18n.t('tickets.title', 'My Tickets') }}</h2>
           <div class="small opacity-75">
             @if (loading()) {
-              Checking your reservations...
+              {{ i18n.t('tickets.loading', 'Checking your reservations...') }}
             } @else {
-              You have <span class="highlight">{{ tickets().length }}</span> active
-              @if (tickets().length === 1) {
-                ticket
-              } @else {
-                tickets
-              }
+              {{ i18n.t('tickets.count', { count: tickets().length }) }}
             }
           </div>
         </div>
@@ -51,12 +47,12 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
             <mat-icon>local_activity</mat-icon>
             <div class="pulse-ring"></div>
           </div>
-          <h2 class="fw-bold mb-3">No tickets found</h2>
+          <h2 class="fw-bold mb-3">{{ i18n.t('tickets.empty_title', 'No tickets found') }}</h2>
           <p class="text-secondary mb-5 mx-auto" style="max-width: 320px;">
-            Your upcoming live shows and digital passes will appear here after purchase.
+            {{ i18n.t('tickets.empty_desc', 'Your upcoming live shows and digital passes will appear here after purchase.') }}
           </p>
           <button mat-flat-button routerLink="/community" class="premium-btn rounded-pill px-5">
-            Explore Events
+            {{ i18n.t('tickets.explore_events', 'Explore Events') }}
           </button>
         </div>
       } @else {
@@ -69,7 +65,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
                   <div class="brand-overlay"></div>
                   <div class="ticket-header-content p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                      <div class="event-type-badge">LIVE PASS</div>
+                      <div class="event-type-badge">{{ i18n.t('tickets.live_pass', 'LIVE PASS') }}</div>
                       <div class="status-indicator" [class.status-active]="t.status === 'active'">
                         {{ t.status.toUpperCase() }}
                       </div>
@@ -92,20 +88,21 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
                 <div class="ticket-visual-bottom p-4">
                   <div class="row mb-4">
                     <div class="col-7 border-end">
-                      <div class="info-label">DATE & TIME</div>
+                      <div class="info-label">{{ i18n.t('tickets.date_time', 'DATE & TIME') }}</div>
                       <div class="info-value">{{ t.events?.event_date | date: 'MMM d, yyyy' }}</div>
                       <div class="info-sub">{{ t.events?.event_date | date: 'EEEE, h:mm a' }}</div>
                     </div>
                     <div class="col-5 ps-4">
-                      <div class="info-label">LOCATION</div>
+                      <div class="info-label">{{ i18n.t('tickets.location', 'LOCATION') }}</div>
                       <div class="info-value text-truncate">{{ t.events?.location_name }}</div>
-                      <div class="info-sub">Main Venue</div>
+                      <div class="info-sub">{{ i18n.t('tickets.main_venue', 'Main Venue') }}</div>
                     </div>
                   </div>
 
                   <div class="qr-vault rounded-4 mb-4">
                     <div class="qr-container p-2">
                       <img
+                        src="assets/brand/avatar-fallback.svg"
                         [src]="
                           'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' +
                           t.qr_hash
@@ -115,20 +112,20 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
                       />
                     </div>
                     <div class="qr-meta">
-                      <div class="entry-code">ENTRY CODE</div>
+                      <div class="entry-code">{{ i18n.t('tickets.entry_code', 'ENTRY CODE') }}</div>
                       <code class="code-value">{{ t.qr_hash.slice(0, 8).toUpperCase() }}</code>
                     </div>
                   </div>
 
                   <div class="d-flex justify-content-between align-items-center">
                     <div class="purchase-info">
-                      <span class="info-label d-block">PURCHASED FOR</span>
+                      <span class="info-label d-block">{{ i18n.t('tickets.purchased_for', 'PURCHASED FOR') }}</span>
                       <span class="info-value">{{
-                        t.purchase_price === 0 ? 'FREE' : (t.purchase_price | currency: 'EUR')
+                        t.purchase_price === 0 ? i18n.t('bands.free', 'FREE') : (t.purchase_price | currency: 'EUR')
                       }}</span>
                     </div>
                     <button mat-button class="view-details-btn">
-                      VIEW FULL DETAILS <mat-icon>arrow_forward</mat-icon>
+                      {{ i18n.t('tickets.view_details', 'VIEW FULL DETAILS') }} <mat-icon>arrow_forward</mat-icon>
                     </button>
                   </div>
                 </div>
@@ -156,16 +153,16 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       .ticket-entity {
         position: relative;
         filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.08));
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: transform 0.35s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
         cursor: default;
       }
 
       .ticket-entity:hover {
-        transform: translateY(-10px) scale(1.02);
+        transform: translateY(-6px);
       }
 
       .ticket-visual-top {
-        background-color: #1a1a1a;
+        background-color: #16181c;
         color: white;
         border-radius: 24px 24px 0 0;
         position: relative;
@@ -185,8 +182,9 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       }
 
       .event-type-badge {
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
         font-size: 0.7rem;
-        font-weight: 800;
+        font-weight: 700;
         letter-spacing: 0.1em;
         padding: 4px 12px;
         background: rgba(255, 255, 255, 0.1);
@@ -195,19 +193,21 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       }
 
       .status-indicator {
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
         font-size: 0.7rem;
         font-weight: 700;
-        color: #ff9800;
+        color: #f59e0b;
       }
 
       .status-active {
-        color: #4caf50;
+        color: #22c55e;
       }
 
       .ticket-title {
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
         font-size: 1.5rem;
         font-weight: 700;
+        letter-spacing: -0.02em;
       }
 
       .ticket-artist {
@@ -219,7 +219,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       /* Perforation */
       .ticket-perf {
         height: 48px;
-        background-color: white;
+        background-color: var(--bm-surface, white);
         position: relative;
         display: flex;
         align-items: center;
@@ -229,7 +229,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       .ticket-perf .line {
         width: 80%;
         height: 2px;
-        border-top: 2px dashed #eee;
+        border-top: 2px dashed rgba(15, 23, 42, 0.12);
       }
 
       .notch {
@@ -250,35 +250,36 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       }
 
       .ticket-visual-bottom {
-        background-color: white;
+        background-color: var(--bm-surface, white);
         border-radius: 0 0 24px 24px;
       }
 
       .info-label {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         font-weight: 800;
-        color: #999;
+        color: #64748b;
         letter-spacing: 0.05em;
         margin-bottom: 2px;
       }
 
       .info-value {
         font-weight: 700;
-        color: #333;
+        color: var(--bm-text, #0f172a);
         font-size: 1rem;
+        font-variant-numeric: tabular-nums;
       }
 
       .info-sub {
         font-size: 0.75rem;
-        color: #666;
+        color: var(--bm-muted, #64748b);
       }
 
       .qr-vault {
-        background-color: #f8f9fa;
+        background-color: #f8fafc;
         display: flex;
         align-items: center;
         padding: 12px;
-        border: 1px solid #f1f1f1;
+        border: 1px solid rgba(15, 23, 42, 0.08);
       }
 
       .qr-container {
@@ -303,16 +304,17 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
         padding-left: 20px;
 
         .entry-code {
-          font-size: 0.65rem;
+          font-size: 0.7rem;
           font-weight: 800;
-          color: #bbb;
+          color: #94a3b8;
         }
 
         .code-value {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
           font-size: 1rem;
           color: var(--bm-primary);
           letter-spacing: 2px;
+          font-variant-numeric: tabular-nums;
         }
       }
 
@@ -332,10 +334,11 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
 
       /* EMPTY STATE */
       .empty-state {
-        background: white;
-        border-radius: 40px;
-        padding: 80px 40px;
+        background: var(--bm-surface, white);
+        border-radius: 32px;
+        padding: 72px 40px;
         text-align: center;
+        border: 1px solid rgba(15, 23, 42, 0.08);
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
       }
 
@@ -352,7 +355,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
           font-size: 60px;
           width: 60px;
           height: 60px;
-          color: #eee;
+          color: var(--bm-primary);
           z-index: 10;
         }
       }
@@ -368,17 +371,40 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
       }
 
       .premium-btn {
-        background-color: #1a1a1a !important;
+        background-color: #16181c !important;
         color: white !important;
         padding: 12px 40px !important;
         font-weight: 600;
         letter-spacing: 0.05em;
-        transition: all 0.3s;
+        transition: all 0.2s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
       }
 
       .premium-btn:hover {
         background-color: var(--bm-primary) !important;
-        box-shadow: 0 10px 20px rgba(13, 169, 185, 0.3);
+        box-shadow: 0 10px 20px rgba(42, 157, 143, 0.25);
+      }
+
+      :host-context([data-theme='dark']) {
+        .ticket-perf,
+        .ticket-visual-bottom,
+        .empty-state {
+          background-color: #16181c;
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+        .ticket-perf .line {
+          border-top-color: rgba(255, 255, 255, 0.12);
+        }
+        .qr-vault {
+          background-color: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+        .info-value {
+          color: #f8fafc;
+        }
+        .info-sub,
+        .info-label {
+          color: #94a3b8;
+        }
       }
 
       /* ANIMATIONS */
@@ -435,6 +461,7 @@ import { TicketingService, TicketRow } from '../../services/ticketing.service';
   ],
 })
 export class MyTicketsPageComponent {
+  readonly i18n = inject(I18nService);
   private ticketService = inject(TicketingService);
 
   tickets = signal<TicketRow[]>([]);

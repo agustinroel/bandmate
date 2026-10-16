@@ -973,23 +973,24 @@
 }
 
 .cm-tier-badge {
-  font-size: 0.65rem;
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6875rem;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 4px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 
   &.cm-tier-pro {
-    background: linear-gradient(135deg, #ffd700, #ff8c00);
-    color: #000000;
-    box-shadow: 0 1px 4px rgba(255, 140, 0, 0.25);
+    background: linear-gradient(135deg, #e9c46a, #c8963e);
+    color: #141a16;
+    box-shadow: 0 1px 4px rgba(200, 150, 62, 0.25);
   }
   &.cm-tier-studio,
   &.cm-tier-band {
-    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    background: linear-gradient(135deg, #0f766e, #264653);
     color: #ffffff;
-    box-shadow: 0 1px 4px rgba(139, 92, 246, 0.25);
+    box-shadow: 0 1px 4px rgba(15, 118, 110, 0.25);
   }
 }
 
@@ -1161,7 +1162,7 @@
     color: #ef4444 !important;
     .heart-active {
       color: #ef4444;
-      animation: bmPulse 0.35s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+      animation: bmPulse 0.3s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
     }
   }
 }

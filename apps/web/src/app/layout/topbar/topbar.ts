@@ -96,7 +96,7 @@ import { I18nService } from '../../core/services/i18n.service';
           <div class="bm-right">
             @if (isAuthed()) {
               <!-- Notifications Bell -->
-              <button mat-icon-button [matMenuTriggerFor]="notifMenu" matTooltip="Notifications">
+              <button mat-icon-button [matMenuTriggerFor]="notifMenu" [matTooltip]="i18n.t('nav.notifications', 'Notificaciones')">
                 <mat-icon
                   [matBadge]="notifService.unreadCount()"
                   [matBadgeHidden]="notifService.unreadCount() === 0"
@@ -110,14 +110,14 @@ import { I18nService } from '../../core/services/i18n.service';
                 <div
                   class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom overflow-hidden bg-dark text-white"
                 >
-                  <span class="fw-bold small opacity-75">Notifications</span>
+                  <span class="fw-bold small opacity-75">{{ i18n.t('nav.notifications', 'Notificaciones') }}</span>
                   @if (notifService.unreadCount() > 0) {
                     <button
                       mat-button
                       class="small-btn text-accent"
                       (click)="notifService.markAllRead()"
                     >
-                      Mark all read
+                      {{ i18n.t('notifications.mark_all_read', 'Marcar todo leído') }}
                     </button>
                   }
                 </div>
@@ -127,7 +127,7 @@ import { I18nService } from '../../core/services/i18n.service';
                   style="max-height: 480px; overflow-y: auto; width: 400px; background: #1a1a1a;"
                 >
                   @if (notifService.notifications().length === 0) {
-                    <div class="p-4 text-center opacity-50 small text-white">No notifications</div>
+                    <div class="p-4 text-center opacity-50 small text-white">{{ i18n.t('notifications.empty', 'No tienes notificaciones pendientes') }}</div>
                   } @else {
                     @for (n of notifService.notifications(); track n.id) {
                       <div
@@ -168,20 +168,20 @@ import { I18nService } from '../../core/services/i18n.service';
                                   class="small-btn py-1"
                                   (click)="accept(n); $event.stopPropagation()"
                                 >
-                                  Accept
+                                  {{ i18n.t('common.accept', 'Aceptar') }}
                                 </button>
                                 <button
                                   mat-stroked-button
                                   class="small-btn py-1 border-white opacity-75 text-white"
                                   (click)="reject(n); $event.stopPropagation()"
                                 >
-                                  Reject
+                                  {{ i18n.t('common.reject', 'Rechazar') }}
                                 </button>
                               </div>
                             }
                           </div>
                         </div>
-                        <div class="text-end opacity-40 mt-2 text-white" style="font-size: 0.65rem">
+                        <div class="text-end opacity-60 mt-2 text-white font-mono" style="font-size: 0.72rem">
                           {{ n.created_at | date: 'short' }}
                         </div>
                       </div>
@@ -194,18 +194,23 @@ import { I18nService } from '../../core/services/i18n.service';
                 class="bm-user"
                 type="button"
                 [matMenuTriggerFor]="userMenu"
-                matTooltip="Account"
+                [matTooltip]="i18n.t('nav.account', 'Cuenta')"
               >
-                <img class="bm-avatar" [src]="avatarUrl()" alt="" referrerpolicy="no-referrer" />
+                <img
+                  class="bm-avatar"
+                  src="assets/brand/avatar-fallback.svg"
+                  [src]="avatarUrl()"
+                  [alt]="userLabel()"
+                  referrerpolicy="no-referrer"
+                />
                 <span class="bm-user-name">{{ userLabel() }}</span>
                 <mat-icon class="bm-caret">expand_more</mat-icon>
               </button>
 
               <!-- User Menu -->
               <mat-menu #userMenu="matMenu" xPosition="before">
-                <!-- ... same ... -->
                 <div class="bm-menu-head" mat-menu-item disabled>
-                  <div class="bm-menu-title">You’re in 🎶</div>
+                  <div class="bm-menu-title">{{ i18n.t('nav.logged_in', 'Sesión iniciada 🎶') }}</div>
                   <div class="bm-menu-sub">{{ emailLabel() }}</div>
                 </div>
 

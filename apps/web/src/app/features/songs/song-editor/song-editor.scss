@@ -75,21 +75,29 @@
   animation: bmFadeIn 0.3s ease;
 }
 
-.bm-auto-btn {
+.bm-auto-btn,
+.bm-metronome-btn {
   border-radius: 99px !important;
-  height: 36px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   padding: 0 16px !important;
-  border-color: rgba(0,0,0,0.1) !important;
+  border-color: rgba(38, 70, 83, 0.16) !important;
   color: inherit !important;
   font-size: 13px !important;
+  font-weight: 700 !important;
   
   mat-icon { margin-right: 6px; font-size: 20px; width: 20px; height: 20px; }
   
   &.is-active {
-    background: rgba(201, 162, 39, 0.12) !important;
-    border-color: rgba(201, 162, 39, 0.3) !important;
-    color: #94751c !important; /* darker gold */
+    background: rgba(201, 162, 39, 0.15) !important;
+    border-color: rgba(201, 162, 39, 0.45) !important;
+    color: #94751c !important;
   }
+}
+
+.bm-metro-label {
+  font-family: var(--bm-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Slider Group */
@@ -97,21 +105,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0,0,0,0.03);
+  background: rgba(38, 70, 83, 0.04);
   border-radius: 99px;
-  padding: 0 10px;
-  height: 36px;
-  border: 1px solid rgba(0,0,0,0.06);
+  padding: 0 12px;
+  min-height: 44px;
+  border: 1px solid rgba(38, 70, 83, 0.1);
   min-width: 140px;
   
-  animation: bmScaleIn 0.2s cubic-bezier(0.2, 0, 0, 1) both;
+  animation: bmScaleIn 0.2s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .bm-slider-ic {
   font-size: 18px;
   width: 18px;
   height: 18px;
-  opacity: 0.45;
+  opacity: 0.6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,14 +144,15 @@
 /* 1. Practice CTA (Primary) */
 .bm-practice-btn {
   background-color: var(--bm-accent) !important;
-  color: #1a1a1a !important; /* Dark text for contrast on gold */
-  font-weight: 750 !important;
+  color: #14171a !important;
+  font-weight: 800 !important;
   border-radius: 99px !important;
   padding: 0 24px !important;
-  height: 42px !important;
-  letter-spacing: 0.3px;
+  min-height: 44px !important;
+  height: 44px !important;
+  letter-spacing: 0.01em;
   box-shadow: 0 4px 14px rgba(201, 162, 39, 0.25);
-  transition: all 0.2s ease;
+  transition: transform 0.2s var(--bm-ease-out), box-shadow 0.2s var(--bm-ease-out);
 
   mat-icon {
     margin-right: 8px;
@@ -151,8 +160,7 @@
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(201, 162, 39, 0.4);
-    filter: brightness(1.05);
+    box-shadow: 0 6px 20px rgba(201, 162, 39, 0.38);
   }
   
   &:active {
@@ -163,23 +171,25 @@
 
 /* 2. Edit Button (Secondary) */
 .bm-edit-btn, .bm-edit-top {
-  border-color: rgba(0,0,0,0.1) !important;
+  border-color: rgba(38, 70, 83, 0.16) !important;
   color: inherit !important;
-  opacity: 0.8;
+  font-weight: 700 !important;
   border-radius: 99px !important;
   padding: 0 20px !important;
-  height: 40px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   
   &:hover {
-    opacity: 1;
-    background: rgba(0,0,0,0.03);
+    background: rgba(38, 70, 83, 0.05);
   }
 }
 
 /* 3. Action Icon (Tertiary - Publish) */
 .bm-action-icon {
-  opacity: 0.6;
-  &:hover { opacity: 1; background: rgba(0,0,0,0.04); }
+  min-width: 44px;
+  min-height: 44px;
+  opacity: 0.75;
+  &:hover { opacity: 1; background: rgba(38, 70, 83, 0.06); }
 }
 
 .bm-btn-ic {
@@ -498,8 +508,8 @@
 /* Make section action icons align nicely */
 .bm-sec-edit,
 .bm-sec-del {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
@@ -531,20 +541,20 @@
 /* Textarea */
 .bm-line-input {
   width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.10);
-  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(38, 70, 83, 0.14);
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 14px;
   padding: 10px 12px;
   color: inherit;
   resize: vertical;
   outline: none;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-  font-size: 13px;
-  line-height: 1.35;
+  font-family: var(--bm-font-mono);
+  font-size: 13.5px;
+  line-height: 1.45;
 }
 
 .bm-line-input:focus {
-  border-color: rgba(201, 162, 39, 0.55);
+  border-color: rgba(201, 162, 39, 0.65);
   box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
 }
 
@@ -561,9 +571,9 @@
 
 /* Delete button — FIX: perfectly centered icon, consistent size */
 .bm-line-del {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   border-radius: 12px;
 
   display: inline-flex;
@@ -578,11 +588,11 @@
   pointer-events: none;
 
   transition:
-    opacity 160ms ease,
-    transform 160ms ease,
-    background-color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    opacity 160ms var(--bm-ease-out),
+    transform 160ms var(--bm-ease-out),
+    background-color 160ms var(--bm-ease-out),
+    border-color 160ms var(--bm-ease-out),
+    box-shadow 160ms var(--bm-ease-out);
 }
 
 .bm-line-del .mat-icon {
@@ -637,7 +647,7 @@
 }
 
 .bm-chart-line {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-family: var(--bm-font-mono);
   white-space: pre;
   line-height: 1.4;
 }
@@ -744,6 +754,7 @@
 .bm-note-pill {
   padding: 4px 10px;
   border-radius: 999px;
+  font-family: var(--bm-font-mono);
   font-size: 12px;
   font-weight: 800;
   border: 1px solid rgba(201, 162, 39, 0.28);
@@ -928,9 +939,9 @@
 }
 
 .bm-meta-title {
-  font-weight: 750;
-  letter-spacing: -0.01em;
-  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.5rem;
   line-height: 1.15;
 }
 
@@ -950,10 +961,13 @@
   align-items: center;
   gap: 8px;
   padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
-  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(38, 70, 83, 0.12);
+  background: rgba(38, 70, 83, 0.04);
+  font-family: var(--bm-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .bm-pill-ic {
@@ -967,15 +981,16 @@
   margin-top: 10px;
   padding: 14px;
   border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(38, 70, 83, 0.1);
+  background: rgba(38, 70, 83, 0.02);
 }
 
 .bm-meta-notes-h {
-  font-size: 0.75rem;
+  font-family: var(--bm-font-mono);
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   font-weight: 800;
-  opacity: 0.55;
+  opacity: 0.65;
   margin-bottom: 6px;
 }
 
@@ -988,8 +1003,6 @@
   .bm-page-header {
     margin-bottom: 6px;
   }
-
-  /* Remove mark to save space */
 
   /* Make header layout more "stacked" and clean */
   .bm-page-header>.d-flex {
@@ -1057,8 +1070,8 @@
   /* Keep edit/delete icons aligned in a neat little row */
   .bm-sec-edit,
   .bm-sec-del {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 
   /* Line delete: never looks “desfasado” */
@@ -1101,8 +1114,8 @@
   }
 
   .bm-flow-chord {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-    font-weight: 900;
+    font-family: var(--bm-font-mono);
+    font-weight: 800;
     font-size: 12px;
     line-height: 1;
     padding: 3px 8px;
@@ -1121,7 +1134,7 @@
   .bm-flow-text {
     white-space: pre-wrap;
     word-break: break-word;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    font-family: var(--bm-font-mono);
     font-size: 14px;
     line-height: 1.35;
     opacity: 0.95;
@@ -1134,7 +1147,6 @@
 
 .bm-body-head {
   align-items: center;
-  /* antes estaba flex-start; esto ya corrige mucho */
 }
 
 /* Acciones: misma altura y alineación */
@@ -1154,10 +1166,11 @@
 .bm-auto-speed {
   display: inline-flex;
   align-items: center;
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
   border-radius: 999px;
-
+  font-family: var(--bm-font-mono);
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1167,27 +1180,27 @@
 .bm-add-section,
 .bm-add-line,
 .bm-mode-toggle {
-  min-height: 40px;
+  min-height: 44px;
 }
 
 /* Icon buttons “cuadrados” y centrados */
 :host ::ng-deep .bm-body-actions .mat-mdc-icon-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: 12px;
 }
 
-/* Key pill y transpose alineados a 40px también */
+/* Key pill y transpose alineados a 44px también */
 .bm-key-pill {
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
 }
 
 .bm-transpose {
-  height: 40px;
+  height: 44px;
   padding: 0 10px;
   align-items: center;
 }
@@ -1201,6 +1214,54 @@
 
   .bm-auto-scroll {
     flex-wrap: wrap;
-    /* en mobile sí */
+  }
+}
+
+/* Dark Mode Overrides */
+:host-context([data-bs-theme='dark']),
+:host-context(.theme-dark) {
+  .bm-editor-card {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+  }
+
+  .bm-body {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .bm-section-card {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .bm-line-input {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+  }
+
+  .bm-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+  }
+
+  .bm-meta-notes {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .bm-auto-btn,
+  .bm-metronome-btn,
+  .bm-edit-btn {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f8fafc !important;
+
+    &.is-active {
+      background: rgba(233, 196, 106, 0.16) !important;
+      border-color: rgba(233, 196, 106, 0.45) !important;
+      color: var(--bm-accent, #e9c46a) !important;
+    }
   }
 }

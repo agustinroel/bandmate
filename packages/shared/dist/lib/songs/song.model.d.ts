@@ -47,6 +47,7 @@ export type Song = {
      * We'll keep it for now for compatibility.
      */
     key?: string;
+    genre?: string;
     bpm?: number | string;
     durationSec?: number | string;
     notes?: string;

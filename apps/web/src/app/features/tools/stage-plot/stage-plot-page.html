@@ -6,38 +6,38 @@
         <mat-icon>dashboard_customize</mat-icon>
       </div>
       <div>
-        <h1 class="fs-3 fw-bold m-0">Stage Plot & Tech Rider</h1>
-        <div class="text-muted small">Diseñador interactivo de escenario y lista de canales para técnicos de sonido</div>
+        <h1 class="fs-3 fw-bold m-0">{{ i18n.t('stage_plot.title', 'Stage Plot & Tech Rider') }}</h1>
+        <div class="text-muted small">{{ i18n.t('stage_plot.subtitle', 'Diseñador interactivo de escenario y lista de canales para técnicos de sonido') }}</div>
       </div>
     </div>
 
     <div class="d-flex align-items-center gap-2">
       <button mat-stroked-button (click)="clearStage()" class="rounded-pill">
         <mat-icon class="me-1">delete_sweep</mat-icon>
-        Limpiar
+        {{ i18n.t('stage_plot.clear', 'Limpiar') }}
       </button>
       <button mat-stroked-button (click)="printTechRider()" class="rounded-pill">
         <mat-icon class="me-1">print</mat-icon>
-        Imprimir
+        {{ i18n.t('stage_plot.print', 'Imprimir') }}
       </button>
       <button mat-flat-button color="primary" (click)="openExportDialog()" class="rounded-pill px-4">
         <mat-icon class="me-1">picture_as_pdf</mat-icon>
-        Exportar Tech Rider (PDF)
+        {{ i18n.t('stage_plot.export_pdf', 'Exportar Tech Rider (PDF)') }}
       </button>
     </div>
   </div>
 
   <!-- Presets Toolbar -->
   <div class="presets-bar bg-white p-2 rounded-3 border mb-4 d-flex align-items-center gap-2 flex-wrap no-print">
-    <span class="small fw-bold text-muted ms-2 me-1">Plantillas rápidas:</span>
+    <span class="small fw-bold text-muted ms-2 me-1">{{ i18n.t('stage_plot.presets_title', 'Plantillas rápidas:') }}</span>
     <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('rock4')">
-      🎸 Cuarteto Rock
+      <mat-icon class="me-1">album</mat-icon> {{ i18n.t('stage_plot.preset_rock', 'Cuarteto Rock') }}
     </button>
     <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('acoustic')">
-      🎙️ Dúo Acústico
+      <mat-icon class="me-1">mic</mat-icon> {{ i18n.t('stage_plot.preset_acoustic', 'Dúo Acústico') }}
     </button>
     <button mat-stroked-button class="btn-sm rounded-pill" (click)="applyPreset('pop6')">
-      🎹 Pop / Funk (6 Músicos)
+      <mat-icon class="me-1">piano</mat-icon> {{ i18n.t('stage_plot.preset_pop', 'Pop / Funk (6 Músicos)') }}
     </button>
   </div>
 
@@ -48,7 +48,7 @@
       <div class="card shadow-sm border-0 rounded-4 p-3 mb-3">
         <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
           <mat-icon class="text-primary fs-5">add_circle_outline</mat-icon>
-          Añadir Elemento
+          {{ i18n.t('stage_plot.add_element', 'Añadir Elemento') }}
         </h6>
         <div class="toolbox-grid">
           @for (tmpl of templates; track tmpl.type) {
@@ -56,12 +56,12 @@
               type="button"
               class="btn btn-outline-light text-dark border d-flex align-items-center gap-2 text-start p-2 rounded-3 tool-item"
               (click)="addElement(tmpl.type)"
-              [matTooltip]="'Añadir ' + tmpl.name + ' al escenario'"
+              [matTooltip]="tmpl.name"
             >
               <mat-icon class="text-primary">{{ tmpl.icon }}</mat-icon>
               <div class="lh-1">
                 <div class="small fw-bold">{{ tmpl.name }}</div>
-                <small class="text-muted" style="font-size: 11px;">{{ tmpl.hasInput ? 'Entrada Audio' : 'Equipamiento' }}</small>
+                <small class="text-muted" style="font-size: 11px;">{{ tmpl.hasInput ? i18n.t('stage_plot.audio_input', 'Entrada Audio') : i18n.t('stage_plot.equipment', 'Equipamiento') }}</small>
               </div>
             </button>
           }
@@ -74,15 +74,15 @@
           <div class="d-flex align-items-center justify-content-between mb-3">
             <h6 class="fw-bold m-0 d-flex align-items-center gap-2 text-primary">
               <mat-icon>{{ getIconForType(sel.type) }}</mat-icon>
-              Propiedades
+              {{ i18n.t('stage_plot.properties', 'Propiedades') }}
             </h6>
-            <button mat-icon-button class="text-danger btn-sm" (click)="deleteSelectedElement()" title="Eliminar">
+            <button mat-icon-button class="text-danger btn-sm" (click)="deleteSelectedElement()" [title]="i18n.t('common.delete', 'Eliminar')">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
 
           <div class="mb-2">
-            <label class="form-label small fw-bold">Nombre / Identificador</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.elem_name', 'Nombre / Identificador') }}</label>
             <input
               type="text"
               class="form-control form-control-sm"
@@ -92,7 +92,7 @@
           </div>
 
           <div class="mb-2">
-            <label class="form-label small fw-bold">Micrófono / Entrada</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.mic_input', 'Micrófono / Entrada') }}</label>
             <input
               type="text"
               class="form-control form-control-sm"
@@ -102,7 +102,7 @@
           </div>
 
           <div class="mb-2">
-            <label class="form-label small fw-bold">Tipo de Soporte</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.ch_stand', 'Tipo de Soporte') }}</label>
             <input
               type="text"
               class="form-control form-control-sm"
@@ -112,7 +112,7 @@
           </div>
 
           <div class="mb-2">
-            <label class="form-label small fw-bold">Requisitos de Monitor</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.monitor_mix', 'Requisitos de Monitor') }}</label>
             <input
               type="text"
               class="form-control form-control-sm"
@@ -129,7 +129,7 @@
               [(ngModel)]="sel.phantomPower"
             />
             <label class="form-check-label small fw-bold" for="phantomCheck">
-              Alimentación Phantom +48V
+              {{ i18n.t('stage_plot.phantom_48v', 'Alimentación Phantom +48V') }}
             </label>
           </div>
         </div>
@@ -142,10 +142,10 @@
         <!-- Stage Canvas Header -->
         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
           <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 text-uppercase fw-bold">
-            FONDO DE ESCENARIO / UPSTAGE (BACKLINE)
+            {{ i18n.t('stage_plot.stage_back', 'FONDO DE ESCENARIO / UPSTAGE (BACKLINE)') }}
           </span>
           <span class="small text-muted no-print">
-            {{ elements().length }} elementos colocados • Arrastra para recolocar
+            {{ elements().length }} {{ i18n.t('stage_plot.elements_placed', 'elementos colocados • Arrastra para recolocar') }}
           </span>
         </div>
 
@@ -191,7 +191,7 @@
         <!-- Front of Stage Indicator -->
         <div class="text-center mt-2">
           <span class="badge bg-primary text-white px-4 py-2 text-uppercase fw-bold shadow-sm">
-            FRENTE DE ESCENARIO / AUDIENCIA & PÚBLICO (DOWNSTAGE)
+            {{ i18n.t('stage_plot.stage_front', 'FRENTE DE ESCENARIO / AUDIENCIA & PÚBLICO (DOWNSTAGE)') }}
           </span>
         </div>
       </div>
@@ -205,43 +205,43 @@
       <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
         <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
           <mat-icon class="text-primary">info</mat-icon>
-          Datos de la Banda & Contacto
+          {{ i18n.t('stage_plot.band_data_title', 'Datos de la Banda & Contacto') }}
         </h5>
 
         <div class="mb-3">
-          <label class="form-label small fw-bold">Nombre del Grupo</label>
+          <label class="form-label small fw-bold">{{ i18n.t('stage_plot.group_name', 'Nombre del Grupo') }}</label>
           <input type="text" class="form-control" [(ngModel)]="meta().bandName" />
         </div>
 
         <div class="mb-3">
-          <label class="form-label small fw-bold">Contacto Técnico / Manager</label>
+          <label class="form-label small fw-bold">{{ i18n.t('stage_plot.tech_contact', 'Contacto Técnico / Manager') }}</label>
           <input type="text" class="form-control" [(ngModel)]="meta().contactPerson" />
         </div>
 
         <div class="row g-2 mb-3">
           <div class="col-6">
-            <label class="form-label small fw-bold">Teléfono</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.phone', 'Teléfono') }}</label>
             <input type="text" class="form-control" [(ngModel)]="meta().contactPhone" />
           </div>
           <div class="col-6">
-            <label class="form-label small fw-bold">Email</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.email', 'Email') }}</label>
             <input type="email" class="form-control" [(ngModel)]="meta().contactEmail" />
           </div>
         </div>
 
         <div class="row g-2 mb-3">
           <div class="col-6">
-            <label class="form-label small fw-bold">Envíos Monitor</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.monitor_sends', 'Envíos Monitor') }}</label>
             <input type="number" class="form-control" [(ngModel)]="meta().monitorMixes" />
           </div>
           <div class="col-6">
-            <label class="form-label small fw-bold">Puntos Corriente</label>
+            <label class="form-label small fw-bold">{{ i18n.t('stage_plot.power_points', 'Puntos Corriente') }}</label>
             <input type="number" class="form-control" [(ngModel)]="meta().powerDrops" />
           </div>
         </div>
 
         <div>
-          <label class="form-label small fw-bold">Observaciones Generales</label>
+          <label class="form-label small fw-bold">{{ i18n.t('stage_plot.general_notes', 'Observaciones Generales') }}</label>
           <textarea class="form-control" rows="3" [(ngModel)]="meta().notes"></textarea>
         </div>
       </div>
@@ -253,10 +253,10 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold m-0 d-flex align-items-center gap-2">
             <mat-icon class="text-primary">format_list_numbered</mat-icon>
-            Lista de Canales (Input List)
+            {{ i18n.t('stage_plot.channel_list', 'Lista de Canales (Input List)') }}
           </h5>
           <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
-            {{ channelInputList().length }} Canales en Mesa
+            {{ channelInputList().length }} {{ i18n.t('stage_plot.channels_count', 'Canales en Mesa') }}
           </span>
         </div>
 
@@ -264,12 +264,12 @@
           <table class="table table-hover align-middle mb-0 font-monospace small">
             <thead class="table-light">
               <tr>
-                <th style="width: 60px;">CH</th>
-                <th>Instrumento / Fuente</th>
-                <th>Micrófono / Entrada</th>
-                <th>Soporte</th>
-                <th style="width: 70px;">+48V</th>
-                <th>Mezcla Monitor</th>
+                <th style="width: 60px;">{{ i18n.t('stage_plot.ch_num', 'CH') }}</th>
+                <th>{{ i18n.t('stage_plot.ch_source', 'Instrumento / Fuente') }}</th>
+                <th>{{ i18n.t('stage_plot.ch_mic', 'Micrófono / Entrada') }}</th>
+                <th>{{ i18n.t('stage_plot.ch_stand', 'Soporte') }}</th>
+                <th style="width: 70px;">{{ i18n.t('stage_plot.ch_phantom', '+48V') }}</th>
+                <th>{{ i18n.t('stage_plot.monitor_mix', 'Mezcla Monitor') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -281,7 +281,7 @@
                   <td>{{ ch.stand }}</td>
                   <td>
                     @if (ch.phantom) {
-                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle">SÍ</span>
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ i18n.t('common.yes', 'SÍ') }}</span>
                     } @else {
                       <span class="text-muted">-</span>
                     }
@@ -292,7 +292,7 @@
               @if (channelInputList().length === 0) {
                 <tr>
                   <td colspan="6" class="text-center py-4 text-muted">
-                    No hay instrumentos añadidos al escenario. Añade elementos desde la barra lateral.
+                    {{ i18n.t('stage_plot.empty_channels', 'No hay instrumentos añadidos al escenario. Añade elementos desde la barra lateral.') }}
                   </td>
                 </tr>
               }

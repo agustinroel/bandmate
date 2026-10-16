@@ -34,6 +34,7 @@ import { PracticeProgressRingComponent } from '../../../../shared/ui/practice-pr
 import { PedalListenerService } from '../../../../core/services/pedal-listener.service';
 import { LoopTrainerService } from '../../services/loop-trainer.service';
 import { LiveBandSyncService, StageRole } from '../../../../core/services/live-band-sync.service';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -69,6 +70,7 @@ export class PracticePageComponent {
   private readonly zone = inject(NgZone);
   private readonly sessionService = inject(PracticeSessionService);
   private readonly animation = inject(AnimationService);
+  readonly i18n = inject(I18nService);
 
   private destroyRef = inject(DestroyRef);
 

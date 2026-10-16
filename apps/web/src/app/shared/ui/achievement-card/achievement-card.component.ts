@@ -32,12 +32,12 @@ import { Achievement } from '../achievement-toast/achievement-toast.component';
       gap: 16px;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
       cursor: default;
 
       &:hover {
-        transform: translateY(-4px) scale(1.02);
+        transform: translateY(-2px);
         border-color: rgba(233, 196, 106, 0.5);
         box-shadow:
           0 20px 48px -12px rgba(0, 0, 0, 0.5),
@@ -78,7 +78,7 @@ import { Achievement } from '../achievement-toast/achievement-toast.component';
       justify-content: center;
       padding: 2px;
       flex-shrink: 0;
-      transition: all 0.3s ease;
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .bm-achievement-icon-wrapper {
@@ -101,7 +101,7 @@ import { Achievement } from '../achievement-toast/achievement-toast.component';
     .bm-achievement-content {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
     }
 
     .bm-achievement-title {
@@ -112,9 +112,9 @@ import { Achievement } from '../achievement-toast/achievement-toast.component';
     }
 
     .bm-achievement-desc {
-      font-size: 0.75rem;
-      opacity: 0.6;
-      line-height: 1.2;
+      font-size: 0.78rem;
+      opacity: 0.82;
+      line-height: 1.3;
       color: #f4f1de;
     }
 

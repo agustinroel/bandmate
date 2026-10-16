@@ -50,10 +50,12 @@ export class ThemeService {
     const root = document.documentElement;
     if (dark) {
       root.setAttribute('data-bs-theme', 'dark');
+      root.setAttribute('data-theme', 'dark');
       root.classList.add('theme-dark');
       document.body.classList.add('theme-dark');
     } else {
       root.setAttribute('data-bs-theme', 'light');
+      root.setAttribute('data-theme', 'light');
       root.classList.remove('theme-dark');
       document.body.classList.remove('theme-dark');
     }

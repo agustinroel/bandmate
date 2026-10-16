@@ -10,6 +10,7 @@ export type CreateSongDto = {
   title: string;
   artist: string;
   key?: string;
+  genre?: string;
   bpm?: number | string;
   durationSec?: number | string;
   notes?: string;

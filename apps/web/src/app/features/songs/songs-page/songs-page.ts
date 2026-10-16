@@ -24,6 +24,7 @@ import { FirstRunHeroComponent } from '../../../shared/ui/first-run-hero/first-r
 import { AnimationService } from '../../../core/services/animation.service';
 import { SmartImportDialogComponent } from '../ui/smart-import-dialog/smart-import-dialog.component';
 import { environment } from '../../../../environments/environment';
+import { I18nService } from '../../../core/services/i18n.service';
 
 /** ---- Types ---- */
 type SongsSort =
@@ -126,6 +127,7 @@ export class SongsPageComponent {
   readonly router = inject(Router);
   readonly dialog = inject(MatDialog);
   readonly animation = inject(AnimationService);
+  readonly i18n = inject(I18nService);
 
   openSmartImport() {
     this.dialog.open(SmartImportDialogComponent, {
@@ -236,31 +238,25 @@ export class SongsPageComponent {
   });
 
   readonly genreOptions = computed(() => {
-    const predefined = [
-      'Rock',
-      'Pop',
-      'Jazz',
-      'Blues',
-      'Metal',
-      'Country',
-      'Folk',
-      'Electronic',
-      'Latin',
-      'Reggae',
-      'Classic Rock',
-    ];
-    const set = new Set<string>(predefined);
+    const set = new Set<string>();
 
-    // Get genres from library works
+    // Collect from current loaded songs
+    for (const s of this.store.songs()) {
+      const g = (s.genre ?? (s as any).genre ?? '').trim();
+      if (g) set.add(g);
+    }
+    // Also from library works
     for (const w of this.libraryWorks()) {
       const g = ((w as any).genre ?? '').trim();
       if (g) set.add(g);
     }
-    // Also from user songs
-    for (const s of this.store.songs()) {
-      const g = ((s as any).genre ?? '').trim();
-      if (g) set.add(g);
+
+    if (set.size === 0) {
+      ['Rock', 'Classic Rock', 'Alternative Rock', 'Pop', 'Soul', 'Folk', 'Jazz', 'Blues'].forEach(
+        (g) => set.add(g),
+      );
     }
+
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   });
 
@@ -284,7 +280,10 @@ export class SongsPageComponent {
     }
 
     if (f.genre) {
-      list = list.filter((s) => ((s as any).genre ?? '').trim() === f.genre);
+      const target = f.genre.toLowerCase();
+      list = list.filter(
+        (s) => ((s.genre ?? (s as any).genre ?? '') + '').trim().toLowerCase() === target,
+      );
     }
 
     return list;
@@ -475,10 +474,10 @@ export class SongsPageComponent {
   askDelete(id: string, title: string) {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete song',
-        message: `Delete "${title}"? This cannot be undone.`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: this.i18n.t('songs.delete_title', 'Delete song'),
+        message: this.i18n.t('songs.delete_msg', { title }),
+        confirmText: this.i18n.t('common.delete', 'Delete'),
+        cancelText: this.i18n.t('common.cancel', 'Cancel'),
         danger: true,
       },
     });
@@ -487,8 +486,8 @@ export class SongsPageComponent {
       if (!confirmed) return;
 
       this.store.remove(id).subscribe({
-        next: () => this.notify.success('Song deleted', 'OK', 2000),
-        error: () => this.notify.error('Could not delete song', 'OK', 3000),
+        next: () => this.notify.success(this.i18n.t('songs.deleted_success', 'Song deleted'), 'OK', 2000),
+        error: () => this.notify.error(this.i18n.t('songs.deleted_error', 'Could not delete song'), 'OK', 3000),
       });
     });
   }
@@ -588,7 +587,7 @@ export class SongsPageComponent {
   ratingLabel(avg?: number | null, count?: number | null) {
     const a = Number(avg ?? 0);
     const c = Number(count ?? 0);
-    if (!c) return 'Not rated yet';
+    if (!c) return this.i18n.t('songs.not_rated', 'Not rated yet');
     return `${a.toFixed(1)} (${c})`;
   }
 
@@ -615,8 +614,8 @@ export class SongsPageComponent {
     if (!s?.isSeed) return; // por ahora solo Library
 
     this.store.rateSong(songId, value).subscribe({
-      next: () => this.notify.success(`Rated ${value}★`, 'OK', 1200),
-      error: () => this.notify.error('Could not save rating', 'OK', 2200),
+      next: () => this.notify.success(this.i18n.t('songs.rated_success', { value }), 'OK', 1200),
+      error: () => this.notify.error(this.i18n.t('songs.rated_error', 'Could not save rating'), 'OK', 2200),
     });
   }
 

@@ -639,6 +639,7 @@ export const seedSongsMeta: SongDetail[] = [
     title: "Stand By Me",
     artist: "Ben E. King",
     key: "A",
+    genre: "Soul",
     bpm: 118,
     durationSec: 180,
     notes: "Timeless soul standard in 4/4. Great for bass and vocal phrasing.",
@@ -657,7 +658,7 @@ export const seedSongsMeta: SongDetail[] = [
           {
             id: "sbm-in-1",
             kind: "lyrics",
-            source: "[A] [A] [F#m] [F#m] [D] [E] [A] [A]",
+            source: "[A]  [F#m]  [D]  [E]  [A]",
           },
         ],
       },
@@ -692,7 +693,7 @@ export const seedSongsMeta: SongDetail[] = [
       {
         id: "sbm-c1",
         type: "chorus",
-        name: "Chorus",
+        name: "Chorus 1",
         order: 3,
         lines: [
           {
@@ -707,6 +708,52 @@ export const seedSongsMeta: SongDetail[] = [
           },
         ],
       },
+      {
+        id: "sbm-v2",
+        type: "verse",
+        name: "Verse 2",
+        order: 4,
+        lines: [
+          {
+            id: "sbm-v2-1",
+            kind: "lyrics",
+            source: "If the [A]sky that we look upon [F#m]should tumble and fall",
+          },
+          {
+            id: "sbm-v2-2",
+            kind: "lyrics",
+            source: "Or the [D]mountain should [E]crumble to the [A]sea",
+          },
+          {
+            id: "sbm-v2-3",
+            kind: "lyrics",
+            source: "I won't [A]cry, I won't cry, no I [F#m]won't shed a tear",
+          },
+          {
+            id: "sbm-v2-4",
+            kind: "lyrics",
+            source: "Just as [D]long as you [E]stand, stand by [A]me",
+          },
+        ],
+      },
+      {
+        id: "sbm-c2",
+        type: "chorus",
+        name: "Chorus 2",
+        order: 5,
+        lines: [
+          {
+            id: "sbm-c2-1",
+            kind: "lyrics",
+            source: "And darling, darling, [A]stand by me, oh [F#m]stand by me",
+          },
+          {
+            id: "sbm-c2-2",
+            kind: "lyrics",
+            source: "Oh [D]stand now, [E]stand by me, [A]stand by me",
+          },
+        ],
+      },
     ],
   },
   {
@@ -714,6 +761,7 @@ export const seedSongsMeta: SongDetail[] = [
     title: "Let It Be",
     artist: "The Beatles",
     key: "C",
+    genre: "Classic Rock",
     bpm: 72,
     durationSec: 243,
     notes: "Iconic piano anthem. Perfect chord progression: C - G - Am - F.",
@@ -754,7 +802,7 @@ export const seedSongsMeta: SongDetail[] = [
       {
         id: "lib-c1",
         type: "chorus",
-        name: "Chorus",
+        name: "Chorus 1",
         order: 2,
         lines: [
           {
@@ -764,6 +812,101 @@ export const seedSongsMeta: SongDetail[] = [
           },
           {
             id: "lib-c1-2",
+            kind: "lyrics",
+            source: "[C]Whisper words of [G]wisdom, let it [F]be [C]",
+          },
+        ],
+      },
+      {
+        id: "lib-v2",
+        type: "verse",
+        name: "Verse 2",
+        order: 3,
+        lines: [
+          {
+            id: "lib-v2-1",
+            kind: "lyrics",
+            source: "And [C]when the broken [G]hearted people [Am]living in the [F]world agree",
+          },
+          {
+            id: "lib-v2-2",
+            kind: "lyrics",
+            source: "[C]There will be an [G]answer, let it [F]be [C]",
+          },
+          {
+            id: "lib-v2-3",
+            kind: "lyrics",
+            source: "For [C]though they may be [G]parted there is [Am]still a chance that [F]they will see",
+          },
+          {
+            id: "lib-v2-4",
+            kind: "lyrics",
+            source: "[C]There will be an [G]answer, let it [F]be [C]",
+          },
+        ],
+      },
+      {
+        id: "lib-c2",
+        type: "chorus",
+        name: "Chorus 2",
+        order: 4,
+        lines: [
+          {
+            id: "lib-c2-1",
+            kind: "lyrics",
+            source: "Let it [Am]be, let it [G]be, let it [F]be, yeah, let it [C]be",
+          },
+          {
+            id: "lib-c2-2",
+            kind: "lyrics",
+            source: "Yeah, [C]there will be an [G]answer, let it [F]be [C]",
+          },
+        ],
+      },
+      {
+        id: "lib-solo",
+        type: "solo",
+        name: "Solo",
+        order: 5,
+        lines: [
+          {
+            id: "lib-s-1",
+            kind: "lyrics",
+            source: "[F]  [Em]  [Dm]  [C]  [Bb]  [Am]  [G]  [F]  [C]",
+          },
+        ],
+      },
+      {
+        id: "lib-v3",
+        type: "verse",
+        name: "Verse 3",
+        order: 6,
+        lines: [
+          {
+            id: "lib-v3-1",
+            kind: "lyrics",
+            source: "And [C]when the night is [G]cloudy, there is [Am]still a light that [F]shines on me",
+          },
+          {
+            id: "lib-v3-2",
+            kind: "lyrics",
+            source: "[C]Shine until to[G]morrow, let it [F]be [C]",
+          },
+        ],
+      },
+      {
+        id: "lib-c3",
+        type: "chorus",
+        name: "Chorus 3",
+        order: 7,
+        lines: [
+          {
+            id: "lib-c3-1",
+            kind: "lyrics",
+            source: "Let it [Am]be, let it [G]be, let it [F]be, let it [C]be",
+          },
+          {
+            id: "lib-c3-2",
             kind: "lyrics",
             source: "[C]Whisper words of [G]wisdom, let it [F]be [C]",
           },
@@ -820,6 +963,7 @@ export const seedSongsMeta: SongDetail[] = [
     title: "Creep",
     artist: "Radiohead",
     key: "G",
+    genre: "Alternative Rock",
     bpm: 92,
     durationSec: 238,
     notes: "Major-to-minor chromatic shift: G - B - C - Cm.",
@@ -860,7 +1004,7 @@ export const seedSongsMeta: SongDetail[] = [
       {
         id: "crp-c1",
         type: "chorus",
-        name: "Chorus",
+        name: "Chorus 1",
         order: 2,
         lines: [
           {
@@ -875,6 +1019,98 @@ export const seedSongsMeta: SongDetail[] = [
           },
         ],
       },
+      {
+        id: "crp-v2",
+        type: "verse",
+        name: "Verse 2",
+        order: 3,
+        lines: [
+          {
+            id: "crp-v2-1",
+            kind: "lyrics",
+            source: "I don't care if it [G]hurts, I wanna have con[B]trol",
+          },
+          {
+            id: "crp-v2-2",
+            kind: "lyrics",
+            source: "I want a perfect [C]body, I want a perfect [Cm]soul",
+          },
+          {
+            id: "crp-v2-3",
+            kind: "lyrics",
+            source: "I want you to [G]notice when I'm not a[B]round",
+          },
+          {
+            id: "crp-v2-4",
+            kind: "lyrics",
+            source: "You're so fuckin' [C]special, I wish I was [Cm]special",
+          },
+        ],
+      },
+      {
+        id: "crp-c2",
+        type: "chorus",
+        name: "Chorus 2",
+        order: 4,
+        lines: [
+          {
+            id: "crp-c2-1",
+            kind: "lyrics",
+            source: "But I'm a [G]creep, I'm a [B]weirdo",
+          },
+          {
+            id: "crp-c2-2",
+            kind: "lyrics",
+            source: "What the hell am I [C]doin' here? I don't be[Cm]long here",
+          },
+        ],
+      },
+      {
+        id: "crp-br",
+        type: "bridge",
+        name: "Bridge",
+        order: 5,
+        lines: [
+          {
+            id: "crp-br-1",
+            kind: "lyrics",
+            source: "Oooh, [G]she's running out the [B]door...",
+          },
+          {
+            id: "crp-br-2",
+            kind: "lyrics",
+            source: "[C]She's running out, she [Cm]run, run, run, run...",
+          },
+        ],
+      },
+      {
+        id: "crp-out",
+        type: "outro",
+        name: "Outro",
+        order: 6,
+        lines: [
+          {
+            id: "crp-out-1",
+            kind: "lyrics",
+            source: "Whatever makes you [G]happy, whatever you [B]want",
+          },
+          {
+            id: "crp-out-2",
+            kind: "lyrics",
+            source: "You're so fuckin' [C]special, I wish I was [Cm]special",
+          },
+          {
+            id: "crp-out-3",
+            kind: "lyrics",
+            source: "But I'm a [G]creep, I'm a [B]weirdo, what the hell am I [C]doin' here?",
+          },
+          {
+            id: "crp-out-4",
+            kind: "lyrics",
+            source: "I don't be[Cm]long here, I don't be[G]long here.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -882,6 +1118,7 @@ export const seedSongsMeta: SongDetail[] = [
     title: "Wonderwall",
     artist: "Oasis",
     key: "Em",
+    genre: "Rock",
     bpm: 87,
     capo: 2,
     durationSec: 258,
@@ -911,15 +1148,43 @@ export const seedSongsMeta: SongDetail[] = [
           {
             id: "ww-v1-3",
             kind: "lyrics",
-            source: "I don't be[Em7]lieve that anybody [G]feels the way I [Dsus4]do about you [A7sus4]now [C] [Dsus4] [A7sus4]",
+            source: "I don't be[Em7]lieve that anybody [G]feels the way I [Dsus4]do about you [A7sus4]now",
+          },
+        ],
+      },
+      {
+        id: "ww-pc1",
+        type: "prechorus",
+        name: "Pre-Chorus 1",
+        order: 2,
+        lines: [
+          {
+            id: "ww-pc1-1",
+            kind: "lyrics",
+            source: "And [C]all the roads we [D]have to walk are [Em7]winding",
+          },
+          {
+            id: "ww-pc1-2",
+            kind: "lyrics",
+            source: "And [C]all the lights that [D]lead us there are [Em7]blinding",
+          },
+          {
+            id: "ww-pc1-3",
+            kind: "lyrics",
+            source: "[C]There are many [D]things that I would [G]like to [D/F#]say to [Em7]you",
+          },
+          {
+            id: "ww-pc1-4",
+            kind: "lyrics",
+            source: "But I don't know [A7sus4]how",
           },
         ],
       },
       {
         id: "ww-c1",
         type: "chorus",
-        name: "Chorus",
-        order: 2,
+        name: "Chorus 1",
+        order: 3,
         lines: [
           {
             id: "ww-c1-1",
@@ -930,6 +1195,65 @@ export const seedSongsMeta: SongDetail[] = [
             id: "ww-c1-2",
             kind: "lyrics",
             source: "And [Em7]after [C]all, [Em7] [G] you're my [Em7]wonder[C]wall [Em7] [G] [Em7]",
+          },
+        ],
+      },
+      {
+        id: "ww-v2",
+        type: "verse",
+        name: "Verse 2",
+        order: 4,
+        lines: [
+          {
+            id: "ww-v2-1",
+            kind: "lyrics",
+            source: "To[Em7]day was gonna be the day, but they'll [G]never throw it back to [Dsus4]you [A7sus4]",
+          },
+          {
+            id: "ww-v2-2",
+            kind: "lyrics",
+            source: "By [Em7]now you should've somehow realized [G]what you're not to [Dsus4]do [A7sus4]",
+          },
+          {
+            id: "ww-v2-3",
+            kind: "lyrics",
+            source: "I don't be[Em7]lieve that anybody [G]feels the way I [Dsus4]do about you [A7sus4]now",
+          },
+        ],
+      },
+      {
+        id: "ww-c2",
+        type: "chorus",
+        name: "Chorus 2",
+        order: 5,
+        lines: [
+          {
+            id: "ww-c2-1",
+            kind: "lyrics",
+            source: "I said [C]maybe, [Em7] [G] you're gonna be the one that [Em7]saves me [C] [Em7] [G]",
+          },
+          {
+            id: "ww-c2-2",
+            kind: "lyrics",
+            source: "And [Em7]after [C]all, [Em7] [G] you're my [Em7]wonder[C]wall [Em7] [G] [Em7]",
+          },
+        ],
+      },
+      {
+        id: "ww-out",
+        type: "outro",
+        name: "Outro",
+        order: 6,
+        lines: [
+          {
+            id: "ww-out-1",
+            kind: "lyrics",
+            source: "I said [C]maybe, [Em7] [G] you're gonna be the one that [Em7]saves me",
+          },
+          {
+            id: "ww-out-2",
+            kind: "lyrics",
+            source: "You're gonna be the one that [Em7]saves me, you're gonna be the one that saves me",
           },
         ],
       },

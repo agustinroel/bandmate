@@ -27,6 +27,7 @@ import { NotificationsService } from '../../../../shared/ui/notifications/notifi
 import { AnimationService } from '../../../../core/services/animation.service';
 import { SubscriptionStore } from '../../../../core/subscription/subscription.store';
 import { TIER_LIMITS } from '@bandmate/shared';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -52,6 +53,7 @@ export class SetlistsPageComponent {
   readonly router = inject(Router);
   readonly animation = inject(AnimationService);
   readonly subscriptionStore = inject(SubscriptionStore);
+  readonly i18n = inject(I18nService);
 
   readonly route = inject(ActivatedRoute);
 
@@ -99,7 +101,7 @@ export class SetlistsPageComponent {
   constructor() {
     effect(() => {
       if (this.songs.state() === 'idle') this.songs.load();
-      if (this.store.state() === 'idle') this.store.load().subscribe();
+      if (this.store.state() === 'idle') this.store.load().subscribe({ error: () => {} });
     });
 
     // Update "last edited" label when selected setlist changes (stable, no NG0100)
@@ -251,21 +253,21 @@ export class SetlistsPageComponent {
             });
           }
         },
-        error: (err) => this.toastError(err, 'Could not create setlist'),
+        error: (err) => this.toastError(err, this.i18n.t('setlists.created_error', 'Could not create setlist')),
       });
     });
   }
 
   shareWithBand() {
     if (!this.subscriptionStore.requireTierOrUpgrade('setlist_share')) return;
-    this.notify.info('Coming soon — share with your bandmates', 'OK', 2000);
+    this.notify.info(this.i18n.t('common.coming_soon', 'Coming soon — share with your bandmates'), 'OK', 2000);
   }
 
   exportPdf() {
     if (!this.subscriptionStore.requireTierOrUpgrade('setlist_export')) return;
     const sel = this.store.selected();
     if (!sel || !sel.items.length) {
-      this.notify.info('Setlist is empty', 'OK', 2000);
+      this.notify.info(this.i18n.t('setlists.empty_setlist_title', 'Setlist is empty'), 'OK', 2000);
       return;
     }
     const songs = sel.items
@@ -296,8 +298,8 @@ export class SetlistsPageComponent {
       if (!nextName || nextName === currentName) return;
 
       this.store.updateName(id, { name: nextName }).subscribe({
-        next: () => this.notify.success('Setlist renamed', 'OK', 2000),
-        error: (err) => this.toastError(err, 'Could not rename setlist'),
+        next: () => this.notify.success(this.i18n.t('setlists.renamed_success', 'Setlist renamed'), 'OK', 2000),
+        error: (err) => this.toastError(err, this.i18n.t('setlists.renamed_error', 'Could not rename setlist')),
       });
     });
   }
@@ -307,12 +309,12 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     if (sel.items.some((i) => i.songId === songId)) {
-      this.notify.info('That song is already in the setlist', 'OK', 1500);
+      this.notify.info(this.i18n.t('setlists.already_in_setlist', 'That song is already in the setlist'), 'OK', 1500);
       return;
     }
 
     this.store.addSong(sel.id, songId).subscribe({
-      next: () => this.notify.success('Added to setlist', 'OK', 1200),
+      next: () => this.notify.success(this.i18n.t('setlists.added_song', 'Added to setlist'), 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not add song', 2500),
     });
   }
@@ -322,7 +324,7 @@ export class SetlistsPageComponent {
     if (!sel) return;
 
     this.store.removeSong(sel.id, songId).subscribe({
-      next: () => this.notify.success('Removed', 'OK', 1200),
+      next: () => this.notify.success(this.i18n.t('setlists.removed_song', 'Removed'), 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not remove'),
     });
   }
@@ -341,7 +343,7 @@ export class SetlistsPageComponent {
     setTimeout(() => this.lastMovedId.set(null), 700);
 
     this.store.reorder(sel.id, ids).subscribe({
-      next: () => this.notify.success('Order updated', 'OK', 1200),
+      next: () => this.notify.success(this.i18n.t('setlists.order_updated', 'Order updated'), 'OK', 1200),
       error: (err) => this.toastError(err, 'Could not reorder', 2500),
     });
   }
@@ -374,10 +376,10 @@ export class SetlistsPageComponent {
   askDeleteSetlist(id: string, name: string) {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete setlist',
-        message: `Delete "${name}"? This cannot be undone.`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: this.i18n.t('setlists.delete_title', 'Delete setlist'),
+        message: this.i18n.t('setlists.delete_msg', { name }),
+        confirmText: this.i18n.t('common.delete', 'Delete'),
+        cancelText: this.i18n.t('common.cancel', 'Cancel'),
         danger: true,
       },
     });
@@ -386,8 +388,8 @@ export class SetlistsPageComponent {
       if (!confirmed) return;
 
       this.store.remove(id).subscribe({
-        next: () => this.notify.success('Setlist deleted', 'OK', 2000),
-        error: (err) => this.toastError(err, 'Could not delete setlist'),
+        next: () => this.notify.success(this.i18n.t('setlists.deleted_success', 'Setlist deleted'), 'OK', 2000),
+        error: (err) => this.toastError(err, this.i18n.t('setlists.deleted_error', 'Could not delete setlist')),
       });
     });
   }

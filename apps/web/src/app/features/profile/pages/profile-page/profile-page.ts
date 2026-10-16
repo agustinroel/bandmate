@@ -17,6 +17,7 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { ProfileRow, ProfilesService } from '../../services/profile.service';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { SubscriptionStore } from '../../../../core/subscription/subscription.store';
+import { I18nService } from '../../../../core/services/i18n.service';
 import type { SubscriptionTier } from '@bandmate/shared';
 
 type Draft = {
@@ -99,6 +100,7 @@ function normalizeUsername(v: string): string {
   styleUrl: './profile-page.scss',
 })
 export class ProfilePageComponent {
+  readonly i18n = inject(I18nService);
   readonly auth = inject(AuthStore);
   readonly profiles = inject(ProfilesService);
   readonly notify = inject(NotificationsService);

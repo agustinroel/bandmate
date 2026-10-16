@@ -279,7 +279,7 @@ export interface PublicStageRiderSummary {
   `,
   styles: [`
     .public-epk-wrapper {
-      background-color: #030712;
+      background-color: #0e1012;
       color: #f8fafc;
     }
     .public-nav {
@@ -289,6 +289,7 @@ export interface PublicStageRiderSummary {
       backdrop-filter: blur(8px);
     }
     .bm-brand-pill {
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
       font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.05em;
@@ -296,6 +297,10 @@ export interface PublicStageRiderSummary {
     .epk-sheet {
       max-width: 960px;
       color: #0f172a;
+    }
+    .rider-summary-card .badge {
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-variant-numeric: tabular-nums;
     }
     .inset-0 {
       top: 0; left: 0; right: 0; bottom: 0;
@@ -307,12 +312,15 @@ export interface PublicStageRiderSummary {
       opacity: 0.35;
     }
     .epk-hero-gradient {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.85) 100%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
     }
     .fw-black {
-      font-weight: 900;
+      font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .tracking-wider {
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
       letter-spacing: 0.1em;
     }
 

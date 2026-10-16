@@ -87,15 +87,38 @@
   }
 }
 
+.bm-sub-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  background: rgba(38, 70, 83, 0.08);
+  color: var(--bm-primary, #264653);
+  box-sizing: border-box;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &.is-premium {
+    background: linear-gradient(135deg, rgba(233, 196, 106, 0.2), rgba(200, 150, 62, 0.25));
+    color: #a16207;
+    border: 1px solid rgba(233, 196, 106, 0.45);
+  }
+}
+
 .highlight-card {
   &.pro-border {
-    border: 2px solid var(--bm-accent);
-    background: linear-gradient(135deg, #ffffff 0%, #fffcf5 100%);
-    
-    mat-icon[mat-card-avatar] {
-      background: var(--bm-accent);
-      color: #fff;
-    }
+    border: 1.5px solid var(--bm-accent, #e9c46a);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(254, 252, 246, 0.95) 100%);
   }
 }
 
@@ -213,6 +236,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-height: 44px;
   padding: 8px 14px;
   border: none;
   background: transparent;
@@ -221,7 +245,7 @@
   font-size: 0.85rem;
   color: var(--bm-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
 
   mat-icon {
     font-size: 18px;
@@ -242,8 +266,19 @@
 }
 
 // In dark mode
+:host-context([data-theme='dark']),
 :host-context([data-bs-theme="dark"]),
 :host-context(.theme-dark) {
+  .bm-card.glass {
+    background: #16181c;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .profile-row {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
   .bm-segmented-group {
     background: rgba(255, 255, 255, 0.06);
   }
@@ -260,6 +295,24 @@
     &:hover:not(.active) {
       background: rgba(255, 255, 255, 0.04);
       color: #ffffff;
+    }
+  }
+
+  .highlight-card {
+    &.pro-border {
+      border: 1.5px solid rgba(233, 196, 106, 0.45);
+      background: linear-gradient(135deg, rgba(233, 196, 106, 0.07) 0%, rgba(22, 26, 34, 0.8) 100%);
+    }
+
+    .bm-sub-avatar {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+
+      &.is-premium {
+        background: rgba(233, 196, 106, 0.18);
+        color: #e9c46a;
+        border-color: rgba(233, 196, 106, 0.35);
+      }
     }
   }
 }

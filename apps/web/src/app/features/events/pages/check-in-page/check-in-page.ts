@@ -201,7 +201,21 @@ import { TicketingService } from '../../services/ticketing.service';
         }
       }
       .xs-text {
-        font-size: 0.7rem;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-size: 0.72rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      :host-context([data-theme='dark']) {
+        .card-footer,
+        mat-card {
+          background-color: #16181c !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+          color: #f8fafc !important;
+        }
+        .ticket-info-mini {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+        }
       }
     `,
   ],

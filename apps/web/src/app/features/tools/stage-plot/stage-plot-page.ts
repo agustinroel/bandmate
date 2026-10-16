@@ -19,6 +19,7 @@ import {
   TechRiderMeta,
 } from './stage-plot.model';
 import { TechRiderExportDialogComponent } from './ui/tech-rider-export-dialog/tech-rider-export-dialog';
+import { I18nService } from '../../../core/services/i18n.service';
 
 const STORAGE_KEY = 'bandmate_stage_plot_data';
 
@@ -43,6 +44,7 @@ const STORAGE_KEY = 'bandmate_stage_plot_data';
   styleUrl: './stage-plot-page.scss',
 })
 export class StagePlotPageComponent {
+  readonly i18n = inject(I18nService);
   private readonly notify = inject(NotificationsService);
   private readonly dialog = inject(MatDialog);
 

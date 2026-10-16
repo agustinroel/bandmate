@@ -74,9 +74,9 @@ export interface SetlistExportDialogData {
         <div class="col-md-3">
           <label class="form-label small fw-bold mb-1">Diseño de Hoja de Escenario</label>
           <select class="form-select form-select-sm" [(ngModel)]="layout">
-            <option value="giant">🎸 Escenario (Letra Gigante / Stand)</option>
-            <option value="structured">📋 Completo (Con Estructura & Cues)</option>
-            <option value="tech">🎛️ Ficha Técnica (Sonido & Tiempos)</option>
+            <option value="giant">Escenario (Letra Gigante / Stand)</option>
+            <option value="structured">Completo (Con Estructura &amp; Cues)</option>
+            <option value="tech">Ficha Técnica (Sonido &amp; Tiempos)</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -267,6 +267,14 @@ export interface SetlistExportDialogData {
       white-space: nowrap;
       user-select: none;
       z-index: 0;
+    }
+
+    .song-index,
+    .stage-badge-key,
+    .stage-badge-bpm,
+    .stage-badge-dur {
+      font-family: var(--bm-font-mono);
+      font-variant-numeric: tabular-nums;
     }
 
     /* Stage Font Size Independent Controls */

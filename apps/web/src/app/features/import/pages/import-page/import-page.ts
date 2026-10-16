@@ -60,7 +60,7 @@ import { CommonModule } from '@angular/common';
               <div class="fw-bold">{{ track.name }}</div>
               <div class="small opacity-75">{{ track.artist }} • {{ track.album }}</div>
             </div>
-            <div class="small opacity-50">{{ durationLabel(track.durationMs) }}</div>
+            <div class="track-duration">{{ durationLabel(track.durationMs) }}</div>
           </div>
         </mat-card>
       </div>
@@ -73,13 +73,33 @@ import { CommonModule } from '@angular/common';
       gap: 12px;
     }
     .track-card {
-      border-radius: 12px;
-      transition: transform 0.2s ease;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(38, 70, 83, 0.1);
+      transition: transform 0.2s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1)), border-color 0.2s var(--bm-ease-out);
+      background: #ffffff;
     }
     .track-card:hover {
-      transform: translateX(4px);
+      transform: translateY(-2px);
+      border-color: rgba(38, 70, 83, 0.24);
+    }
+    .track-duration {
+      font-family: var(--bm-font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--bm-muted);
+    }
+    :host-context([data-bs-theme='dark']),
+    :host-context(.theme-dark) {
+      .bm-card,
+      .track-card {
+        background: #0f172a;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+      }
+      .track-duration {
+        color: #94a3b8;
+      }
     }
   `]
 })

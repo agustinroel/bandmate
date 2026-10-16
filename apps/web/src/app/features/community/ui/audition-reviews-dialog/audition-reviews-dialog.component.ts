@@ -82,7 +82,7 @@ export interface CandidateApplication {
                 <div class="d-flex align-items-center gap-2">
                   <div class="avatar-circle">
                     @if (app.musicianAvatar) {
-                      <img [src]="app.musicianAvatar" class="avatar-img" alt="" />
+                      <img src="assets/brand/avatar-fallback.svg" [src]="app.musicianAvatar" class="avatar-img" [alt]="app.musicianName" />
                     } @else {
                       <mat-icon class="text-muted">person</mat-icon>
                     }
@@ -100,12 +100,12 @@ export interface CandidateApplication {
                     class="form-select form-select-sm"
                     [(ngModel)]="app.status"
                     (change)="updateStatus(app)"
-                    style="width: 150px;"
+                    style="width: 165px;"
                   >
-                    <option value="pending">⏳ Pendiente</option>
-                    <option value="shortlisted">⭐ Preseleccionado</option>
-                    <option value="accepted">✅ Convocado Ensayo</option>
-                    <option value="rejected">❌ Descartado</option>
+                    <option value="pending">Pendiente</option>
+                    <option value="shortlisted">Preseleccionado</option>
+                    <option value="accepted">Convocado Ensayo</option>
+                    <option value="rejected">Descartado</option>
                   </select>
                 </div>
               </div>

@@ -5,43 +5,45 @@
     <!-- 1. Minimal Header -->
     <header class="bm-dash-header">
       <div class="bm-dash-welcome">
-        <!-- Date or personalized greeting could go here, staying minimal for now -->
       </div>
     </header>
 
     <!-- 2. Primary Focus: Songs (Library) -->
     <section class="bm-practice-hero" aria-label="Music Library">
       <div class="bm-hero-content">
-        <!-- Removed "Focus Area" label -->
-        <h2 class="bm-hero-headline">Ready to play?</h2>
-        <p class="bm-hero-desc">Choose a song from your library and start playing.</p>
+        <div class="bm-hero-eyebrow">
+          <span class="bm-hero-dot" aria-hidden="true"></span>
+          <span>{{ i18n.t('home.eyebrow', 'CONSOLA DE ESTUDIO Y ESCENARIO') }}</span>
+        </div>
+        <h2 class="bm-hero-headline">{{ i18n.t('home.headline', '¿Listo para tocar?') }}</h2>
+        <p class="bm-hero-desc">{{ i18n.t('home.desc', 'Elige una canción de tu repertorio y comienza a tocar.') }}</p>
 
         <a mat-flat-button class="bm-hero-cta" routerLink="/songs">
           <mat-icon>play_circle</mat-icon>
-          Start Playing
+          {{ i18n.t('home.start_playing', 'Empezar a Tocar') }}
         </a>
       </div>
 
       <!-- Subtle visual cue: Musical texture -->
-      <div class="bm-hero-visual">
+      <div class="bm-hero-visual" aria-hidden="true">
         <mat-icon class="bm-hero-icon">library_music</mat-icon>
       </div>
     </section>
 
-    <!-- 2.5 Continuity Block (New) -->
+    <!-- 2.5 Continuity Block -->
     <section class="bm-continuity-section" aria-label="Recent Activity">
       @if (lastSong(); as last) {
         <div class="bm-continuity-card">
           <div class="bm-cont-info">
-            <div class="bm-cont-label">Continue where you left off</div>
+            <div class="bm-cont-label">{{ i18n.t('home.continue_title', 'Continúa donde lo dejaste') }}</div>
             <div class="bm-cont-title">{{ last.song.title }}</div>
             <div class="bm-cont-meta">
-              {{ last.song.artist }}
+              <span>{{ last.song.artist }}</span>
               @if (last.song.key) {
-                • {{ last.song.key }}
+                <span class="bm-cont-pill">{{ last.song.key }}</span>
               }
               @if (last.song.bpm) {
-                • {{ last.song.bpm }} BPM
+                <span class="bm-cont-pill">{{ last.song.bpm }} BPM</span>
               }
               <span class="bm-cont-time">• {{ relativeTimeLabel() }}</span>
             </div>
@@ -50,23 +52,23 @@
           <div class="bm-cont-actions">
             <!-- Secondary link -->
             <a class="bm-cont-link" [routerLink]="['/songs']" fragment="{{ last.song.id }}">
-              View in Library
+              {{ i18n.t('home.view_in_library', 'Ver en Repertorio') }}
             </a>
 
             <!-- Primary continue -->
             <button mat-stroked-button class="bm-cont-btn" (click)="continueSession()">
               <mat-icon>play_arrow</mat-icon>
-              Continue
+              {{ i18n.t('home.continue_btn', 'Continuar') }}
             </button>
           </div>
         </div>
       } @else {
         <!-- Empty State -->
         <div class="bm-continuity-empty">
-          <span class="bm-cont-label">You haven't practiced recently.</span>
-          <a class="bm-cont-link" routerLink="/songs"
-            >Explore Songs <mat-icon>arrow_forward</mat-icon></a
-          >
+          <span class="bm-cont-label">{{ i18n.t('home.no_recent', 'Aún no has practicado recientemente.') }}</span>
+          <a class="bm-cont-link" routerLink="/songs">
+            {{ i18n.t('home.explore_songs', 'Explorar Canciones') }} <mat-icon>arrow_forward</mat-icon>
+          </a>
         </div>
       }
     </section>
@@ -78,8 +80,8 @@
           <mat-icon>queue_music</mat-icon>
         </div>
         <div class="bm-action-text">
-          <div class="bm-action-title">Setlists</div>
-          <div class="bm-action-desc">Prepare for gigs</div>
+          <div class="bm-action-title">{{ i18n.t('nav.setlists', 'Setlists') }}</div>
+          <div class="bm-action-desc">{{ i18n.t('home.setlists_desc', 'Prepárate para tus conciertos') }}</div>
         </div>
         <mat-icon class="bm-action-arrow">arrow_forward</mat-icon>
       </a>
@@ -90,8 +92,8 @@
           <mat-icon>fitness_center</mat-icon>
         </div>
         <div class="bm-action-text">
-          <div class="bm-action-title">Practice Mode</div>
-          <div class="bm-action-desc">Free session</div>
+          <div class="bm-action-title">{{ i18n.t('home.practice_title', 'Modo Práctica') }}</div>
+          <div class="bm-action-desc">{{ i18n.t('home.practice_desc', 'Sesión libre con herramientas') }}</div>
         </div>
         <mat-icon class="bm-action-arrow">arrow_forward</mat-icon>
       </a>
@@ -102,7 +104,7 @@
       <section class="bm-stats-strip" aria-label="Your Progress">
         <div class="bm-stat-item">
           <span class="bm-stat-val">{{ practiceStats.summary()?.week?.sessionCount || 0 }}</span>
-          <span class="bm-stat-label">Sessions this week</span>
+          <span class="bm-stat-label">{{ i18n.t('home.sessions_this_week', 'Sesiones esta semana') }}</span>
         </div>
 
         <div class="bm-stat-divider"></div>
@@ -111,14 +113,14 @@
           <span class="bm-stat-val">{{
             practiceStats.formatDuration(practiceStats.summary()?.week?.totalSeconds || 0)
           }}</span>
-          <span class="bm-stat-label">Time in flow</span>
+          <span class="bm-stat-label">{{ i18n.t('home.time_in_flow', 'Tiempo en flujo') }}</span>
         </div>
 
         <div class="bm-stat-divider"></div>
 
         <div class="bm-stat-item">
           <span class="bm-stat-val">{{ practiceStats.streak() }}</span>
-          <span class="bm-stat-label">Day streak</span>
+          <span class="bm-stat-label">{{ i18n.t('home.day_streak', 'Días de racha') }}</span>
         </div>
       </section>
     }

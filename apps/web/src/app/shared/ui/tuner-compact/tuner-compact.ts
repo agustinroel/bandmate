@@ -39,12 +39,17 @@ import { MatButtonModule } from '@angular/material/button';
         background: #ffffff;
         padding: 16px;
         border-radius: 20px;
-        width: 180px;
+        width: 188px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+        border: 1px solid rgba(38, 70, 83, 0.1);
+
+        button {
+          min-height: 44px;
+          font-weight: 700;
+        }
       }
       .display {
         display: flex;
@@ -53,8 +58,10 @@ import { MatButtonModule } from '@angular/material/button';
         width: 100%;
       }
       .note {
-        font-size: 48px;
-        font-weight: 900;
+        font-family: var(--bm-font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 46px;
+        font-weight: 800;
         color: var(--bm-wood);
         line-height: 1;
         height: 48px;
@@ -63,9 +70,9 @@ import { MatButtonModule } from '@angular/material/button';
         color: var(--bm-teal);
       }
       .gauge-mini {
-        width: 120px;
+        width: 132px;
         height: 4px;
-        background: #eee;
+        background: rgba(38, 70, 83, 0.12);
         border-radius: 2px;
         margin: 16px 0;
         position: relative;
@@ -78,26 +85,48 @@ import { MatButtonModule } from '@angular/material/button';
         height: 12px;
         background: var(--bm-wood);
         border-radius: 2px;
-        transition: transform 0.1s ease;
+        transition: transform 0.1s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
         margin-left: -2px;
       }
       .center-mark {
         position: absolute;
         top: -2px;
         left: 50%;
-        width: 1px;
+        width: 2px;
         height: 8px;
         background: var(--bm-teal);
-        margin-left: -0.5px;
-        opacity: 0.5;
+        margin-left: -1px;
+        opacity: 0.7;
       }
       .cents {
+        font-family: var(--bm-font-mono);
+        font-variant-numeric: tabular-nums;
         font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 1px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        opacity: 0.8;
+        opacity: 0.9;
         height: 14px;
+      }
+      :host-context([data-bs-theme='dark']),
+      :host-context(.theme-dark) {
+        .tuner-compact-card {
+          background: #0f172a;
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        }
+        .note {
+          color: #f8fafc;
+        }
+        .note.in-tune {
+          color: var(--bm-teal);
+        }
+        .gauge-mini {
+          background: rgba(255, 255, 255, 0.14);
+        }
+        .needle-mini {
+          background: var(--bm-accent);
+        }
       }
     `,
   ],

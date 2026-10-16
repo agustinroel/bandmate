@@ -63,13 +63,19 @@ import { AuthStore } from '../../../../core/auth/auth.store';
   styles: [
     `
       .success-icon mat-icon {
-        font-size: 100px;
-        width: 100px;
-        height: 100px;
+        font-size: 96px;
+        width: 96px;
+        height: 96px;
       }
-      .display-4 {
-        font-weight: 850;
+      .display-4,
+      .display-5 {
+        font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
+        font-weight: 800;
         letter-spacing: -0.02em;
+      }
+      :host-context([data-theme='dark']) .bg-light {
+        background-color: #0e1012 !important;
+        color: #f8fafc !important;
       }
     `,
   ],

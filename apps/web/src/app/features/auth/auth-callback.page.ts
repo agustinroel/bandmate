@@ -20,7 +20,9 @@ import { MatButtonModule } from '@angular/material/button';
         <mat-card class="bm-cb__card">
           <div class="bm-cb__top">
             <div class="bm-cb__brand">
-              <div class="bm-cb__logo" aria-hidden="true">♪</div>
+              <div class="bm-cb__logo" aria-hidden="true">
+                <mat-icon>graphic_eq</mat-icon>
+              </div>
               <div class="bm-cb__name">Bandmate</div>
             </div>
 
@@ -51,7 +53,7 @@ import { MatButtonModule } from '@angular/material/button';
 
           <div class="bm-cb__sub">
             @if (state() === 'loading') {
-              We’re finishing your login and getting things ready.
+              We’re finishing your studio login and syncing your repertoire.
             }
             @if (state() === 'ok') {
               Taking you to your songs.
@@ -63,14 +65,16 @@ import { MatButtonModule } from '@angular/material/button';
 
           @if (state() === 'timeout') {
             <div class="bm-cb__actions">
-              <button mat-stroked-button type="button" (click)="goLogin()">
+              <button mat-stroked-button type="button" class="touch-target-44" (click)="goLogin()">
                 <mat-icon>arrow_back</mat-icon>
                 Back to login
               </button>
 
               <button
                 mat-flat-button
+                color="primary"
                 type="button"
+                class="touch-target-44"
                 (click)="goSongs()"
                 [disabled]="!auth.isAuthed()"
               >
@@ -83,7 +87,7 @@ import { MatButtonModule } from '@angular/material/button';
 
         <div class="bm-cb__foot">
           <span class="bm-cb__dot"></span>
-          Secure auth callback
+          Secure studio session handoff
         </div>
       </div>
     </div>
@@ -91,29 +95,28 @@ import { MatButtonModule } from '@angular/material/button';
   styles: [
     `
       .bm-cb {
-        min-height: calc(100vh - 64px);
+        min-height: 100vh;
         display: grid;
         place-items: center;
         padding: 24px 16px;
         background:
-          radial-gradient(900px 480px at 20% 10%, rgba(201, 162, 39, 0.16), transparent 60%),
-          radial-gradient(900px 480px at 80% 20%, rgba(22, 62, 63, 0.14), transparent 60%),
-          rgba(0, 0, 0, 0.01);
+          radial-gradient(900px 480px at 20% 10%, rgba(233, 196, 106, 0.14), transparent 60%),
+          radial-gradient(900px 480px at 80% 20%, rgba(38, 70, 83, 0.12), transparent 60%),
+          var(--bm-bg, #f9f7f0);
       }
 
       .bm-cb__wrap {
         width: min(520px, 100%);
         display: grid;
-        gap: 12px;
+        gap: 14px;
       }
 
       .bm-cb__card {
         border-radius: 20px;
-        padding: 18px 18px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.07);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.75));
-        backdrop-filter: blur(10px);
+        padding: 24px;
+        border: 1px solid var(--bm-border, rgba(38, 70, 83, 0.12));
+        box-shadow: var(--bm-shadow-2, 0 10px 24px rgba(38, 48, 53, 0.08));
+        background: var(--bm-surface, #ffffff);
       }
 
       .bm-cb__top {
@@ -121,7 +124,7 @@ import { MatButtonModule } from '@angular/material/button';
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 10px;
+        margin-bottom: 14px;
       }
 
       .bm-cb__brand {
@@ -131,18 +134,19 @@ import { MatButtonModule } from '@angular/material/button';
       }
 
       .bm-cb__logo {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 12px;
         display: grid;
         place-items: center;
-        font-weight: 900;
-        background: rgba(201, 162, 39, 0.14);
-        border: 1px solid rgba(201, 162, 39, 0.22);
+        background: var(--bm-gradient-dark, #264653);
+        color: var(--bm-accent, #e9c46a);
+        border: 1px solid rgba(233, 196, 106, 0.25);
       }
 
       .bm-cb__name {
-        font-weight: 900;
+        font-weight: 850;
+        font-size: 1.15rem;
         letter-spacing: -0.02em;
       }
 
@@ -155,30 +159,30 @@ import { MatButtonModule } from '@angular/material/button';
       }
 
       .bm-cb__ok {
-        color: #2e7d32;
+        color: var(--bm-teal, #2a9d8f);
       }
 
       .bm-cb__warn {
-        color: #c62828;
+        color: var(--bm-burnt, #e76f51);
       }
 
       .bm-cb__title {
-        font-size: 1.1rem;
-        font-weight: 900;
-        letter-spacing: -0.01em;
-        margin-bottom: 4px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 6px;
       }
 
       .bm-cb__sub {
-        opacity: 0.78;
-        line-height: 1.35;
+        color: var(--bm-muted, rgba(38, 70, 83, 0.72));
+        line-height: 1.5;
       }
 
       .bm-cb__actions {
         display: flex;
         gap: 10px;
         justify-content: flex-end;
-        margin-top: 14px;
+        margin-top: 18px;
         flex-wrap: wrap;
       }
 
@@ -187,15 +191,16 @@ import { MatButtonModule } from '@angular/material/button';
         align-items: center;
         gap: 8px;
         justify-content: center;
-        opacity: 0.6;
+        color: var(--bm-muted, rgba(38, 70, 83, 0.7));
+        font-family: var(--bm-font-mono, monospace);
         font-size: 12px;
       }
 
       .bm-cb__dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
         border-radius: 999px;
-        background: rgba(22, 62, 63, 0.55);
+        background: var(--bm-teal, #2a9d8f);
       }
     `,
   ],

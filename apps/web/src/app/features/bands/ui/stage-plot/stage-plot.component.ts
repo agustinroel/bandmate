@@ -432,9 +432,8 @@ export interface StagePlotConfig {
         background: #0f172a;
         background-image:
           radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.8) 0%, #090d16 100%),
-          linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-        background-size: 100% 100%, 30px 30px, 30px 30px;
+          radial-gradient(circle, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
+        background-size: 100% 100%, 24px 24px;
         border-color: #334155 !important;
         overflow: hidden;
       }
@@ -509,8 +508,23 @@ export interface StagePlotConfig {
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
       }
       .item-sub-label {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         color: #94a3b8 !important;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      }
+
+      :host-context([data-theme='dark']) {
+        .gear-toolbox,
+        .selected-editor,
+        .stage-plot-sheet {
+          background-color: #16181c !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+          color: #f8fafc !important;
+        }
+        .rider-requirements-box {
+          background-color: rgba(255, 255, 255, 0.04) !important;
+          color: #94a3b8 !important;
+        }
       }
 
       /* Print Media Styles */

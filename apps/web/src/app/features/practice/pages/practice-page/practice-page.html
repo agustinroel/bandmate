@@ -18,12 +18,12 @@
   <div
     class="p-live-hud-pill shadow-sm"
     [matMenuTriggerFor]="syncMenu"
-    matTooltip="Sala en vivo: clic para ver miembros y señas"
-    aria-label="Indicador de sala en vivo de banda"
+    [matTooltip]="i18n.t('practice.live_room_tooltip', 'Sala en vivo: clic para ver miembros y señas')"
+    [attr.aria-label]="i18n.t('practice.live_room_label', 'Indicador de sala en vivo de banda')"
   >
     <span class="p-status-dot online"></span>
-    <span class="p-hud-title">{{ liveSync.isLeader() ? 'LÍDER' : 'EN VIVO' }}</span>
-    <span class="p-hud-peers" matTooltip="Músicos conectados">{{ liveSync.peerCount() }}</span>
+    <span class="p-hud-title">{{ liveSync.isLeader() ? i18n.t('practice.leader', 'LÍDER') : i18n.t('practice.live', 'EN VIVO') }}</span>
+    <span class="p-hud-peers" [matTooltip]="i18n.t('practice.connected_musicians', 'Músicos conectados')">{{ liveSync.peerCount() }}</span>
   </div>
 }
 
@@ -33,7 +33,7 @@
   </div>
 
   <div class="flex-grow-1">
-    <h2 class="m-0">Practice</h2>
+    <h2 class="m-0">{{ i18n.t('practice.title', 'Practice') }}</h2>
 
     @if (p.setlist()) {
       <div class="small opacity-75 mt-1">
@@ -43,30 +43,27 @@
       <div class="p-top-meta small mt-1">
         <span class="p-pill">
           <mat-icon class="p-pill-ic">schedule</mat-icon>
-          Total: <span class="fw-semibold">{{ p.totalLabel() }}</span>
+          {{ i18n.t('practice.total', 'Total:') }} <span class="fw-semibold">{{ p.totalLabel() }}</span>
         </span>
 
         <span class="p-pill">
           <mat-icon class="p-pill-ic">trending_up</mat-icon>
-          Elapsed: <span class="fw-semibold">{{ p.elapsedLabel() }}</span>
+          {{ i18n.t('practice.elapsed', 'Elapsed:') }} <span class="fw-semibold">{{ p.elapsedLabel() }}</span>
         </span>
 
         <span class="p-pill">
           <mat-icon class="p-pill-ic">hourglass_bottom</mat-icon>
-          Remaining: <span class="fw-semibold">{{ p.remainingLabel() }}</span>
+          {{ i18n.t('practice.remaining', 'Remaining:') }} <span class="fw-semibold">{{ p.remainingLabel() }}</span>
         </span>
 
         <div class="p-hotkeys small opacity-75 mt-2">
-          Hotkeys:
-          <span class="fw-semibold">Space</span>/<span class="fw-semibold">→</span> next,
-          <span class="fw-semibold">←</span> previous, <span class="fw-semibold">R</span> restart,
-          <span class="fw-semibold">Esc</span> exit
+          {{ i18n.t('practice.hotkeys', 'Hotkeys: Space/→ next, ← previous, R restart, Esc exit') }}
         </div>
       </div>
     } @else if (hasId()) {
-      <div class="small opacity-75 mt-1">Loading setlist…</div>
+      <div class="small opacity-75 mt-1">{{ i18n.t('practice.loading_setlist', 'Loading setlist…') }}</div>
     } @else {
-      <div class="small opacity-75 mt-1">Select a setlist to start.</div>
+      <div class="small opacity-75 mt-1">{{ i18n.t('practice.select_setlist', 'Select a setlist to start.') }}</div>
     }
   </div>
 
@@ -89,7 +86,7 @@
         class="p-metronome-btn"
         [color]="metronome.isPlaying() ? 'accent' : ''"
         (click)="metronome.toggle()"
-        matTooltip="Metronome (Click to play/stop)"
+        [matTooltip]="i18n.t('practice.metronome_tooltip', 'Metronome (Click to play/stop)')"
       >
         <mat-icon>{{ metronome.isPlaying() ? 'volume_up' : 'timer' }}</mat-icon>
       </button>
@@ -99,14 +96,14 @@
         type="button"
         class="p-bpm-btn"
         [matMenuTriggerFor]="bpmMenu"
-        matTooltip="Change BPM"
+        [matTooltip]="i18n.t('practice.change_bpm', 'Change BPM')"
       >
         {{ metronome.bpm() }}
       </button>
 
       <mat-menu #bpmMenu="matMenu">
         <div class="p-bpm-panel" (click)="$event.stopPropagation()">
-          <div class="small opacity-75 mb-2">Tempo (BPM)</div>
+          <div class="small opacity-75 mb-2">{{ i18n.t('song_editor.bpm_label', 'Tempo (BPM)') }}</div>
           <mat-slider min="40" max="220" step="1" showTickMarks discrete>
             <input
               matSliderThumb

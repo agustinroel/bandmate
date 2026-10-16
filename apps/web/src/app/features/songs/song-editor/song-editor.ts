@@ -30,6 +30,7 @@ import { NotificationsService } from '../../../shared/ui/notifications/notificat
 import { ChordLineViewComponent } from '../../../shared/ui/chord-line-view/chord-line-view';
 import { TransposeBarComponent } from '../../../shared/ui/transpose-bar/transpose-bar';
 import { MetronomeService } from '../../practice/services/metronome.service';
+import { I18nService } from '../../../core/services/i18n.service';
 
 type SongMetaSnapshot = {
   title: string;
@@ -115,8 +116,8 @@ export class SongEditorPageComponent {
   readonly store = inject(SongsStore);
 
   readonly dialog = inject(MatDialog);
-
   readonly notify = inject(NotificationsService);
+  readonly i18n = inject(I18nService);
 
   readonly saving = signal(false);
 
@@ -424,10 +425,10 @@ export class SongEditorPageComponent {
 
     req$.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: () => {
-        this.notify.success('Song saved', 'OK', 2000);
+        this.notify.success(this.i18n.t('song_editor.saved', 'Song saved'), 'OK', 2000);
         this.router.navigate(['/songs']);
       },
-      error: () => this.notify.error('Could not save song', 'OK', 3000),
+      error: () => this.notify.error(this.i18n.t('song_editor.save_failed', 'Could not save song'), 'OK', 3000),
     });
   };
 
@@ -436,21 +437,20 @@ export class SongEditorPageComponent {
     if (!id) return;
 
     this.confirm({
-      title: 'Publish to Community',
-      message:
-        'This will create a public version of your arrangement for everyone to see. You can continue editing your private copy.',
-      confirmText: 'Publish',
-      cancelText: 'Cancel',
+      title: this.i18n.t('song_editor.publish_title', 'Publish to Community'),
+      message: this.i18n.t('song_editor.publish_msg', 'This will create a public version of your arrangement for everyone to see. You can continue editing your private copy.'),
+      confirmText: this.i18n.t('song_editor.publish_btn', 'Publish'),
+      cancelText: this.i18n.t('common.cancel', 'Cancel'),
     }).subscribe((ok) => {
       if (!ok) return;
 
       this.store.publish(id).subscribe({
         next: () => {
-          this.notify.success('Published to community!', 'OK', 3000);
+          this.notify.success(this.i18n.t('song_editor.publish_success', 'Published to community!'), 'OK', 3000);
           // Optional: navigate to work page to see it?
           // this.router.navigate(['/library', this.currentDetail()?.workId]);
         },
-        error: (err) => this.notify.error('Failed to publish', 'OK', 3000),
+        error: () => this.notify.error(this.i18n.t('song_editor.save_failed', 'Failed to publish'), 'OK', 3000),
       });
     });
   }
@@ -516,10 +516,10 @@ export class SongEditorPageComponent {
     const section = this.store.selected()?.sections.find((s) => s.id === sectionId);
 
     this.confirm({
-      title: 'Delete section',
-      message: `Delete "${section?.name ?? 'this section'}" and all its lines?`,
-      confirmText: 'Delete section',
-      cancelText: 'Cancel',
+      title: this.i18n.t('song_editor.delete_section_title', 'Delete section'),
+      message: this.i18n.t('song_editor.delete_section_confirm', { name: section?.name ?? this.i18n.t('song_editor.this_section', 'this section') }),
+      confirmText: this.i18n.t('song_editor.delete_section', 'Delete section'),
+      cancelText: this.i18n.t('common.cancel', 'Cancel'),
       tone: 'danger',
     }).subscribe((ok) => {
       if (!ok) return;
@@ -529,10 +529,10 @@ export class SongEditorPageComponent {
 
   deleteLine(sectionId: string, lineId: string) {
     this.confirm({
-      title: 'Delete line',
-      message: 'This will remove the line content. You can’t undo this yet (MVP).',
-      confirmText: 'Delete',
-      cancelText: 'Keep',
+      title: this.i18n.t('song_editor.delete_line_title', 'Delete line'),
+      message: this.i18n.t('song_editor.delete_line_confirm', 'This will remove the line content. You can’t undo this yet.'),
+      confirmText: this.i18n.t('common.delete', 'Delete'),
+      cancelText: this.i18n.t('common.cancel', 'Keep'),
       tone: 'danger',
     }).subscribe((ok) => {
       if (!ok) return;

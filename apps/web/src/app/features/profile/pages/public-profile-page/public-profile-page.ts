@@ -223,9 +223,12 @@ export class PublicProfilePageComponent {
     this.router.navigate(['/']);
   }
 
-  handleAvatarError() {
+  handleAvatarError(event?: Event) {
+    if (event?.target) {
+      (event.target as HTMLImageElement).src = 'assets/brand/avatar-fallback.svg';
+    }
     const p = this.profile();
-    if (p) {
+    if (p && p.avatar_url) {
       this.profile.set({ ...p, avatar_url: null });
     }
   }

@@ -110,6 +110,7 @@
             <div class="d-flex gap-3">
               <div class="cm-composer-avatar-wrap">
                 <img
+                  src="assets/brand/avatar-fallback.svg"
                   [src]="currentUserAvatar()"
                   [alt]="currentUserLabel()"
                   class="cm-composer-avatar-img"
@@ -196,7 +197,7 @@
                 <!-- Attachment Previews in Composer -->
                 @if (attachedMediaUrl() && attachedMediaType() === 'image') {
                   <div class="cm-composer-attachment-preview mb-3 position-relative rounded-3 overflow-hidden border">
-                    <img [src]="attachedMediaUrl()" alt="Attached image preview" class="w-100" style="max-height: 200px; object-fit: cover;" />
+                    <img src="assets/brand/avatar-fallback.svg" [src]="attachedMediaUrl()" alt="Attached image preview" class="w-100" style="max-height: 200px; object-fit: cover;" />
                     <button mat-icon-button class="cm-preview-remove-btn" (click)="removeAttachedMedia()" matTooltip="Quitar imagen">
                       <mat-icon>close</mat-icon>
                     </button>
@@ -374,6 +375,7 @@
                     (mouseleave)="onAuthorMouseLeave()"
                   >
                     <img
+                      src="assets/brand/avatar-fallback.svg"
                       [src]="post.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                       [alt]="post.authorName"
                       class="cm-post-avatar cursor-pointer"
@@ -459,7 +461,7 @@
                     tabindex="0"
                     matTooltip="Click para ampliar imagen"
                   >
-                    <img [src]="post.mediaUrl" [alt]="post.content" class="cm-post-attached-image" loading="lazy" />
+                    <img src="assets/brand/avatar-fallback.svg" [src]="post.mediaUrl" [alt]="post.content" class="cm-post-attached-image" loading="lazy" />
                     <div class="cm-image-zoom-overlay">
                       <mat-icon>fullscreen</mat-icon>
                     </div>
@@ -581,6 +583,7 @@
                           @for (comment of commentsByPost()[post.id]; track comment.id) {
                             <div class="cm-comment-item">
                               <img
+                                src="assets/brand/avatar-fallback.svg"
                                 [src]="comment.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                                 [alt]="comment.authorName"
                                 class="cm-comment-avatar"
@@ -669,6 +672,7 @@
               <div class="d-flex align-items-center justify-content-between py-2 border-bottom cm-rec-item gap-2">
                 <div class="d-flex align-items-center gap-2 overflow-hidden flex-grow-1" style="min-width: 0;">
                   <img
+                    src="assets/brand/avatar-fallback.svg"
                     [src]="rec.avatar_url || 'assets/brand/avatar-fallback.svg'"
                     [alt]="rec.username"
                     class="cm-rec-avatar flex-shrink-0"
@@ -705,7 +709,7 @@
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                   <div class="cm-band-avatar-mini flex-shrink-0">
                     @if (b.avatar_url) {
-                      <img [src]="b.avatar_url" [alt]="b.name" />
+                      <img src="assets/brand/avatar-fallback.svg" [src]="b.avatar_url" [alt]="b.name" />
                     } @else {
                       <span>{{ b.name[0] | uppercase }}</span>
                     }
@@ -786,6 +790,7 @@
                 <div class="d-flex justify-content-between align-items-start position-relative px-3 pt-3">
                   <div class="cm-musician-avatar-container">
                     <img
+                      src="assets/brand/avatar-fallback.svg"
                       [src]="profile.avatar_url || 'assets/brand/avatar-fallback.svg'"
                       [alt]="profile.full_name || profile.username"
                       class="cm-musician-avatar"
@@ -895,6 +900,7 @@
       <div class="cm-hovercard-header d-flex align-items-center justify-content-between mb-2 gap-2">
         <div class="d-flex align-items-center gap-2 cm-hovercard-author cursor-pointer flex-grow-1 overflow-hidden" (click)="navigateToProfile(hoveredUser()!.username, $event)">
           <img
+            src="assets/brand/avatar-fallback.svg"
             [src]="hoveredUser()?.avatar_url || 'assets/brand/avatar-fallback.svg'"
             [alt]="hoveredUser()?.full_name || hoveredUser()?.username"
             class="cm-hovercard-avatar flex-shrink-0"
@@ -954,7 +960,7 @@
   @if (previewImageUrl()) {
     <div class="cm-lightbox-backdrop" (click)="previewImageUrl.set(null)">
       <div class="cm-lightbox-container" (click)="$event.stopPropagation()">
-        <img [src]="previewImageUrl()!" alt="Vista ampliada" class="cm-lightbox-img" />
+        <img src="assets/brand/avatar-fallback.svg" [src]="previewImageUrl()!" alt="Vista ampliada" class="cm-lightbox-img" />
         <button mat-icon-button class="cm-lightbox-close" (click)="previewImageUrl.set(null)" matTooltip="Cerrar imagen">
           <mat-icon>close</mat-icon>
         </button>

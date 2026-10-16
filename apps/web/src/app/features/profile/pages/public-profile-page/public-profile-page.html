@@ -50,11 +50,13 @@
                 [class.pro-ring]="isPro()"
                 [class.studio-ring]="isStudio()"
               >
-                @if (profile()?.avatar_url) {
-                  <img [src]="profile()?.avatar_url" (error)="handleAvatarError()" alt="Avatar" />
-                } @else {
-                  <mat-icon class="icon-xl">person</mat-icon>
-                }
+                <img
+                  class="profile-avatar-img"
+                  src="assets/brand/avatar-fallback.svg"
+                  [src]="profile()?.avatar_url || 'assets/brand/avatar-fallback.svg'"
+                  (error)="handleAvatarError($event)"
+                  [alt]="profile()?.full_name || profile()?.username || 'Avatar'"
+                />
               </div>
               @if (isPremium()) {
                 <div
@@ -217,7 +219,11 @@
                           <div class="band-card">
                             <div class="band-card-avatar">
                               @if (band.avatar_url) {
-                                <img [src]="band.avatar_url" />
+                                <img
+                                  src="assets/brand/avatar-fallback.svg"
+                                  [src]="band.avatar_url"
+                                  [alt]="band.name"
+                                />
                               } @else {
                                 {{ band.name.slice(0, 1).toUpperCase() }}
                               }

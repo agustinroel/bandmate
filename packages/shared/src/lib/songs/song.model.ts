@@ -65,6 +65,7 @@ export type Song = {
    */
   key?: string;
 
+  genre?: string;
   bpm?: number | string;
   durationSec?: number | string;
   notes?: string;

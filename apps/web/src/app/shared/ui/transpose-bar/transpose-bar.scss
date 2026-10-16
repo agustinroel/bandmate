@@ -75,7 +75,9 @@
 }
 
 .bm-tr-key {
-  font-weight: 900;
+  font-weight: 800;
+  font-family: var(--bm-font-mono, monospace);
+  font-variant-numeric: tabular-nums;
   opacity: 0.95;
 }
 
@@ -87,9 +89,9 @@
 }
 
 .bm-tr-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   padding: 0 !important;
   border-radius: 12px;
 
@@ -106,9 +108,18 @@
 
 .bm-tr-reset {
   border-radius: 12px;
-  height: 40px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 14px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+:host-context(.theme-dark),
+:host-context([data-bs-theme="dark"]) {
+  .bm-tr {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(15, 23, 42, 0.75);
+  }
 }
 
 @media (max-width: 640px) {
@@ -128,13 +139,11 @@
 }
 
 .bm-transpose {
-     display: inline-flex;
-
+  display: inline-flex;
   gap: 10px;
-
   border-radius: 14px;
-    width: 100%;
-    height: 40px;
+  width: 100%;
+  height: 44px;
   padding: 0 10px;
   align-items: center;
-  }
+}

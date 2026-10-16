@@ -1,0 +1,9 @@
+{
+  "buildPath": "code",
+  "telemetry": false,
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": {}
+  }
+}

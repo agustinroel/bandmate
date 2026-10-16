@@ -20,6 +20,7 @@ import { EventsStore } from '../../../events/state/events.store';
 import { EventCreateDialogComponent } from '../../ui/event-create-dialog/event-create-dialog.component';
 import { StagePlotComponent } from '../../ui/stage-plot/stage-plot.component';
 import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog.component';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 @Component({
   standalone: true,
@@ -68,7 +69,9 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
               <div class="band-avatar shadow-lg rounded-circle">
                 @if (b.avatar_url) {
                   <img
+                    src="assets/brand/avatar-fallback.svg"
                     [src]="b.avatar_url"
+                    [alt]="b.name"
                     (error)="b.avatar_url = ''"
                     class="w-100 h-100 object-fit-cover rounded-circle"
                   />
@@ -103,7 +106,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
               <div class="text-white mb-2 flex-grow-1">
                 <h1 class="display-3 fw-bold mb-0 text-shadow">{{ b.name }}</h1>
                 <p class="h5 opacity-75 fw-light mb-3 text-shadow">
-                  {{ b.description || 'No description' }}
+                  {{ b.description || i18n.t('bands.no_desc', 'No description') }}
                 </p>
 
                 <div class="d-flex gap-2 flex-wrap">
@@ -113,7 +116,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                     class="rounded-pill shadow-sm"
                     (click)="openEpk()"
                   >
-                    <mat-icon class="me-2">newspaper</mat-icon> EPK / Dossier
+                    <mat-icon class="me-2">newspaper</mat-icon> {{ i18n.t('bands.epk_btn', 'EPK / Dossier') }}
                   </button>
                   @if (isMember()) {
                     <button
@@ -121,7 +124,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                       class="glass-button rounded-pill"
                       (click)="inviteMember()"
                     >
-                      <mat-icon class="me-2">person_add</mat-icon> Invite Member
+                      <mat-icon class="me-2">person_add</mat-icon> {{ i18n.t('bands.invite_btn', 'Invite Member') }}
                     </button>
                   }
                   @if (isAdmin()) {
@@ -147,17 +150,17 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
             class="custom-tabs bm-tabs"
           >
             <!-- Overview Tab -->
-            <mat-tab label="Overview">
+            <mat-tab [label]="i18n.t('bands.tab_overview', 'Overview')">
               <div class="py-4">
                 <div class="row g-4 m-0 w-100">
                   <!-- Fixed horizontal scroll by using m-0 and w-100 -->
                   <div class="col-lg-8 p-0">
                     <div class="d-flex align-items-center justify-content-between mb-4">
-                      <h3 class="fw-bold m-0 text-primary">Members</h3>
+                      <h3 class="fw-bold m-0 text-primary">{{ i18n.t('bands.members_title', 'Members') }}</h3>
                       <span
                         class="badge rounded-pill px-3 py-2 text-primary"
                         style="background: rgba(38, 70, 83, 0.1);"
-                        >{{ members().length }} members</span
+                        >{{ i18n.t('bands.members_count', { count: members().length }) }}</span
                       >
                     </div>
 
@@ -172,7 +175,9 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                           >
                             @if (m.avatar_url) {
                               <img
+                                src="assets/brand/avatar-fallback.svg"
                                 [src]="m.avatar_url"
+                                [alt]="m.full_name || m.username"
                                 (error)="m.avatar_url = null"
                                 class="rounded-circle shadow-sm"
                                 width="56"
@@ -218,35 +223,34 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                   <div class="col-lg-4 p-0 ps-lg-4 mt-lg-0 mt-4">
                     <!-- Stats -->
                     <div class="p-4 bg-white rounded-4 shadow-sm border-0 h-100">
-                      <h4 class="fw-bold text-primary mb-4">Band Profile</h4>
+                      <h4 class="fw-bold text-primary mb-4">{{ i18n.t('bands.profile_title', 'Band Profile') }}</h4>
                       <div class="d-flex flex-column gap-3">
                         <div
                           class="d-flex justify-content-between align-items-center border-bottom pb-2"
                         >
-                          <span class="text-muted">Founded</span>
+                          <span class="text-muted">{{ i18n.t('bands.founded', 'Founded') }}</span>
                           <span class="fw-bold">{{ b.created_at | date: 'yyyy' }}</span>
                         </div>
                         <div
                           class="d-flex justify-content-between align-items-center border-bottom pb-2"
                         >
-                          <span class="text-muted">Songs Shared</span>
-                          <span class="fw-bold">{{ isMember() ? songs().length : 'Private' }}</span>
+                          <span class="text-muted">{{ i18n.t('bands.songs_shared', 'Songs Shared') }}</span>
+                          <span class="fw-bold">{{ isMember() ? songs().length : i18n.t('bands.private', 'Private') }}</span>
                         </div>
                         <div
                           class="d-flex justify-content-between align-items-center border-bottom pb-2"
                         >
-                          <span class="text-muted">Setlists</span>
-                          <span class="fw-bold">{{ isMember() ? '0' : 'Private' }}</span>
+                          <span class="text-muted">{{ i18n.t('bands.tab_setlists', 'Setlists') }}</span>
+                          <span class="fw-bold">{{ isMember() ? '0' : i18n.t('bands.private', 'Private') }}</span>
                         </div>
                       </div>
 
                       <div class="mt-4 p-3 rounded-4 bg-light">
                         <p class="small text-muted mb-0">
                           @if (isMember()) {
-                            PRO members can create band setlists and sync arrangements with all
-                            members.
+                            {{ i18n.t('bands.pro_perk_setlists', 'PRO members can create band setlists and sync arrangements with all members.') }}
                           } @else {
-                            Join this band to see shared songs and setlists.
+                            {{ i18n.t('bands.join_perk', 'Join this band to see shared songs and setlists.') }}
                           }
                         </p>
                       </div>
@@ -258,17 +262,17 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
 
             <!-- Shared Songs -->
             @if (isMember()) {
-              <mat-tab label="Shared Songs">
+              <mat-tab [label]="i18n.t('bands.tab_songs', 'Shared Songs')">
                 <div class="py-4">
                   <div class="d-flex align-items-center justify-content-between mb-4 px-2">
-                    <h3 class="fw-bold m-0 text-primary">Library</h3>
+                    <h3 class="fw-bold m-0 text-primary">{{ i18n.t('bands.library', 'Library') }}</h3>
                     <button
                       mat-flat-button
                       color="primary"
                       (click)="shareSong()"
                       class="rounded-pill px-4"
                     >
-                      <mat-icon class="me-2">add</mat-icon> Share Song
+                      <mat-icon class="me-2">add</mat-icon> {{ i18n.t('bands.share_song', 'Share Song') }}
                     </button>
                   </div>
 
@@ -277,8 +281,8 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                       <mat-icon class="display-1 text-muted opacity-25 mb-3"
                         >library_music</mat-icon
                       >
-                      <p class="h5 text-muted">No songs shared yet</p>
-                      <p class="small text-muted">Start building your band's repertoire!</p>
+                      <p class="h5 text-muted">{{ i18n.t('bands.no_songs_shared', 'No songs shared yet') }}</p>
+                      <p class="small text-muted">{{ i18n.t('bands.start_repertoire', "Start building your band's repertoire!") }}</p>
                     </div>
                   } @else {
                     <div class="row g-3 m-0">
@@ -300,10 +304,10 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                             <div class="text-end">
                               <span
                                 class="badge border text-primary"
-                                style="background: rgba(38, 70, 83, 0.05);"
+                                style="background: rgba(38, 70, 83, 0.05); font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);"
                                 >{{ s.key || '?' }}</span
                               >
-                              <div class="small text-muted mt-1" style="font-size: 0.65rem;">
+                              <div class="small text-muted mt-1" style="font-size: 0.7rem; font-variant-numeric: tabular-nums;">
                                 {{ s.shared_at | date: 'shortDate' }}
                               </div>
                             </div>
@@ -316,13 +320,13 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
               </mat-tab>
 
               <!-- Events -->
-              <mat-tab label="Events">
+              <mat-tab [label]="i18n.t('bands.tab_gigs', 'Events')">
                 <div class="py-4 px-2">
                   <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>
-                      <h3 class="fw-bold m-0 text-primary">Live Shows</h3>
+                      <h3 class="fw-bold m-0 text-primary">{{ i18n.t('bands.live_shows', 'Live Shows') }}</h3>
                       <p class="text-muted small mb-0">
-                        Manage and schedule your band's upcoming performances
+                        {{ i18n.t('bands.manage_shows_desc', "Manage and schedule your band's upcoming performances") }}
                       </p>
                     </div>
                     @if (isAdmin()) {
@@ -332,9 +336,9 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                           color="primary"
                           (click)="eventsStore.setupPayouts(id()!)"
                           class="rounded-pill px-3"
-                          matTooltip="Set up Stripe to receive ticket payouts"
+                          [matTooltip]="i18n.t('bands.payouts_tooltip', 'Set up Stripe to receive ticket payouts')"
                         >
-                          <mat-icon class="me-2">account_balance</mat-icon> Payouts
+                          <mat-icon class="me-2">account_balance</mat-icon> {{ i18n.t('bands.payouts', 'Payouts') }}
                         </button>
                         <button
                           mat-flat-button
@@ -342,7 +346,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                           (click)="createEvent()"
                           class="rounded-pill px-4 shadow-sm"
                         >
-                          <mat-icon class="me-2">add_location</mat-icon> Create Event
+                          <mat-icon class="me-2">add_location</mat-icon> {{ i18n.t('bands.create_event', 'Create Event') }}
                         </button>
                       </div>
                     }
@@ -357,14 +361,14 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                       <mat-icon class="display-1 text-muted opacity-25 mb-3"
                         >event_available</mat-icon
                       >
-                      <p class="h5 text-muted">No shows scheduled yet</p>
-                      <p class="small text-muted">Bands with live events get 3x more engagement!</p>
+                      <p class="h5 text-muted">{{ i18n.t('bands.no_shows', 'No shows scheduled yet') }}</p>
+                      <p class="small text-muted">{{ i18n.t('bands.no_shows_desc', 'Bands with live events get 3x more engagement!') }}</p>
                     </div>
                   } @else {
                     <!-- PREMIUM FEATURED EVENT CARD (GREY TEAL + GOLD) -->
                     @if (featuredEvent(); as feat) {
                       <div class="mb-5 position-relative">
-                        <h4 class="fw-bold text-dark mb-4 ms-1">Next Big Show</h4>
+                        <h4 class="fw-bold text-dark mb-4 ms-1">{{ i18n.t('bands.next_big_show', 'Next Big Show') }}</h4>
 
                         <div
                           class="featured-card rounded-5 overflow-hidden shadow-lg position-relative text-white"
@@ -396,7 +400,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                     <mat-icon style="font-size: 16px; width:16px; height:16px;"
                                       >local_activity</mat-icon
                                     >
-                                    ON SALE
+                                    {{ i18n.t('bands.on_sale', 'ON SALE') }}
                                   </span>
                                 } @else {
                                   <!-- Sold Out / Other: Desaturated Grey Teal -->
@@ -406,7 +410,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                   >
                                     {{
                                       feat!.status === 'published'
-                                        ? 'SOLD OUT'
+                                        ? i18n.t('bands.sold_out', 'SOLD OUT')
                                         : (feat!.status | uppercase)
                                     }}
                                   </span>
@@ -448,7 +452,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                     >confirmation_number</mat-icon
                                   >
                                   <span class="text-gold fw-bold fs-5"
-                                    >{{ feat!.tickets_sold || 0 }} tickets sold</span
+                                    >{{ i18n.t('bands.tickets_sold', { count: feat!.tickets_sold || 0 }) }}</span
                                   >
                                 </div>
                                 <div
@@ -467,7 +471,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                   {{
                                     (feat!.capacity || 100) - (feat!.tickets_sold || 0)
                                   }}
-                                  remaining
+                                  {{ i18n.t('bands.remaining', 'remaining') }}
                                 </div>
                               </div>
 
@@ -477,7 +481,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                 mat-flat-button
                                 class="btn-premium-gold py-4 px-5 rounded-pill fs-5 shadow-lg"
                               >
-                                View Event Details
+                                {{ i18n.t('bands.view_event_details', 'View Event Details') }}
                                 <mat-icon iconPositionEnd class="ms-2">arrow_forward</mat-icon>
                               </a>
                             </div>
@@ -487,7 +491,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                     }
 
                     <!-- Other Events List -->
-                    <h5 class="fw-bold text-muted mb-3">Upcoming Events</h5>
+                    <h5 class="fw-bold text-muted mb-3">{{ i18n.t('bands.upcoming_events', 'Upcoming Events') }}</h5>
                     <div class="row g-3 m-0">
                       @for (ev of eventsStore.bandEvents(); track ev.id) {
                         @if (ev.id !== featuredEvent()?.id) {
@@ -526,7 +530,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
                                         $any(ev).ticket_price | currency: $any(ev).currency
                                       }}</span>
                                     } @else {
-                                      <span class="text-success fw-bold small">FREE</span>
+                                      <span class="text-success fw-bold small">{{ i18n.t('bands.free', 'FREE') }}</span>
                                     }
                                   </div>
                                 </div>
@@ -550,7 +554,7 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
               </mat-tab>
 
               <!-- Stage Plot & Tech Rider Tab -->
-              <mat-tab label="Stage Plot & Rider">
+              <mat-tab [label]="i18n.t('bands.tab_stage_plot', 'Stage Plot & Rider')">
                 <div class="py-4 px-2">
                   <app-stage-plot
                     [bandId]="b.id"
@@ -565,10 +569,10 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
     } @else if (!loading() && error()) {
       <div class="d-flex flex-column align-items-center justify-content-center vh-100 bg-light">
         <mat-icon class="display-1 text-danger mb-3">error_outline</mat-icon>
-        <h2 class="text-primary fw-bold">Oops!</h2>
+        <h2 class="text-primary fw-bold">{{ i18n.t('common.error', 'Oops!') }}</h2>
         <p class="text-danger bg-danger-subtle px-4 py-2 rounded-pill fw-medium">{{ error() }}</p>
         <button mat-flat-button color="primary" routerLink="/bands" class="mt-3 rounded-pill">
-          <mat-icon class="me-2">arrow_back</mat-icon> Back to Bands
+          <mat-icon class="me-2">arrow_back</mat-icon> {{ i18n.t('bands.back_to_bands', 'Back to Bands') }}
         </button>
       </div>
     }
@@ -576,15 +580,15 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="openEditDialog()">
         <mat-icon>edit</mat-icon>
-        <span>Edit Band Info</span>
+        <span>{{ i18n.t('bands.edit_info', 'Edit Band Info') }}</span>
       </button>
       <button mat-menu-item>
         <mat-icon>group_add</mat-icon>
-        <span>Manage Members</span>
+        <span>{{ i18n.t('bands.manage_members', 'Manage Members') }}</span>
       </button>
       <button mat-menu-item>
         <mat-icon>delete_forever</mat-icon>
-        <span>Delete Band</span>
+        <span>{{ i18n.t('bands.delete_band', 'Delete Band') }}</span>
       </button>
     </mat-menu>
   `,
@@ -751,10 +755,11 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
       }
 
       .member-role-badge {
-        font-size: 0.65rem;
-        font-weight: 600;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-size: 0.7rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.03em;
         padding: 0.4em 0.8em;
       }
 
@@ -783,10 +788,25 @@ import { BandEpkDialogComponent } from '../../ui/band-epk-dialog/band-epk-dialog
       .bg-primary-subtle {
         background-color: rgba(38, 70, 83, 0.08) !important;
       }
+
+      :host-context([data-bs-theme="dark"]),
+      :host-context(.theme-dark) {
+        .member-card,
+        .song-card,
+        .event-card {
+          background-color: #0f172a !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #f8fafc !important;
+        }
+        .text-dark {
+          color: #f8fafc !important;
+        }
+      }
     `,
   ],
 })
 export class BandDetailPageComponent {
+  readonly i18n = inject(I18nService);
   private bandsService = inject(BandsService);
   private dialog = inject(MatDialog);
   private auth = inject(AuthStore);
@@ -964,6 +984,7 @@ export class BandDetailPageComponent {
     this.dialog.open(BandEpkDialogComponent, {
       width: '900px',
       maxWidth: '96vw',
+      panelClass: 'bm-epk-dialog-panel',
       data: {
         band: b,
         members: this.members(),

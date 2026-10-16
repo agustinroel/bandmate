@@ -57,7 +57,9 @@ import { FormsModule } from '@angular/forms';
                 >
                   @if (event()!.bands?.avatar_url) {
                     <img
+                      src="assets/brand/avatar-fallback.svg"
                       [src]="event()!.bands?.avatar_url"
+                      [alt]="event()!.bands?.name || 'Band avatar'"
                       class="rounded-circle"
                       style="width: 100%; height: 100%; object-fit: cover"
                     />
@@ -153,7 +155,9 @@ import { FormsModule } from '@angular/forms';
                   <div class="d-flex gap-3 overflow-auto pb-2">
                     @for (photo of eventPhotos(); track photo) {
                       <img
+                        src="assets/brand/avatar-fallback.svg"
                         [src]="photo"
+                        alt="Event gallery photo"
                         class="rounded-3 shadow-sm"
                         style="height: 200px; object-fit: cover"
                       />
@@ -223,7 +227,7 @@ import { FormsModule } from '@angular/forms';
 
                 <!-- Ticket Purchase Section -->
                 <div class="text-center mb-4">
-                  <div class="display-5 fw-bold text-primary mb-1">
+                  <div class="display-5 fw-bold text-primary mb-1 font-monospace">
                     @if (event()!.ticket_price > 0) {
                       {{ event()!.ticket_price | currency: event()!.currency || 'EUR' }}
                     } @else {
@@ -244,7 +248,7 @@ import { FormsModule } from '@angular/forms';
                   >
                     <mat-icon>remove</mat-icon>
                   </button>
-                  <span class="fw-bold fs-5">{{ quantity() }}</span>
+                  <span class="fw-bold fs-5 font-monospace">{{ quantity() }}</span>
                   <button
                     mat-icon-button
                     (click)="incrementQuantity()"
@@ -451,6 +455,17 @@ import { FormsModule } from '@angular/forms';
       .bm-checkin-btn:hover {
         background: rgba(255, 255, 255, 0.25);
         transform: translateY(-2px);
+      }
+
+      :host-context([data-theme='dark']) {
+        mat-card.bg-white {
+          background-color: #16181c !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          color: #f8fafc !important;
+        }
+        .text-dark {
+          color: #f8fafc !important;
+        }
       }
     `,
   ],

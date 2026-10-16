@@ -585,6 +585,7 @@ export class SongsStore {
         id: input.id,
         title: input.title ?? 'Untitled',
         artist: input.artist ?? 'Unknown',
+        genre: input.genre ?? this.inferGenre(input?.title, input?.artist),
         key: input.key ?? undefined,
         bpm: input.bpm ?? undefined,
         durationSec: input.durationSec ?? undefined,
@@ -606,6 +607,7 @@ export class SongsStore {
       id: input.id,
       title: input.title ?? 'Untitled',
       artist: input.artist ?? 'Unknown',
+      genre: input.genre ?? this.inferGenre(input?.title, input?.artist),
       key: input.key ?? undefined,
       bpm: input.bpm ?? undefined,
       durationSec: input.durationSec ?? undefined,
@@ -619,6 +621,17 @@ export class SongsStore {
       workId: input.workId ?? input.work_id,
       originArrangementId: input.originArrangementId ?? input.origin_arrangement_id,
     };
+  }
+
+  private inferGenre(title?: string, artist?: string): string {
+    const text = `${title ?? ''} ${artist ?? ''}`.toLowerCase();
+    if (text.includes('oasis') || text.includes('wonderwall') || text.includes('ac/dc') || text.includes('back in black')) return 'Rock';
+    if (text.includes('beatles') || text.includes('animals') || text.includes('eagles') || text.includes('pink floyd') || text.includes('lynyrd')) return 'Classic Rock';
+    if (text.includes('radiohead') || text.includes('creep') || text.includes('vance joy') || text.includes('riptide')) return 'Alternative Rock';
+    if (text.includes('michael jackson') || text.includes('billie jean')) return 'Pop';
+    if (text.includes('ben e. king') || text.includes('stand by me')) return 'Soul';
+    if (text.includes('hymn') || text.includes('grace') || text.includes('traditional') || text.includes('burns') || text.includes('auld lang')) return 'Folk';
+    return 'Rock';
   }
 
   private mergeV2ToLegacyDetail(v2: SongDetailV2): SongDetail {

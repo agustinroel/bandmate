@@ -55,11 +55,11 @@
   --bm-burnt: #E76F51;
 
 
-  /* Animation Tokens */
-  --bm-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Animation Tokens (Exponential deceleration - The Luthier's Console) */
+  --bm-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --bm-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --bm-transition-fast: 150ms var(--bm-ease-out);
-  --bm-transition-base: 250ms var(--bm-ease-out);
+  --bm-transition-base: 240ms var(--bm-ease-out);
 
   /* Tier Gradients */
   --bm-gradient-pro: linear-gradient(135deg, #ffd700, #ff8c00);
@@ -797,11 +797,11 @@ header .bm-mark,
   place-items: center !important;
   flex: 0 0 auto !important;
   box-shadow: 0 4px 12px rgba(22, 60, 64, 0.22) !important;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease !important;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease !important;
   user-select: none;
 
   &:hover {
-    transform: translateY(-2px) scale(1.05);
+    transform: translateY(-2px) scale(1.04);
     box-shadow: 0 8px 20px rgba(22, 60, 64, 0.3) !important;
   }
 
@@ -826,10 +826,85 @@ header .bm-mark,
   height: 14px !important;
 }
 
-/* ---------- 4) Base ---------- */
+/* ---------- 4) Base & Browser Surfaces ---------- */
 html,
 body {
   height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(38, 70, 83, 0.28) transparent;
+}
+
+.theme-dark,
+[data-bs-theme="dark"] {
+  scrollbar-color: rgba(233, 196, 106, 0.28) rgba(3, 7, 18, 0.6);
+}
+
+/* Custom Webkit Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(38, 70, 83, 0.24);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+
+  &:hover {
+    background: rgba(38, 70, 83, 0.42);
+    background-clip: padding-box;
+  }
+}
+
+.theme-dark ::-webkit-scrollbar-thumb,
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+
+  &:hover {
+    background: rgba(233, 196, 106, 0.55);
+    background-clip: padding-box;
+  }
+}
+
+/* Custom Text Selection & Caret */
+::selection {
+  background: rgba(233, 196, 106, 0.35);
+  color: var(--bm-text, #264653);
+}
+
+.theme-dark ::selection,
+[data-bs-theme="dark"] ::selection {
+  background: rgba(233, 196, 106, 0.32);
+  color: #ffffff;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: var(--bm-accent, #E9C46A);
+}
+
+/* Tabular numerals for musical telemetry (BPM, Hz, Chords, Durations, Counts) */
+.font-mono,
+code,
+pre,
+.badge,
+.bm-telemetry-pill,
+.bm-pro-badge,
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Link underline offset refinement */
+a {
+  text-underline-offset: 3px;
 }
 
 body {
@@ -850,7 +925,7 @@ body {
     height: 100vh;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.05;
+    opacity: 0.04;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     mix-blend-mode: multiply;
   }
@@ -1071,6 +1146,103 @@ mat-form-field {
   .mat-mdc-dialog-content {
     padding: 0 !important;
     margin: 0 !important;
+  }
+}
+
+/* EPK Dialog Panel Overrides */
+.bm-epk-dialog-panel {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+  }
+
+  .mat-mdc-dialog-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Global Material Dialog Dark Mode Fixes */
+.theme-dark,
+[data-bs-theme="dark"],
+[data-theme="dark"] {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    background-color: var(--bm-surface-elevated, #161a22) !important;
+    color: var(--bm-text-primary, #f1f5f9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .mat-mdc-dialog-title {
+    color: #f1f5f9 !important;
+  }
+
+  .mat-mdc-dialog-content {
+    color: #cbd5e1 !important;
+  }
+
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+
+    .mat-mdc-button:not(.mat-mdc-button-base--unelevated):not(.mat-mdc-raised-button) {
+      color: #94a3b8 !important;
+
+      &:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+      }
+    }
+  }
+
+  .mat-mdc-list-option {
+    --mdc-list-list-item-label-text-color: #cbd5e1 !important;
+    color: #cbd5e1 !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06) !important;
+      color: #ffffff !important;
+    }
+
+    &.mdc-list-item--selected,
+    &[aria-selected="true"] {
+      background: rgba(233, 196, 106, 0.18) !important;
+      color: #e9c46a !important;
+    }
+  }
+}
+
+/* Global Subscription & Musician Tier Badges */
+.cm-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+
+  &.cm-tier-pro {
+    background: linear-gradient(135deg, #e9c46a, #c8963e) !important;
+    color: #141a16 !important;
+    box-shadow: 0 1px 4px rgba(200, 150, 62, 0.25);
+  }
+
+  &.cm-tier-studio,
+  &.cm-tier-band {
+    background: linear-gradient(135deg, #0f766e, #264653) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 4px rgba(15, 118, 110, 0.25);
+  }
+
+  &.cm-tier-free {
+    background: rgba(148, 163, 184, 0.14) !important;
+    color: var(--bm-text-secondary, #64748b) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25);
   }
 }
 

@@ -82,9 +82,9 @@ export interface TechRiderExportDialogData {
         <div class="col-md-4">
           <label class="form-label small fw-bold mb-1">Formato de Exportación</label>
           <select class="form-select form-select-sm" [(ngModel)]="layout">
-            <option value="full">📄 Completo (Escenario + Canales + Requisitos)</option>
-            <option value="compact">⚡ Compacto (Escenario y Canales Principales)</option>
-            <option value="patch-only">🎛️ Solo Patch Sheet (Lista de Canales FOH)</option>
+            <option value="full">Completo (Escenario + Canales + Requisitos)</option>
+            <option value="compact">Compacto (Escenario y Canales Principales)</option>
+            <option value="patch-only">Solo Patch Sheet (Lista de Canales FOH)</option>
           </select>
         </div>
         <div class="col-md-4">
@@ -347,8 +347,7 @@ export interface TechRiderExportDialogData {
     .preview-backdrop-grid {
       position: absolute;
       inset: 0;
-      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
       background-size: 24px 24px;
       pointer-events: none;
     }
@@ -365,10 +364,10 @@ export interface TechRiderExportDialogData {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 9px;
+      font-size: 11px;
       letter-spacing: 1.5px;
       font-weight: 800;
-      color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.25);
       writing-mode: vertical-rl;
       pointer-events: none;
       &.left { left: 8px; }
@@ -402,8 +401,8 @@ export interface TechRiderExportDialogData {
       background: rgba(15, 23, 42, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #f8fafc;
-      font-size: 9px;
-      padding: 1px 5px;
+      font-size: 11px;
+      padding: 1px 6px;
       border-radius: 99px;
       white-space: nowrap;
       max-width: 110px;
@@ -441,8 +440,7 @@ export interface TechRiderExportDialogData {
         border: 2px solid #000 !important;
       }
       .preview-backdrop-grid {
-        background-image: linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
-                          linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px) !important;
+        background-image: radial-gradient(circle, rgba(0, 0, 0, 0.18) 1px, transparent 1px) !important;
       }
       .preview-bubble {
         background: #fff !important;

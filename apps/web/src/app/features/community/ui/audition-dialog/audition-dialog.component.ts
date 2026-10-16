@@ -187,10 +187,10 @@ export interface AuditionDialogData {
                         [(ngModel)]="c.status"
                         (ngModelChange)="saveCandidates()"
                       >
-                        <option value="pending">⏳ Pendiente</option>
-                        <option value="shortlisted">⭐ Preseleccionado</option>
-                        <option value="accepted">✓ Aceptado para Ensayo</option>
-                        <option value="declined">✕ Descartado</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="shortlisted">Preseleccionado</option>
+                        <option value="accepted">Aceptado para Ensayo</option>
+                        <option value="declined">Descartado</option>
                       </select>
                     </div>
                   </div>

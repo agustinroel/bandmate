@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { AchievementService } from '../../../core/services/achievement.service';
+import { I18nService } from '../../../core/services/i18n.service';
 
 export interface TuningString {
   note: string;
@@ -201,7 +202,7 @@ export const TUNING_PRESETS: TuningPreset[] = [
     <div class="tuner-container">
       <header class="bm-page-header">
         <div class="flex-grow-1">
-          <h2 class="bm-page-title">Pro Tuner Studio</h2>
+          <h2 class="bm-page-title">{{ i18n.t('tuner.title', 'Pro Tuner Studio') }}</h2>
           <div class="small opacity-75">
             {{ activePreset().instrumentLabel }} • {{ activePreset().name }}
           </div>
@@ -212,19 +213,19 @@ export const TUNING_PRESETS: TuningPreset[] = [
             class="mode-btn"
             [class.active]="tunerMode() === 'needle'"
             (click)="setTunerMode('needle')"
-            title="Modo Aguja Clásica"
+            [title]="i18n.t('tuner.mode_needle', 'Modo Aguja Clásica')"
           >
             <mat-icon>speed</mat-icon>
-            <span>Aguja</span>
+            <span>{{ i18n.t('tuner.mode_needle', 'Aguja') }}</span>
           </button>
           <button
             class="mode-btn strobe-toggle"
             [class.active]="tunerMode() === 'strobe'"
             (click)="setTunerMode('strobe')"
-            title="Modo Estroboscópico de Alta Precisión"
+            [title]="i18n.t('tuner.mode_strobe', 'Modo Estroboscópico de Alta Precisión')"
           >
             <mat-icon>album</mat-icon>
-            <span>Strobe 60fps</span>
+            <span>{{ i18n.t('tuner.mode_strobe', 'Strobe 60fps') }}</span>
           </button>
         </div>
       </header>
@@ -232,15 +233,39 @@ export const TUNING_PRESETS: TuningPreset[] = [
       <!-- Panel de Configuración Rápida: Instrumento y Calibración A4 -->
       <section class="tuning-config-panel">
         <div class="instrument-selector">
-          <label class="section-label">Afinación & Instrumento</label>
-          <div class="preset-chips">
-            @for (preset of presets; track preset.id) {
+          <div class="selector-header">
+            <span class="section-label">{{ i18n.t('tuner.instrument_and_tuning', 'Instrumento & Afinación') }}</span>
+            <span class="preset-notes-badge">
+              {{ getStringNotesSummary(activePreset()) }}
+            </span>
+          </div>
+
+          <!-- Selector de Instrumento tipo Tabs -->
+          <div class="instrument-tabs-bar">
+            @for (inst of instrumentCategories; track inst.id) {
               <button
+                type="button"
+                class="inst-tab-btn"
+                [class.active]="selectedInstrument() === inst.id"
+                (click)="selectInstrument(inst.id)"
+              >
+                <mat-icon>{{ inst.icon }}</mat-icon>
+                <span>{{ inst.label }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Variantes de Afinación del Instrumento Seleccionado -->
+          <div class="preset-chips">
+            @for (preset of filteredPresets(); track preset.id) {
+              <button
+                type="button"
                 class="chip-btn"
                 [class.active]="selectedPresetId() === preset.id"
                 (click)="selectPreset(preset.id)"
               >
-                {{ preset.instrumentLabel }}: {{ preset.name }}
+                <span class="preset-name">{{ preset.name.split(' (')[0] }}</span>
+                <span class="preset-notes">({{ getStringNotesSummary(preset) }})</span>
               </button>
             }
           </div>
@@ -248,7 +273,7 @@ export const TUNING_PRESETS: TuningPreset[] = [
 
         <div class="a4-calibration-card">
           <div class="a4-header">
-            <span class="section-label">Calibración A4</span>
+            <span class="section-label">{{ i18n.t('tuner.a4_calibration', 'Calibración A4') }}</span>
             <span class="a4-val-badge">{{ a4Frequency() }} Hz</span>
           </div>
           <div class="a4-controls">
@@ -304,17 +329,17 @@ export const TUNING_PRESETS: TuningPreset[] = [
                 @if (detectedPitch()) {
                   <span>{{ detectedPitch() | number: '1.1-1' }} Hz</span>
                   <span class="target-diff">
-                    (Target: {{ targetFrequency() | number: '1.1-1' }} Hz)
+                    ({{ i18n.t('tuner.target', 'Target:') }} {{ targetFrequency() | number: '1.1-1' }} Hz)
                   </span>
                 } @else {
-                  <span>Escuchando...</span>
+                  <span>{{ i18n.t('tuner.listening', 'Escuchando...') }}</span>
                 }
               </div>
             } @else {
               <!-- Idle State -->
               <div class="note-val placeholder">--</div>
-              <div class="cents-val">Pulsa Iniciar para Afinar</div>
-              <div class="frequency-detail">Micrófono inactivo</div>
+              <div class="cents-val">{{ i18n.t('tuner.click_start', 'Pulsa Iniciar para Afinar') }}</div>
+              <div class="frequency-detail">{{ i18n.t('tuner.mic_inactive', 'Micrófono inactivo') }}</div>
             }
           </div>
 
@@ -374,13 +399,13 @@ export const TUNING_PRESETS: TuningPreset[] = [
               </div>
               <div class="strobe-status">
                 @if (!isListening()) {
-                  <span>Modo Estroboscópico en reposo</span>
+                  <span>{{ i18n.t('tuner.strobe_idle', 'Modo Estroboscópico en reposo') }}</span>
                 } @else if (isInTune()) {
-                  <span class="strobe-locked">● ESTROBO BLOQUEADO (PERFECTO)</span>
+                  <span class="strobe-locked">{{ i18n.t('tuner.strobe_locked', '● ESTROBO BLOQUEADO (PERFECTO)') }}</span>
                 } @else if (currentCents() < 0) {
-                  <span class="strobe-flat">◀ Desplazamiento hacia la izquierda (Grave / Flat)</span>
+                  <span class="strobe-flat">{{ i18n.t('tuner.strobe_flat', '◀ Desplazamiento hacia la izquierda (Grave)') }}</span>
                 } @else {
-                  <span class="strobe-sharp">Desplazamiento hacia la derecha (Agudo / Sharp) ▶</span>
+                  <span class="strobe-sharp">{{ i18n.t('tuner.strobe_sharp', 'Desplazamiento hacia la derecha (Agudo) ▶') }}</span>
                 }
               </div>
             </div>
@@ -390,11 +415,11 @@ export const TUNING_PRESETS: TuningPreset[] = [
         <div class="controls">
           @if (!isListening()) {
             <button mat-flat-button class="start-btn" (click)="startTuner()">
-              <mat-icon>mic</mat-icon> Iniciar Afinador
+              <mat-icon>mic</mat-icon> {{ i18n.t('tuner.start_btn', 'Iniciar Afinador') }}
             </button>
           } @else {
             <button mat-stroked-button (click)="stopTuner()" class="stop-btn">
-              <mat-icon>stop</mat-icon> Detener
+              <mat-icon>stop</mat-icon> {{ i18n.t('tuner.stop_btn', 'Detener') }}
             </button>
           }
         </div>
@@ -403,8 +428,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
       <!-- Cuerdas de Referencia & Tonos Calibrados -->
       <section class="reference-tones-section">
         <div class="section-label-row">
-          <span class="section-label">Tonos de Cuerdas Abiertas (Calibrados a A4={{ a4Frequency() }}Hz)</span>
-          <span class="section-hint">Toca una cuerda para escuchar su frecuencia exacta</span>
+          <span class="section-label">{{ i18n.t('tuner.open_strings_calibrated', { a4: a4Frequency() }) }}</span>
+          <span class="section-hint">{{ i18n.t('tuner.open_strings_hint', 'Toca una cuerda para escuchar su frecuencia exacta') }}</span>
         </div>
         <div class="reference-tones">
           @for (stringItem of calibratedStrings(); track stringItem.note + stringItem.octave) {
@@ -453,14 +478,12 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .bm-page-title {
+        font-family: var(--bm-font-display, 'Space Grotesk', sans-serif);
         font-size: 32px;
         font-weight: 800;
+        letter-spacing: -0.025em;
         margin: 0;
-        background: linear-gradient(135deg, #e9c46a 0%, #f4a261 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: transparent;
+        color: #f8fafc;
       }
 
       .mode-toggles {
@@ -476,13 +499,13 @@ export const TUNING_PRESETS: TuningPreset[] = [
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        height: 40px;
+        height: 44px;
         min-width: 48px;
         padding: 0 16px;
         border-radius: 99px;
         border: none;
         background: transparent;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.75);
         font-weight: 600;
         font-size: 13px;
         cursor: pointer;
@@ -518,14 +541,74 @@ export const TUNING_PRESETS: TuningPreset[] = [
         padding: 18px 20px;
       }
 
+      .selector-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
       .section-label {
         font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1.5px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.65);
         display: block;
-        margin-bottom: 8px;
+        margin: 0;
+      }
+
+      .preset-notes-badge {
+        font-family: var(--bm-font-mono, monospace);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: rgba(233, 196, 106, 0.16);
+        color: #e9c46a;
+        border: 1px solid rgba(233, 196, 106, 0.35);
+      }
+
+      .instrument-tabs-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .inst-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+        }
+
+        &.active {
+          background: rgba(46, 196, 182, 0.16);
+          border-color: rgba(46, 196, 182, 0.5);
+          color: #2ec4b6;
+          box-shadow: 0 2px 8px rgba(46, 196, 182, 0.2);
+        }
       }
 
       .preset-chips {
@@ -539,27 +622,40 @@ export const TUNING_PRESETS: TuningPreset[] = [
         min-height: 38px;
         padding: 0 14px;
         border-radius: 99px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
         color: rgba(255, 255, 255, 0.85);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         transition: all 0.15s ease;
-      }
 
-      .chip-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-      }
+        .preset-notes {
+          font-family: var(--bm-font-mono, monospace);
+          font-size: 11px;
+          opacity: 0.75;
+        }
 
-      .chip-btn.active {
-        background: #e9c46a;
-        color: #1a1a1a;
-        border-color: #e9c46a;
-        font-weight: 700;
-        box-shadow: 0 4px 12px rgba(233, 196, 106, 0.3);
+        &:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.28);
+          transform: translateY(-1px);
+        }
+
+        &.active {
+          background: #e9c46a;
+          color: #1a1a1a;
+          border-color: #e9c46a;
+          font-weight: 700;
+          box-shadow: 0 4px 12px rgba(233, 196, 106, 0.3);
+
+          .preset-notes {
+            opacity: 0.9;
+          }
+        }
       }
 
       /* A4 Calibration */
@@ -578,7 +674,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .a4-val-badge {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-variant-numeric: tabular-nums;
         font-weight: 700;
         font-size: 15px;
         background: rgba(233, 196, 106, 0.15);
@@ -601,6 +698,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
         border: 1px solid rgba(255, 255, 255, 0.2);
         background: rgba(255, 255, 255, 0.08);
         color: white;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-variant-numeric: tabular-nums;
         font-weight: 700;
         font-size: 15px;
         cursor: pointer;
@@ -626,6 +725,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
         border: 1px solid rgba(255, 255, 255, 0.15);
         background: rgba(255, 255, 255, 0.06);
         color: rgba(255, 255, 255, 0.7);
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-variant-numeric: tabular-nums;
         font-size: 12px;
         font-weight: 700;
         cursor: pointer;
@@ -685,6 +786,7 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .note-val {
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
         font-size: 110px;
         font-weight: 900;
         line-height: 1;
@@ -705,6 +807,7 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .cents-val {
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
         font-size: 20px;
         font-weight: 700;
         margin-top: 6px;
@@ -715,15 +818,16 @@ export const TUNING_PRESETS: TuningPreset[] = [
 
       .frequency-detail {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.5);
-        font-family: 'JetBrains Mono', monospace;
+        color: rgba(255, 255, 255, 0.55);
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-variant-numeric: tabular-nums;
         margin-top: 4px;
         display: flex;
         gap: 8px;
       }
 
       .target-diff {
-        color: rgba(255, 255, 255, 0.35);
+        color: rgba(255, 255, 255, 0.4);
       }
 
       /* Gauge */
@@ -785,9 +889,9 @@ export const TUNING_PRESETS: TuningPreset[] = [
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.5px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.65);
         text-align: center;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
       }
 
       .strobe-locked {
@@ -869,8 +973,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .section-hint {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.4);
+        font-size: 11.5px;
+        color: rgba(255, 255, 255, 0.5);
       }
 
       .reference-tones {
@@ -881,8 +985,8 @@ export const TUNING_PRESETS: TuningPreset[] = [
       }
 
       .tone-btn {
-        min-width: 58px;
-        height: 64px;
+        min-width: 60px;
+        height: 66px;
         border-radius: 16px;
         border: 1.5px solid rgba(255, 255, 255, 0.2);
         background: rgba(255, 255, 255, 0.07);
@@ -895,7 +999,7 @@ export const TUNING_PRESETS: TuningPreset[] = [
         gap: 2px;
         transition: all 0.2s ease;
         padding: 6px 10px;
-        font-family: inherit;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
       }
 
       .tone-btn:hover {
@@ -920,19 +1024,21 @@ export const TUNING_PRESETS: TuningPreset[] = [
 
       .tone-btn .octave-num {
         font-size: 11px;
-        opacity: 0.7;
+        opacity: 0.75;
         font-weight: 600;
       }
 
       .tone-btn .freq-tag {
-        font-size: 10px;
-        font-family: 'JetBrains Mono', monospace;
-        opacity: 0.6;
+        font-size: 11px;
+        font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+        font-variant-numeric: tabular-nums;
+        opacity: 0.7;
       }
     `,
   ],
 })
 export class TunerPageComponent implements OnDestroy {
+  readonly i18n = inject(I18nService);
   private readonly zone = inject(NgZone);
   private readonly achievements = inject(AchievementService);
 
@@ -1019,6 +1125,36 @@ export class TunerPageComponent implements OnDestroy {
   readonly selectedPresetId = signal<string>(this.getInitialPresetId());
   readonly a4Frequency = signal<number>(this.getInitialA4());
 
+  readonly instrumentCategories = [
+    { id: 'guitar', label: 'Guitarra', icon: 'music_note' },
+    { id: 'bass', label: 'Bajo', icon: 'speaker' },
+    { id: 'ukulele', label: 'Ukulele', icon: 'audiotrack' },
+    { id: 'violin', label: 'Violín', icon: 'graphic_eq' },
+    { id: 'cello', label: 'Cello', icon: 'tune' },
+  ] as const;
+
+  readonly selectedInstrument = signal<string>(
+    this.presets.find((p) => p.id === this.getInitialPresetId())?.instrument || 'guitar'
+  );
+
+  readonly filteredPresets = computed(() => {
+    return this.presets.filter((p) => p.instrument === this.selectedInstrument());
+  });
+
+  selectInstrument(instrumentId: string) {
+    this.selectedInstrument.set(instrumentId);
+    const presetsForInst = this.presets.filter((p) => p.instrument === instrumentId);
+    if (!presetsForInst.some((p) => p.id === this.selectedPresetId())) {
+      if (presetsForInst.length > 0) {
+        this.selectPreset(presetsForInst[0].id);
+      }
+    }
+  }
+
+  getStringNotesSummary(preset: TuningPreset): string {
+    return preset.strings.map((s: TuningString) => s.note).join(' ');
+  }
+
   // Computed Values
   readonly activePreset = computed(() => {
     return (
@@ -1063,7 +1199,6 @@ export class TunerPageComponent implements OnDestroy {
     this.tunerMode.set(mode);
     this.persistMode(mode);
     if (mode === 'strobe') {
-      // Allow DOM to render canvas before starting loop
       setTimeout(() => this.startStrobeRenderLoop(), 50);
     }
   }
@@ -1071,6 +1206,10 @@ export class TunerPageComponent implements OnDestroy {
   selectPreset(presetId: string) {
     this.selectedPresetId.set(presetId);
     this.persistPreset(presetId);
+    const found = this.presets.find((p) => p.id === presetId);
+    if (found && found.instrument !== this.selectedInstrument()) {
+      this.selectedInstrument.set(found.instrument);
+    }
   }
 
   adjustA4(delta: number) {

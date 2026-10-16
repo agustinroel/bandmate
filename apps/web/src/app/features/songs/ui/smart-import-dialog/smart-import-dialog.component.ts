@@ -314,21 +314,31 @@ export interface BulkImportItem {
       max-width: 680px;
     }
     .hover-bg:hover {
-      background-color: rgba(0, 0, 0, 0.02);
+      background-color: rgba(38, 70, 83, 0.03);
     }
     .bulk-upload-dropzone {
-      border-color: #cbd5e1 !important;
-      transition: all 0.2s ease;
+      border-color: rgba(38, 70, 83, 0.22) !important;
+      transition: all 0.2s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
       cursor: pointer;
     }
     .bulk-upload-dropzone:hover {
-      border-color: #3b82f6 !important;
-      background-color: rgba(59, 130, 246, 0.04) !important;
+      border-color: var(--bm-teal, #2a9d8f) !important;
+      background-color: rgba(42, 157, 143, 0.05) !important;
     }
     .bulk-upload-dropzone.drag-active {
-      border-color: #2563eb !important;
-      background-color: rgba(37, 99, 235, 0.08) !important;
-      transform: scale(1.01);
+      border-color: var(--bm-wood, #264653) !important;
+      background-color: rgba(42, 157, 143, 0.1) !important;
+      transform: translateY(-1px);
+    }
+    :host-context([data-bs-theme='dark']),
+    :host-context(.theme-dark) {
+      .import-preview,
+      .bulk-upload-dropzone,
+      .bulk-list {
+        background: #0f172a !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
+        color: #f8fafc !important;
+      }
     }
   `],
 })

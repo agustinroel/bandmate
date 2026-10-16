@@ -9,6 +9,8 @@ import { CreateBandDialogComponent } from '../../ui/create-band-dialog/create-ba
 import { BandRow, BandsService } from '../../services/bands.service';
 import { AnimationService } from '../../../../core/services/animation.service';
 
+import { I18nService } from '../../../../core/services/i18n.service';
+
 @Component({
   standalone: true,
   imports: [
@@ -27,30 +29,30 @@ import { AnimationService } from '../../../../core/services/animation.service';
           <mat-icon>diversity_3</mat-icon>
         </div>
         <div class="flex-grow-1">
-          <h2 class="m-0">My Bands</h2>
-          <div class="small opacity-75">Manage your musical groups</div>
+          <h2 class="m-0">{{ i18n.t('bands.title', 'My Bands') }}</h2>
+          <div class="small opacity-75">{{ i18n.t('bands.subtitle', 'Manage your musical groups') }}</div>
         </div>
         <button mat-raised-button color="primary" (click)="createBand()">
-          <mat-icon class="me-2">add</mat-icon> New Band
+          <mat-icon class="me-2">add</mat-icon> {{ i18n.t('bands.new_band', 'New Band') }}
         </button>
       </div>
 
       @if (loading()) {
         <div class="text-center py-5 opacity-50">
           <mat-icon class="spin mb-2">sync</mat-icon>
-          <div>Loading bands...</div>
+          <div>{{ i18n.t('bands.loading', 'Loading bands...') }}</div>
         </div>
       }
 
       @if (!loading() && bands().length === 0) {
         <div class="text-center py-5 border rounded bg-light">
           <mat-icon class="display-4 text-muted mb-3">diversity_3</mat-icon>
-          <h3 class="h5">Unlock your potential with Bands</h3>
+          <h3 class="h5">{{ i18n.t('bands.empty_title', 'Unlock your potential with Bands') }}</h3>
           <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
-            Create a setlist, share songs, and manage your rehearsals like a pro.
+            {{ i18n.t('bands.empty_desc', 'Create a setlist, share songs, and manage your rehearsals like a pro.') }}
           </p>
           <button mat-stroked-button color="primary" (click)="createBand()">
-            Create First Band
+            {{ i18n.t('bands.create_first', 'Create First Band') }}
           </button>
         </div>
       }
@@ -84,24 +86,24 @@ import { AnimationService } from '../../../../core/services/animation.service';
                     @if (bands()[0].my_roles.includes('owner')) {
                       <span
                         class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2"
-                        >Owner</span
+                        >{{ i18n.t('bands.owner', 'Owner') }}</span
                       >
                     } @else {
                       <span
                         class="badge bg-secondary-subtle text-secondary border border-secondary-subtle mb-2"
-                        >Member</span
+                        >{{ i18n.t('bands.member', 'Member') }}</span
                       >
                     }
                   </div>
                   <h2 class="display-5 fw-bold mb-2">{{ bands()[0].name }}</h2>
                   <p class="text-muted mb-4 fs-5">
-                    {{ bands()[0].description || 'No description provided.' }}
+                    {{ bands()[0].description || i18n.t('bands.no_desc', 'No description provided.') }}
                   </p>
 
                   <div class="d-flex gap-3">
-                    <button mat-flat-button color="primary">Open Dashboard</button>
+                    <button mat-flat-button color="primary">{{ i18n.t('bands.open_dashboard', 'Open Dashboard') }}</button>
                     <button mat-stroked-button [routerLink]="['/bands', bands()[0].id]">
-                      Invite Members
+                      {{ i18n.t('bands.invite_btn', 'Invite Members') }}
                     </button>
                   </div>
                 </div>
@@ -112,7 +114,7 @@ import { AnimationService } from '../../../../core/services/animation.service';
 
         <!-- Grid for other bands -->
         @if (bands().length > 1) {
-          <h3 class="h5 text-muted mb-3">Other Bands</h3>
+          <h3 class="h5 text-muted mb-3">{{ i18n.t('bands.other_bands', 'Other Bands') }}</h3>
           <div class="row g-3">
             @for (band of bands().slice(1); track band.id) {
               <div class="col-12 col-md-6 col-lg-4 band-grid-item">
@@ -132,10 +134,10 @@ import { AnimationService } from '../../../../core/services/animation.service';
                   <mat-card-content class="p-3">
                     <h3 class="h6 fw-bold mb-1">{{ band.name }}</h3>
                     <p class="small text-muted mb-2 line-clamp-2">
-                      {{ band.description || 'No description.' }}
+                      {{ band.description || i18n.t('bands.no_desc', 'No description.') }}
                     </p>
                     <div class="small">
-                      {{ band.my_roles.includes('owner') ? 'Owner' : 'Member' }}
+                      {{ band.my_roles.includes('owner') ? i18n.t('bands.owner', 'Owner') : i18n.t('bands.member', 'Member') }}
                     </div>
                   </mat-card-content>
                 </mat-card>
@@ -166,13 +168,15 @@ import { AnimationService } from '../../../../core/services/animation.service';
 
       .hero-card {
         min-height: 250px;
+        border-radius: 20px;
+        border: 1px solid rgba(20, 26, 22, 0.08);
         transition:
-          transform 0.2s,
-          box-shadow 0.2s;
+          transform 0.25s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+          box-shadow 0.25s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
       }
       .hero-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
       }
       .hero-cover {
         background-size: cover;
@@ -181,14 +185,20 @@ import { AnimationService } from '../../../../core/services/animation.service';
       }
 
       .band-card {
-        transition: transform 0.2s;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(20, 26, 22, 0.08);
+        transition:
+          transform 0.25s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+          box-shadow 0.25s var(--bm-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
       }
       .band-card:hover {
         transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
       }
       .card-cover {
         height: 120px;
-        background-color: #eee;
+        background-color: #1f4b50;
         background-size: cover;
         background-position: center;
       }
@@ -199,6 +209,21 @@ import { AnimationService } from '../../../../core/services/animation.service';
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+
+      :host-context([data-bs-theme="dark"]),
+      :host-context(.theme-dark) {
+        .hero-card,
+        .band-card {
+          background-color: #0f172a !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #f8fafc !important;
+        }
+        .bg-light {
+          background-color: #0f172a !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #f8fafc !important;
+        }
+      }
     `,
   ],
 })
@@ -206,6 +231,7 @@ export class BandsListPageComponent {
   private bandsService = inject(BandsService);
   private dialog = inject(MatDialog);
   private animation = inject(AnimationService);
+  readonly i18n = inject(I18nService);
 
   bands = signal<(BandRow & { my_roles: string[] })[]>([]);
   loading = signal(true);

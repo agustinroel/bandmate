@@ -88,11 +88,14 @@
 .p-chip {
   display: inline-flex;
   align-items: center;
-  padding: 8px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.65);
-  font-size: 0.85rem;
+  border: 1px solid rgba(20, 26, 22, 0.1);
+  background: rgba(255, 255, 255, 0.75);
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  font-weight: 700;
 
   /* Entrance Animation */
   animation: bmFadeInUp 0.5s var(--bm-ease-out) both;
@@ -135,6 +138,7 @@
 
 .exit-button {
   margin-top: 14px;
+  min-height: 44px;
 }
 
 .p-top-meta {
@@ -148,10 +152,15 @@
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(20, 26, 22, 0.1);
+  background: rgba(255, 255, 255, 0.75);
+  font-variant-numeric: tabular-nums;
+
+  .fw-semibold {
+    font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  }
 }
 
 .p-pill-ic {
@@ -172,16 +181,16 @@
   
   // Premium styling - make it stand out as a metronome
   background: var(--bm-gradient-dark);
-  border: 1px solid rgba(233, 196, 106, 0.2);
+  border: 1px solid rgba(233, 196, 106, 0.25);
   border-radius: 16px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   
   // Subtle shadow for depth
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 
   button[mat-icon-button] {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: rgba(233, 196, 106, 0.15);
     border-radius: 50%;
     
@@ -201,20 +210,21 @@
   }
 
   .p-bpm-btn {
-    min-width: 0;
+    min-width: 52px;
     padding: 4px 12px;
-    height: 36px;
+    height: 44px;
     line-height: 36px;
-    font-weight: 700;
-    font-family: var(--bm-font-sans, 'Inter', system-ui, sans-serif);
-    font-size: 1em;
+    font-weight: 800;
+    font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(233, 196, 106, 0.25);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(233, 196, 106, 0.35);
     color: var(--bm-accent);
     
     &:hover {
-      background: rgba(255, 255, 255, 1);
+      background: rgba(233, 196, 106, 0.18);
       border-color: var(--bm-accent);
     }
   }
@@ -471,7 +481,8 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  font-family: monospace;
+  font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 .p-speed {
@@ -854,7 +865,8 @@
 
   .p-loop-btn {
     border-radius: 99px;
-    height: 40px;
+    min-height: 44px;
+    height: 44px;
     padding: 0 14px;
     border-color: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.85);
@@ -869,6 +881,8 @@
 
     .p-loop-badge-count {
       margin-left: 6px;
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-variant-numeric: tabular-nums;
       font-size: 11px;
       padding: 1px 6px;
       border-radius: 99px;
@@ -927,6 +941,8 @@
   }
 
   .p-loop-chip {
+    font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
     font-size: 12px;
     padding: 2px 10px;
     border-radius: 99px;
@@ -963,7 +979,8 @@
 
   .p-band-sync-btn {
     border-radius: 99px;
-    height: 40px;
+    min-height: 44px;
+    height: 44px;
     padding: 0 14px;
     border-color: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.85);
@@ -978,6 +995,8 @@
 
     .p-peer-badge {
       margin-left: 6px;
+      font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+      font-variant-numeric: tabular-nums;
       font-size: 11px;
       padding: 1px 6px;
       border-radius: 99px;
@@ -1043,7 +1062,7 @@
         text-overflow: ellipsis;
       }
       .p-peer-inst {
-        font-size: 10px;
+        font-size: 11px;
         padding: 2px 6px;
         border-radius: 4px;
         background: rgba(255, 255, 255, 0.1);
@@ -1104,6 +1123,8 @@
     color: #2ec4b6;
     padding: 1px 7px;
     border-radius: 999px;
+    font-family: var(--bm-font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
     font-size: 0.72rem;
     font-weight: 800;
   }
@@ -1236,14 +1257,21 @@
     }
   }
 
-  .p-pill {
+  .p-pill,
+  .p-chip {
     background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
     color: #cbd5e1 !important;
 
     .p-pill-ic {
       color: #94a3b8 !important;
     }
+  }
+
+  .p-toolbar {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f8fafc !important;
   }
 
   .p-metronome {
