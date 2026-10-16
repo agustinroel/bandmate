@@ -206,50 +206,73 @@ export class SongViewerComponent implements OnDestroy {
   startScroll() {
     if (this.isScrolling()) return;
 
-    const container = document.querySelector('.app-main');
+    const container = this._getScrollContainer();
     if (!container) return;
 
     this.isScrolling.set(true);
+    this._lastTs = null;
+    this._scrollCarry = 0;
 
     this.zone.runOutsideAngular(() => {
-      const currentScroll = container.scrollTop;
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      const remaining = maxScroll - currentScroll;
+      const step = (ts: number) => {
+        if (!this.isScrolling()) return;
 
-      if (remaining <= 0) {
-        this.zone.run(() => this.stopScroll());
-        return;
-      }
+        if (this._lastTs === null) this._lastTs = ts;
+        const dtMs = ts - this._lastTs;
+        this._lastTs = ts;
 
-      const duration = remaining / this.scrollSpeed();
+        const dt = Math.min(dtMs, 64) / 1000;
+        const dyFloat = this.scrollSpeed() * dt;
 
-      this.scrollTween = gsap.to(container, {
-        scrollTo: { y: maxScroll },
-        duration,
-        ease: 'none',
-        onComplete: () => {
-          this.zone.run(() => this.stopScroll());
-        },
-      });
+        this._scrollCarry += dyFloat;
+        const dy = Math.trunc(this._scrollCarry);
+        if (dy !== 0) {
+          this._scrollCarry -= dy;
+          const target = this._getScrollContainer();
+          if (target) {
+            target.scrollTop += dy;
+            const maxScroll = target.scrollHeight - target.clientHeight;
+            if (maxScroll > 0 && target.scrollTop >= maxScroll - 1) {
+              this.zone.run(() => this.stopScroll());
+              return;
+            }
+          }
+        }
+
+        this._rafId = requestAnimationFrame(step);
+      };
+
+      this._rafId = requestAnimationFrame(step);
     });
   }
 
+  private _getScrollContainer(): HTMLElement | null {
+    return (
+      document.querySelector('.stage-mode-active .p-now') ||
+      document.querySelector('.p-now') ||
+      document.querySelector('.app-main') ||
+      (document.scrollingElement as HTMLElement) ||
+      document.documentElement
+    );
+  }
+
   stopScroll() {
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
     if (this.scrollTween) {
       this.scrollTween.kill();
       this.scrollTween = null;
     }
     this.isScrolling.set(false);
+    this._lastTs = null;
+    this._scrollCarry = 0;
   }
 
   updateScrollSpeed(val: number | null) {
     if (val !== null) {
       this.scrollSpeed.set(val);
-      if (this.isScrolling()) {
-        // Restart with new speed
-        this.stopScroll();
-        this.startScroll();
-      }
     }
   }
 

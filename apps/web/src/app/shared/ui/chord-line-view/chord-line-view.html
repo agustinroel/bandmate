@@ -147,82 +147,140 @@
   }
 }
 
-<mat-menu #chordMenu="matMenu" class="bm-chord-menu" yPosition="above" overlapTrigger="false">
+<mat-menu
+  #chordMenu="matMenu"
+  class="bm-chord-menu"
+  yPosition="above"
+  overlapTrigger="false"
+  (closed)="onMenuClosed()"
+>
   <div class="bm-chord-menu-inner" (click)="$event.stopPropagation()">
     @if (chordInfo(); as info) {
       <!-- Header Section -->
       <div class="bm-chord-header">
-        <div class="bm-chord-menu-title">{{ info.raw }}</div>
-        @if (info.root || info.quality) {
-          <div class="bm-chord-menu-sub">{{ info.root }} · {{ info.quality }}</div>
-        }
+        <div class="d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="bm-chord-menu-title">{{ info.raw }}</div>
+            @if (info.root || info.quality) {
+              <div class="bm-chord-menu-sub">{{ info.root }} · {{ info.quality }}</div>
+            }
+          </div>
+
+          <!-- Instrument Switcher Tabs -->
+          <div class="bm-instrument-switcher" role="tablist" aria-label="Instrument selector">
+            <button
+              type="button"
+              class="bm-instrument-btn"
+              [class.is-active]="selectedInstrument() === 'guitar'"
+              (click)="selectedInstrument.set('guitar'); $event.stopPropagation()"
+              role="tab"
+              [attr.aria-selected]="selectedInstrument() === 'guitar'"
+              title="Ver en Guitarra"
+            >
+              <mat-icon class="bm-tab-icon">sports_guitar</mat-icon>
+              <span>Guitarra</span>
+            </button>
+
+            <button
+              type="button"
+              class="bm-instrument-btn"
+              [class.is-active]="selectedInstrument() === 'piano'"
+              (click)="selectedInstrument.set('piano'); $event.stopPropagation()"
+              role="tab"
+              [attr.aria-selected]="selectedInstrument() === 'piano'"
+              title="Ver en Piano"
+            >
+              <mat-icon class="bm-tab-icon">piano</mat-icon>
+              <span>Piano</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Body Section -->
       <div class="bm-chord-body">
         @if (info.notes.length > 0) {
-          <div class="bm-chord-notes">
-            @for (n of info.notes; track n) {
-              <span class="bm-note-pill">{{ n }}</span>
-            }
+          <div class="bm-chord-notes-row">
+            <span class="bm-notes-label">Notas:</span>
+            <div class="bm-chord-notes">
+              @for (n of info.notes; track n) {
+                <span class="bm-note-pill" [class.is-root]="n === info.root">{{ n }}</span>
+              }
+            </div>
           </div>
         }
 
-        <div class="bm-chord-section-title">Guitar</div>
+        @if (selectedInstrument() === 'guitar') {
+          <div class="bm-chord-section-header">
+            <div class="bm-chord-section-title">Diagrama de Trastes (Guitarra)</div>
+          </div>
 
-        @let shapes = info.shapes;
-        @let total = shapes.length;
-        @let idx = chordShapeIndex();
+          @let shapes = info.shapes;
+          @let total = shapes.length;
+          @let idx = chordShapeIndex();
 
-        @if (total === 0) {
-          <div class="bm-shape-empty small">No guitar shape yet for this chord.</div>
+          @if (total === 0) {
+            <div class="bm-shape-empty small">No guitar shape yet for this chord.</div>
+          } @else {
+            @let sh = shapeAt(shapes, idx);
+
+            <div class="bm-shape-head">
+              <div class="bm-shape-left">
+                <div class="bm-shape-title">{{ sh.name }}</div>
+              </div>
+              @if (total > 1) {
+                <div class="bm-shape-count">{{ idx + 1 }} / {{ total }}</div>
+              }
+            </div>
+
+            <div class="bm-shape-stage">
+              @if (total > 1) {
+                <button
+                  type="button"
+                  class="bm-shape-arrow bm-shape-arrow--left"
+                  aria-label="Previous shape"
+                  (click)="prevShape(total); $event.stopPropagation()"
+                >
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+              }
+
+              <div
+                class="bm-shape-diagram"
+                (click)="playShape(sh); $event.stopPropagation()"
+                title="Haz clic para escuchar el acorde de guitarra"
+              >
+                <bm-guitar-chord-diagram
+                  [shape]="sh"
+                  [ariaLabel]="'Guitar chord ' + info.raw"
+                ></bm-guitar-chord-diagram>
+                <mat-icon class="bm-shape-audio-icon" aria-hidden="true">volume_up</mat-icon>
+              </div>
+
+              @if (total > 1) {
+                <button
+                  type="button"
+                  class="bm-shape-arrow bm-shape-arrow--right"
+                  aria-label="Next shape"
+                  (click)="nextShape(total); $event.stopPropagation()"
+                >
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              }
+            </div>
+          }
         } @else {
-          @let sh = shapeAt(shapes, idx);
-
-          <div class="bm-shape-head">
-            <div class="bm-shape-left">
-              <div class="bm-shape-title">{{ sh.name }}</div>
-            </div>
-            @if (total > 1) {
-              <div class="bm-shape-count">{{ idx + 1 }} / {{ total }}</div>
-            }
+          <!-- PIANO VISUALIZATION -->
+          <div class="bm-chord-section-header">
+            <div class="bm-chord-section-title">Teclado de Piano</div>
           </div>
 
-          <div class="bm-shape-stage">
-            @if (total > 1) {
-              <button
-                type="button"
-                class="bm-shape-arrow bm-shape-arrow--left"
-                aria-label="Previous shape"
-                (click)="prevShape(total); $event.stopPropagation()"
-              >
-                <mat-icon>chevron_left</mat-icon>
-              </button>
-            }
-
-            <div
-              class="bm-shape-diagram"
-              (click)="playShape(sh); $event.stopPropagation()"
-              title="Click to hear chord voicing"
-            >
-              <bm-guitar-chord-diagram
-                [shape]="sh"
-                [ariaLabel]="'Guitar chord ' + info.raw"
-              ></bm-guitar-chord-diagram>
-              <mat-icon class="bm-shape-audio-icon" aria-hidden="true">volume_up</mat-icon>
-            </div>
-
-            @if (total > 1) {
-              <button
-                type="button"
-                class="bm-shape-arrow bm-shape-arrow--right"
-                aria-label="Next shape"
-                (click)="nextShape(total); $event.stopPropagation()"
-              >
-                <mat-icon>chevron_right</mat-icon>
-              </button>
-            }
-          </div>
+          <bm-piano-chord-diagram
+            [notes]="info.notes"
+            [root]="info.root"
+            [ariaLabel]="'Acorde ' + info.raw + ' en piano'"
+            (chordClicked)="playPianoChord($event)"
+          ></bm-piano-chord-diagram>
         }
       </div>
     } @else {
@@ -230,3 +288,4 @@
     }
   </div>
 </mat-menu>
+

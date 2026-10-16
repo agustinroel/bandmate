@@ -1573,6 +1573,9 @@
 .cm-musician-avatar-container {
   position: relative;
   margin-top: -32px;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
 }
 
 .cm-musician-avatar {
@@ -1580,18 +1583,19 @@
   height: 64px;
   border-radius: 50%;
   object-fit: cover;
-  background: #ffffff;
+  background: #163e3f;
   border: 3px solid var(--bm-surface, #ffffff);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: block;
 
   &.cm-tier-ring-studio {
-    border-color: #ff0080;
-    box-shadow: 0 0 0 2px #7928ca;
+    border-color: #2a9d8f;
+    box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.45);
   }
 
   &.cm-tier-ring-pro {
-    border-color: #ffd700;
-    box-shadow: 0 0 0 2px #ff8c00;
+    border-color: #e9c46a;
+    box-shadow: 0 0 0 2px rgba(233, 196, 106, 0.45);
   }
 }
 
@@ -1901,7 +1905,8 @@
   }
 
   .cm-musician-avatar {
-    border-color: #0f172a;
+    border-color: #1e293b;
+    background: #163e3f;
   }
 
   .cm-musician-name {

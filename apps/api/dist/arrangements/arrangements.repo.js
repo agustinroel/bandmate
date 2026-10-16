@@ -145,7 +145,7 @@ export async function rateArrangementForUser(userId, arrangementId, rating) {
     if (!Number.isFinite(value) || value < 1 || value > 5) {
         return "BAD_RATING";
     }
-    // Traemos arrangement para validar que exista + si es seed
+    // Traemos arrangement para validar que exista
     const { data: existing, error: e1 } = await supabase
         .from("arrangements")
         .select("id, is_seed")
@@ -155,14 +155,41 @@ export async function rateArrangementForUser(userId, arrangementId, rating) {
         throw e1;
     if (!existing)
         return null;
-    // RPC que upsertea en arrangement_ratings y recalcula avg/count en arrangements
-    const { error } = await supabase.rpc("rate_arrangement", {
-        p_arrangement_id: arrangementId,
-        p_user_id: userId,
-        p_value: value,
-    });
-    if (error)
-        throw error;
+    // 1. Upsert rating in arrangement_ratings table
+    const { error: ratingErr } = await supabase
+        .from("arrangement_ratings")
+        .upsert({
+        arrangement_id: arrangementId,
+        user_id: userId,
+        value,
+        updated_at: new Date().toISOString(),
+    }, { onConflict: "arrangement_id,user_id" });
+    // If table upsert failed, attempt RPC fallback
+    if (ratingErr) {
+        await supabase.rpc("rate_arrangement", {
+            p_arrangement_id: arrangementId,
+            p_value: value,
+        });
+    }
+    // 2. Query aggregate from arrangement_ratings or update directly
+    const { data: ratings } = await supabase
+        .from("arrangement_ratings")
+        .select("value")
+        .eq("arrangement_id", arrangementId);
+    if (ratings && ratings.length > 0) {
+        const count = ratings.length;
+        const avg = Number((ratings.reduce((sum, r) => sum + Number(r.value), 0) / count).toFixed(2));
+        await supabase
+            .from("arrangements")
+            .update({ rating_avg: avg, rating_count: count })
+            .eq("id", arrangementId);
+    }
+    else {
+        await supabase
+            .from("arrangements")
+            .update({ rating_avg: value, rating_count: 1 })
+            .eq("id", arrangementId);
+    }
     const { data, error: e2 } = await supabase
         .from("arrangements")
         .select("*")

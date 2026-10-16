@@ -325,4 +325,18 @@
             font-weight: 500 !important;
         }
     }
-}
+}
+
+/* ─── GENERAL DARK THEME OVERRIDES ─── */
+:host-context([data-bs-theme='dark']),
+:host-context([data-theme='dark']),
+:host-context(.theme-dark) {
+    .sv-title {
+        color: #f8fafc !important;
+    }
+
+    .sv-artist {
+        color: #cbd5e1 !important;
+    }
+}
+

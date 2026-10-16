@@ -179,19 +179,46 @@ export async function rateSongForUser(userId, id, rating) {
     const song = await getSongByIdForUser(userId, id);
     if (!song)
         return null;
-    if (!song.isSeed)
-        return "FORBIDDEN";
     const value = Number(rating);
     if (!Number.isFinite(value) || value < 1 || value > 5) {
         throw new Error("rating must be a number between 1 and 5");
     }
-    const { error } = await supabase.rpc("rate_song", {
-        p_song_id: id,
-        p_user_id: userId,
-        p_value: value,
-    });
-    if (error)
-        throw error;
+    // 1. Try upserting in song_ratings table with explicit user_id
+    const { error: ratingErr } = await supabase
+        .from("song_ratings")
+        .upsert({
+        song_id: id,
+        user_id: userId,
+        value,
+        updated_at: new Date().toISOString(),
+    }, { onConflict: "song_id,user_id" });
+    // If table upsert failed (e.g. table not initialized), attempt RPC fallback
+    if (ratingErr) {
+        await supabase.rpc("rate_song", {
+            p_song_id: id,
+            p_value: value,
+        });
+    }
+    // 2. Query aggregate from song_ratings or update directly
+    const { data: ratings } = await supabase
+        .from("song_ratings")
+        .select("value")
+        .eq("song_id", id);
+    if (ratings && ratings.length > 0) {
+        const count = ratings.length;
+        const avg = Number((ratings.reduce((sum, r) => sum + Number(r.value), 0) / count).toFixed(2));
+        await supabase
+            .from("songs")
+            .update({ rating_avg: avg, rating_count: count })
+            .eq("id", id);
+    }
+    else {
+        // If no previous ratings found, set this value as initial average
+        await supabase
+            .from("songs")
+            .update({ rating_avg: value, rating_count: 1 })
+            .eq("id", id);
+    }
     const { data, error: e2 } = await supabase
         .from("songs")
         .select("*")

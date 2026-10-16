@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ChordLyricLayout, toChordLyricLayout } from '../../utils/music/chord-inline';
 import { getChordInfo, ChordInfo } from '../../utils/chords/chord-info';
 import { GuitarChordDiagramComponent } from '../guitar-chord-diagram/guitar-chord-diagram';
+import { PianoChordDiagramComponent } from '../piano-chord-diagram/piano-chord-diagram';
 import type { GuitarShape } from '../../utils/music/guitar-shapes';
 import { transposeChordSymbol, transposeKey } from '../../utils/music/chords';
 import { AudioService } from '../../data-access/audio/audio.service';
@@ -13,12 +14,14 @@ type FlowToken = { chord?: string | null; text: string };
 @Component({
   selector: 'bm-chord-line-view',
   standalone: true,
-  imports: [MatMenuModule, MatIconModule, GuitarChordDiagramComponent],
+  imports: [MatMenuModule, MatIconModule, GuitarChordDiagramComponent, PianoChordDiagramComponent],
   templateUrl: './chord-line-view.html',
   styleUrl: './chord-line-view.scss',
 })
 export class ChordLineViewComponent {
   private readonly audio = inject(AudioService);
+  readonly selectedInstrument = signal<'guitar' | 'piano'>('guitar');
+
   // ---- inputs -> signals internos (clave para que computed reaccione) ----
   private readonly _source = signal('');
   @Input({ required: true }) set source(v: string) {
@@ -111,6 +114,14 @@ export class ChordLineViewComponent {
 
   playShape(shape: GuitarShape) {
     this.audio.playShape(shape);
+  }
+
+  playPianoChord(notes: string[]) {
+    this.audio.playNotes(notes);
+  }
+
+  onMenuClosed() {
+    this.selectedChord.set(null);
   }
 
   // --- core ---

@@ -79,10 +79,6 @@ export async function songsRoutes(app) {
         const updated = await rateSongForUser(userId, id, value);
         if (!updated)
             return reply.code(404).send({ message: "Song not found" });
-        if (updated === "FORBIDDEN")
-            return reply
-                .code(403)
-                .send({ message: "Only library songs can be rated" });
         return reply.code(200).send(updated);
     });
     // DELETE

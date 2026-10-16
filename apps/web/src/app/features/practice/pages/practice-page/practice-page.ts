@@ -510,47 +510,7 @@ export class PracticePageComponent {
   }
 
   private _updateScrollTweenSpeed() {
-    this.zone.runOutsideAngular(() => {
-      // Target the scrollable container
-      // In Stage Mode, the scrollable element is the fixed card (.p-now)
-      const container = this.isStageMode()
-        ? document.querySelector('.stage-mode-active .p-now')
-        : document.querySelector('.app-main');
-
-      if (!container) {
-        this.zone.run(() => this.stopScroll());
-        return;
-      }
-
-      const currentScroll = container.scrollTop;
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      const remaining = maxScroll - currentScroll;
-
-      if (remaining <= 0) {
-        this.zone.run(() => this.stopScroll());
-        return;
-      }
-
-      const duration = remaining / this.autoScrollSpeed();
-
-      if (this.scrollTween) {
-        this.scrollTween.kill();
-      }
-
-      this.scrollTween = gsap.to(container, {
-        scrollTo: { y: maxScroll },
-        duration,
-        ease: 'none',
-        onUpdate: () => {
-          if (this.liveSync.isConnected() && this.liveSync.isLeader()) {
-            this.broadcastCurrentScroll(container as HTMLElement);
-          }
-        },
-        onComplete: () => {
-          this.zone.run(() => this.stopScroll());
-        },
-      });
-    });
+    // Dynamic speed is applied instantly on next animation frame
   }
 
   startScroll() {
@@ -563,16 +523,60 @@ export class PracticePageComponent {
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = this._bindAutoScrollInterruption(() => this.stopScroll());
 
-    this._updateScrollTweenSpeed();
+    this._lastTs = null;
+    this._scrollCarry = 0;
+
+    this.zone.runOutsideAngular(() => {
+      const step = (ts: number) => {
+        if (!this.isScrolling()) return;
+
+        if (this._lastTs === null) this._lastTs = ts;
+        const dtMs = ts - this._lastTs;
+        this._lastTs = ts;
+
+        const dt = Math.min(dtMs, 64) / 1000;
+        const speed = this.autoScrollSpeed();
+        const dyFloat = speed * dt;
+
+        this._scrollCarry += dyFloat;
+        const dy = Math.trunc(this._scrollCarry);
+        if (dy !== 0) {
+          this._scrollCarry -= dy;
+          const container = this.getScrollContainer();
+          if (container) {
+            container.scrollTop += dy;
+            const maxScroll = container.scrollHeight - container.clientHeight;
+
+            if (this.liveSync.isConnected() && this.liveSync.isLeader()) {
+              this.broadcastCurrentScroll(container);
+            }
+
+            if (maxScroll > 0 && container.scrollTop >= maxScroll - 1) {
+              this.zone.run(() => this.stopScroll());
+              return;
+            }
+          }
+        }
+
+        this._rafId = requestAnimationFrame(step);
+      };
+
+      this._rafId = requestAnimationFrame(step);
+    });
   }
 
   stopScroll() {
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
     if (this.scrollTween) {
       this.scrollTween.kill();
       this.scrollTween = null;
     }
     this.isScrolling.set(false);
     this._lastTs = null;
+    this._scrollCarry = 0;
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = null;
   }

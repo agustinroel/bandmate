@@ -73,4 +73,27 @@ export class AudioService {
       }
     });
   }
+
+  async playNotes(notes: string[], octave = 4) {
+    await this.init();
+    if (!this.synth || !notes?.length) return;
+
+    const now = Tone.now();
+    const chordDuration = 0.03; // subtle humanized arpeggiation
+
+    notes.forEach((note, idx) => {
+      // Normalize note (e.g. C -> C4, F# -> F#4)
+      const formattedNote = /\d/.test(note) ? note : `${note}${octave}`;
+      try {
+        this.synth!.triggerAttackRelease(
+          formattedNote,
+          "2n",
+          now + (idx * chordDuration)
+        );
+      } catch (err) {
+        console.warn(`Could not play note ${formattedNote}:`, err);
+      }
+    });
+  }
 }
+

@@ -473,7 +473,14 @@
 
 /* Dark Mode Overrides */
 :host-context([data-bs-theme='dark']),
+:host-context([data-theme='dark']),
 :host-context(.theme-dark) {
+  .bm-h1 {
+    color: #f8fafc !important;
+  }
+  .bm-sub {
+    color: #cbd5e1 !important;
+  }
   .bm-header {
     border-bottom-color: rgba(255, 255, 255, 0.08);
   }

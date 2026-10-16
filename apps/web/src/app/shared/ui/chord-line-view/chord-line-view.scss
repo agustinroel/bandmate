@@ -288,7 +288,7 @@
 
   /* Header Section */
   .bm-chord-header {
-    padding: 20px 24px 18px;
+    padding: 16px 20px;
     background:
       radial-gradient(circle at 90% 15%, rgba(233, 196, 106, 0.18) 0%, transparent 55%),
       linear-gradient(180deg, #163c40 0%, #1f4b50 100%);
@@ -299,17 +299,17 @@
   }
 
   .bm-chord-menu-title {
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 800;
     line-height: 1.05;
     letter-spacing: -0.03em;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     color: #ffffff;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 
   .bm-chord-menu-sub {
-    font-size: 12px;
+    font-size: 11px;
     color: rgba(248, 250, 252, 0.82);
     font-weight: 700;
     text-transform: uppercase;
@@ -317,13 +317,81 @@
     font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   }
 
+  /* Instrument Switcher in Menu Header */
+  .bm-instrument-switcher {
+    display: flex;
+    background: rgba(0, 0, 0, 0.28);
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid rgba(233, 196, 106, 0.3);
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .bm-instrument-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: rgba(248, 250, 252, 0.78);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-family: 'Manrope', system-ui, sans-serif;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+
+    .bm-tab-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.is-active {
+      background: var(--bm-gold, #e9c46a);
+      color: #14171a;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      font-weight: 800;
+    }
+  }
+
   /* Body Section */
   .bm-chord-body {
-    padding: 20px 24px 24px;
+    padding: 18px 22px 22px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     background: var(--bm-cream);
+  }
+
+  /* Notes Row */
+  .bm-chord-notes-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .bm-notes-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--bm-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'Manrope', system-ui, sans-serif;
+  }
+
+  .bm-chord-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   /* Section titles */
@@ -340,23 +408,30 @@
   .bm-chord-notes {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
 
   .bm-note-pill {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: #ffffff;
     color: var(--bm-wood);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     box-shadow: 0 2px 5px rgba(38, 70, 83, 0.08);
     border: 1px solid rgba(38, 70, 83, 0.14);
     font-family: 'JetBrains Mono', ui-monospace, monospace;
+
+    &.is-root {
+      background: #2a9d8f;
+      color: #ffffff;
+      border-color: #2a9d8f;
+      box-shadow: 0 2px 8px rgba(42, 157, 143, 0.35);
+    }
   }
 
   /* Guitar Shape Header */
@@ -474,3 +549,65 @@
     padding: 10px 0;
   }
 }
+
+/* Dark mode for chord popover */
+::ng-deep {
+  body.theme-dark,
+  [data-bs-theme='dark'],
+  [data-theme='dark'] {
+    .bm-chord-menu.mat-mdc-menu-panel {
+      background: #111622 !important;
+      border-color: rgba(233, 196, 106, 0.35) !important;
+      box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.75) !important;
+    }
+
+    .bm-chord-menu {
+      .bm-chord-menu-inner,
+      .bm-chord-body {
+        background: #111622 !important;
+      }
+
+      .bm-chord-section-title,
+      .bm-notes-label {
+        color: #94a3b8 !important;
+      }
+
+      .bm-note-pill {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+
+        &.is-root {
+          background: #2a9d8f !important;
+          color: #ffffff !important;
+          border-color: #2a9d8f !important;
+        }
+      }
+
+      .bm-shape-title {
+        color: #f8fafc !important;
+      }
+
+      .bm-shape-stage {
+        background: #161e2e !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+
+        .bm-shape-audio-icon {
+          color: #e9c46a !important;
+        }
+      }
+
+      .bm-shape-arrow {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
+
+        &:hover {
+          background: #263346 !important;
+          border-color: var(--bm-gold) !important;
+          color: #e9c46a !important;
+        }
+      }
+    }
+  }
+}

@@ -625,19 +625,15 @@ export class SongEditorPageComponent {
 
   /** Returns the element that actually scrolls */
   private _getScrollTarget(): HTMLElement {
-    if (this.isPracticeMode()) {
-      return this.el.nativeElement;
-    }
-
     // Check if internal card is scrolling (Desktop view)
     const card = this.scrollHost?.nativeElement;
-    if (card && card.scrollHeight > card.clientHeight + 1) {
+    if (card && card.scrollHeight > card.clientHeight + 15) {
       return card;
     }
 
-    // Fallback to app-main (Mobile / No internal scroll)
+    // Fallback to app-main (Mobile / No internal scroll / Fullscreen)
     const main = document.querySelector('.app-main');
-    return (main as HTMLElement) || document.documentElement;
+    return (main as HTMLElement) || (document.scrollingElement as HTMLElement) || document.documentElement;
   }
 
   // No _scrollBy helper needed
@@ -693,13 +689,9 @@ export class SongEditorPageComponent {
 
       if (dy !== 0) {
         const targetEl = this._getScrollTarget();
-        const beforeTop = targetEl.scrollTop;
-
         targetEl.scrollTop += dy;
 
-        const afterTop = targetEl.scrollTop;
-
-        if (afterTop === beforeTop || this._isAtBottom()) {
+        if (this._isAtBottom()) {
           this.stopAutoScroll();
           return;
         }

@@ -1219,7 +1219,18 @@
 
 /* Dark Mode Overrides */
 :host-context([data-bs-theme='dark']),
+:host-context([data-theme='dark']),
 :host-context(.theme-dark) {
+  .bm-page-header h2,
+  .bm-meta-title {
+    color: #f8fafc !important;
+  }
+
+  .bm-page-header .opacity-75,
+  .bm-meta-artist {
+    color: #cbd5e1 !important;
+  }
+
   .bm-editor-card {
     background: #0f172a !important;
     border: 1px solid rgba(255, 255, 255, 0.08);

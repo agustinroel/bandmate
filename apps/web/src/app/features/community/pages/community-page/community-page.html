@@ -115,6 +115,7 @@
                   [alt]="currentUserLabel()"
                   class="cm-composer-avatar-img"
                   referrerpolicy="no-referrer"
+                  (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
                 />
               </div>
               <div class="flex-grow-1">
@@ -379,6 +380,7 @@
                       [src]="post.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                       [alt]="post.authorName"
                       class="cm-post-avatar cursor-pointer"
+                      (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
                     />
                     <div>
                       <div class="d-flex align-items-center gap-1 flex-wrap">
@@ -587,6 +589,7 @@
                                 [src]="comment.authorAvatar || 'assets/brand/avatar-fallback.svg'"
                                 [alt]="comment.authorName"
                                 class="cm-comment-avatar"
+                                (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
                               />
                               <div class="cm-comment-bubble">
                                 <div class="d-flex align-items-center">
@@ -676,6 +679,7 @@
                     [src]="rec.avatar_url || 'assets/brand/avatar-fallback.svg'"
                     [alt]="rec.username"
                     class="cm-rec-avatar flex-shrink-0"
+                    (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
                   />
                   <div class="overflow-hidden" style="min-width: 0;">
                     <div class="fw-bold small text-truncate">{{ rec.full_name || rec.username }}</div>
@@ -709,7 +713,12 @@
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                   <div class="cm-band-avatar-mini flex-shrink-0">
                     @if (b.avatar_url) {
-                      <img src="assets/brand/avatar-fallback.svg" [src]="b.avatar_url" [alt]="b.name" />
+                      <img
+                        src="assets/brand/avatar-fallback.svg"
+                        [src]="b.avatar_url"
+                        [alt]="b.name"
+                        (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
+                      />
                     } @else {
                       <span>{{ b.name[0] | uppercase }}</span>
                     }
@@ -796,6 +805,7 @@
                       class="cm-musician-avatar"
                       [class.cm-tier-ring-studio]="profile.subscription_tier === 'studio'"
                       [class.cm-tier-ring-pro]="profile.subscription_tier === 'pro'"
+                      (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
                     />
                     <div class="cm-status-dot" [matTooltip]="musicianStatus(profile).label"></div>
                   </div>
@@ -904,6 +914,7 @@
             [src]="hoveredUser()?.avatar_url || 'assets/brand/avatar-fallback.svg'"
             [alt]="hoveredUser()?.full_name || hoveredUser()?.username"
             class="cm-hovercard-avatar flex-shrink-0"
+            (error)="$any($event.target).src = 'assets/brand/avatar-fallback.svg'"
           />
           <div class="overflow-hidden min-w-0 flex-grow-1">
             <div class="fw-bold fs-6 text-truncate">
