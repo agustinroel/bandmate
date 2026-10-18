@@ -1,0 +1,58 @@
+{
+  "packageId": "com.bandmate.app",
+  "host": "bandmate-ebon.vercel.app",
+  "name": "Bandmate",
+  "launcherName": "Bandmate",
+  "display": "standalone",
+  "themeColor": "#0D131A",
+  "themeColorDark": "#080B10",
+  "navigationColor": "#0D131A",
+  "navigationColorDark": "#080B10",
+  "navigationDividerColor": "#1E293B",
+  "navigationDividerColorDark": "#1E293B",
+  "backgroundColor": "#0D131A",
+  "enableNotifications": true,
+  "startUrl": "/songs?source=twa",
+  "iconUrl": "https://bandmate-ebon.vercel.app/assets/brand/favicon/web-app-manifest-512x512.png",
+  "maskableIconUrl": "https://bandmate-ebon.vercel.app/assets/brand/favicon/web-app-manifest-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "bandmate-release"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Biblioteca de Canciones",
+      "shortName": "Canciones",
+      "url": "https://bandmate-ebon.vercel.app/songs?source=twa_shortcut",
+      "chosenIconUrl": "https://bandmate-ebon.vercel.app/assets/brand/favicon/web-app-manifest-192x192.png"
+    },
+    {
+      "name": "Modo Práctica",
+      "shortName": "Practicar",
+      "url": "https://bandmate-ebon.vercel.app/practice?source=twa_shortcut",
+      "chosenIconUrl": "https://bandmate-ebon.vercel.app/assets/brand/favicon/web-app-manifest-192x192.png"
+    },
+    {
+      "name": "Comunidad",
+      "shortName": "Comunidad",
+      "url": "https://bandmate-ebon.vercel.app/community?source=twa_shortcut",
+      "chosenIconUrl": "https://bandmate-ebon.vercel.app/assets/brand/favicon/web-app-manifest-192x192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://bandmate-ebon.vercel.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": []
+}
