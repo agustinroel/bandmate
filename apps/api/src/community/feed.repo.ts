@@ -724,6 +724,22 @@ export async function createAuditionApplication(
     console.warn('[feed.repo] Supabase audition application insert warning:', e);
   }
 
+  // Notify audition post author
+  if (post.authorId && post.authorId !== musicianId) {
+    try {
+      const { createNotification } = await import('../notifications/notifications.repo.js');
+      await createNotification(
+        post.authorId,
+        'audition',
+        'Nueva postulación a tu audición',
+        `${application.musicianName} (${application.instrument}) se postuló a tu convocatoria.`,
+        { postId: post.id, applicationId: application.id, musicianId }
+      );
+    } catch (notifErr) {
+      console.warn('[feed.repo] Audition application notification warning:', notifErr);
+    }
+  }
+
   return application;
 }
 
@@ -743,6 +759,7 @@ export async function updateAuditionApplication(
   const app = applications.find((a) => a.id === applicationId);
   if (!app) throw new Error('Application not found');
 
+  const prevStatus = app.status;
   if (updates.status) app.status = updates.status;
   if (updates.privateNotes !== undefined) app.privateNotes = updates.privateNotes;
   app.updatedAt = new Date().toISOString();
@@ -764,6 +781,29 @@ export async function updateAuditionApplication(
     }
   } catch (e) {
     console.warn('[feed.repo] Supabase audition application update warning:', e);
+  }
+
+  // Notify applicant when status changes
+  if (updates.status && updates.status !== prevStatus && app.musicianId) {
+    try {
+      const { createNotification } = await import('../notifications/notifications.repo.js');
+      const statusLabels: Record<string, string> = {
+        shortlisted: 'preseleccionada ⭐',
+        accepted: '¡aceptada! 🎉',
+        rejected: 'actualizada',
+        pending: 'en revisión',
+      };
+      const label = statusLabels[updates.status] || updates.status;
+      await createNotification(
+        app.musicianId,
+        'audition_status',
+        'Actualización de tu audición',
+        `Tu postulación para ${app.instrument} fue marcada como ${label}.`,
+        { postId: app.postId, applicationId: app.id, status: updates.status }
+      );
+    } catch (notifErr) {
+      console.warn('[feed.repo] Audition status notification warning:', notifErr);
+    }
   }
 
   return app;

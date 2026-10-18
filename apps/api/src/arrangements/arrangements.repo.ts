@@ -273,6 +273,22 @@ export async function rateArrangementForUser(
   if (e2) throw e2;
   if (!data) return null;
 
+  // Notify arrangement author when another user rates their arrangement
+  if (data.author_user_id && String(data.author_user_id) !== String(userId)) {
+    try {
+      const { createNotification } = await import("../notifications/notifications.repo.js");
+      await createNotification(
+        String(data.author_user_id),
+        "rating",
+        "Nueva calificación en tu arreglo",
+        `Un músico calificó tu arreglo con ${value} ⭐.`,
+        { arrangementId, workId: data.work_id, rating: value, ratedBy: userId },
+      );
+    } catch (notifErr) {
+      console.warn("[arrangements.repo] Rating notification warning:", notifErr);
+    }
+  }
+
   return mapArrangement(data);
 }
 

@@ -82,7 +82,26 @@ export async function getProfileByUsername(username: string) {
   } as ProfileRow;
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getProfileById(userId: string) {
+  if (!userId) return null;
+
+  if (!UUID_REGEX.test(userId)) {
+    const cleanUsername = userId.replace(/^usr-/, "").replace(/-/g, "");
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .or(`username.eq.${userId},username.eq.${cleanUsername}`)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      ...data,
+      bio: (data as any).bio || (data as any).about || null,
+      about: (data as any).about || (data as any).bio || null,
+    } as ProfileRow;
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
