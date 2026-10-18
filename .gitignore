@@ -75,5 +75,10 @@ apps/api/data/
 **/.impeccable/live/pending-manual-edits.json
 **/.impeccable/live/deferred-svelte-component-accepts.json
 **/.impeccable/live/*.png
+**/.impeccable/mocks/
 # impeccable-ignore-end
+
+.claude/
+.taste-skill/
+skills-lock.json
 

@@ -1,1 +1,154 @@
-<p>login-page works!</p>
+<main class="bm-room-layout">
+  <!-- Top Bar: Brand & Rehearsal Room Pilot Status -->
+  <header class="bm-room-header" #headerSection>
+    <div class="bm-brand-unit">
+      <div class="bm-brand-icon-wrap">
+        <img
+          src="/assets/brand/transparent-gold.png"
+          alt="Bandmate emblem"
+          class="bm-brand-icon"
+          width="32"
+          height="32"
+        />
+      </div>
+      <div class="bm-brand-text">
+        <span class="bm-brand-title">Bandmate</span>
+        <span class="bm-brand-sub">Stage &amp; Rehearsal</span>
+      </div>
+    </div>
+
+    <div class="bm-pilot-indicator" aria-label="Studio status: Standby">
+      <span class="bm-pilot-jewel" aria-hidden="true"></span>
+      <span class="bm-pilot-label">Studio B · Standby</span>
+    </div>
+  </header>
+
+  <div class="bm-stage-centerpiece">
+    <!-- THE STAGE MONITOR: Interactive ChordPro Rehearsal Chart -->
+    <section class="bm-stage-monitor" #monitorSection aria-label="Interactive rehearsal chart preview">
+      <div class="bm-monitor-topbar">
+        <div class="bm-track-info">
+          <span class="bm-track-title">House of the Rising Sun</span>
+          <span class="bm-track-meta">Traditional · Key of Am · 6/8</span>
+        </div>
+
+        <button
+          type="button"
+          class="bm-audio-toggle"
+          (click)="toggleMute()"
+          [attr.aria-label]="soundMuted() ? 'Unmute chord playback' : 'Mute chord playback'"
+        >
+          <mat-icon>{{ soundMuted() ? 'volume_off' : 'volume_up' }}</mat-icon>
+          <span>{{ soundMuted() ? 'Muted' : 'Sound On' }}</span>
+        </button>
+      </div>
+
+      <!-- Illuminated Chord Pins -->
+      <div class="bm-chord-deck" role="toolbar" aria-label="Chord progression soundcheck">
+        @for (chord of chords; track chord.name) {
+          <button
+            type="button"
+            class="bm-chord-pin"
+            [class.active]="activeChord().name === chord.name"
+            [class.playing]="activeChord().name === chord.name && isPlaying()"
+            (click)="selectChord(chord)"
+            [attr.aria-pressed]="activeChord().name === chord.name"
+            [attr.aria-label]="chord.fullName + ' chord, fingering ' + chord.frets"
+          >
+            <span class="bm-chord-symbol">{{ chord.name }}</span>
+            <span class="bm-chord-voicing">{{ chord.frets }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Prompter Lyric Line -->
+      <div class="bm-lyric-board">
+        <p class="bm-lyric-primary">There is a house in New Orleans</p>
+        <p class="bm-lyric-secondary">They call the Rising Sun</p>
+      </div>
+
+      <div class="bm-monitor-status">
+        <span class="bm-active-detail">
+          Active Voicing: <strong>{{ activeChord().fullName }}</strong> ({{ activeChord().frets }})
+        </span>
+        <span class="bm-audio-hint">Click any chord to soundcheck</span>
+      </div>
+    </section>
+
+    <!-- BACKSTAGE CONSOLE: Authentication & Stage Sync Entry -->
+    <section class="bm-checkin-console" #checkinSection>
+      <div class="bm-console-chassis">
+        <div class="bm-console-lead">
+          <h1 class="bm-console-headline">The room is quiet. For now.</h1>
+          <p class="bm-console-copy">
+            Sign in to synchronize ChordPro charts, live setlists, and stage cues across every screen in your band.
+          </p>
+        </div>
+
+        <!-- Primary Action: Google SSO Button -->
+        <div class="bm-action-dock">
+          <button
+            type="button"
+            class="bm-google-signin-btn"
+            (click)="signIn()"
+            [disabled]="busy()"
+            aria-label="Continue with Google"
+          >
+            @if (busy()) {
+              <mat-icon class="bm-spinner">hourglass_top</mat-icon>
+              <span>Connecting to session...</span>
+            } @else {
+              <svg class="bm-google-vector" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              <span class="bm-btn-text">Continue with Google</span>
+            }
+          </button>
+        </div>
+
+        <!-- 3 Pillars of Bandmate Rehearsal Performance -->
+        <div class="bm-pillars-row">
+          <div class="bm-pillar-item">
+            <span class="bm-pillar-title">Live Transpose</span>
+            <span class="bm-pillar-desc">Instant key and capo changes across all charts</span>
+          </div>
+          <div class="bm-pillar-item">
+            <span class="bm-pillar-title">Stage Mesh Sync</span>
+            <span class="bm-pillar-desc">Sub-15ms setlist cues broadcast to all band devices</span>
+          </div>
+          <div class="bm-pillar-item">
+            <span class="bm-pillar-title">Offline Vault</span>
+            <span class="bm-pillar-desc">100% rehearsal-ready without needing Wi-Fi</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Quiet Stage Footer -->
+  <footer class="bm-room-footer" #footerSection>
+    <div class="bm-footer-nav">
+      <a routerLink="/privacy" class="bm-footer-link">Privacy Policy</a>
+      <span class="bm-sep" aria-hidden="true">·</span>
+      <a routerLink="/terms" class="bm-footer-link">Terms of Service</a>
+    </div>
+    <p class="bm-footer-motto">
+      Bandmate · Built for musicians who rehearse with intent and play live.
+    </p>
+  </footer>
+</main>

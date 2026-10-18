@@ -1,4 +1,566 @@
+// =============================================================================
+// Bandmate: The Dark Rehearsal Room ("Sala de Ensayo Oscura")
+// Skills: Taste (Anti-Slop Art Direction) + Impeccable (Craft Floor)
+// + Motion / Emil Kowalski (Physics & Microinteractions) + UI/UX Pro Max
+// =============================================================================
+
 :host {
-    display: block;
-    animation: bmScaleIn 0.8s var(--bm-ease-out) both;
+  display: block;
+  width: 100%;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+// Master Layout Canvas
+.bm-room-layout {
+  min-height: 100dvh;
+  width: 100%;
+  position: relative;
+  overflow-x: hidden;
+  background-color: #07090e;
+  color: #f8fafc;
+  font-family: var(--bm-font-sans, 'Plus Jakarta Sans', system-ui, sans-serif);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(20px, 3vw, 40px) clamp(16px, 4vw, 56px);
+  box-sizing: border-box;
+}
+
+// -----------------------------------------------------------------------------
+// Top Navigation & Amber Tube Amp Pilot Light
+// -----------------------------------------------------------------------------
+
+.bm-room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bm-brand-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bm-brand-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #111726;
+  display: grid;
+  place-items: center;
+
+  .bm-brand-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+}
+
+.bm-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.bm-brand-title {
+  font-family: var(--bm-font-display, 'Space Grotesk', system-ui, sans-serif);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.bm-brand-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e9c46a;
+  letter-spacing: 0.04em;
+}
+
+// Vintage Amp Pilot Lamp
+.bm-pilot-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #111726;
+}
+
+.bm-pilot-jewel {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  animation: ampBreath 2.8s ease-in-out infinite;
+}
+
+@keyframes ampBreath {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+}
+
+.bm-pilot-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  letter-spacing: 0.02em;
+}
+
+// -----------------------------------------------------------------------------
+// Stage Centerpiece
+// -----------------------------------------------------------------------------
+
+.bm-stage-centerpiece {
+  width: 100%;
+  max-width: 920px;
+  margin: clamp(16px, 3vh, 36px) auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3.5vh, 36px);
+}
+
+// -----------------------------------------------------------------------------
+// The Stage Monitor: Rehearsal Chart & Live Soundcheck
+// -----------------------------------------------------------------------------
+
+.bm-stage-monitor {
+  background: #0f1420;
+  border-radius: 18px;
+  padding: clamp(20px, 3.2vw, 32px);
+  position: relative;
+}
+
+.bm-monitor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bm-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bm-track-title {
+  font-family: var(--bm-font-display, 'Space Grotesk', system-ui, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.bm-track-meta {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.bm-audio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #182235;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #e9c46a;
+  }
+
+  &:hover {
+    background: #223049;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e9c46a;
+    outline-offset: 2px;
+  }
+}
+
+// Chord Pins Toolbar
+.bm-chord-deck {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
+}
+
+.bm-chord-pin {
+  background: #151d2e;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  min-height: 52px;
+  transition: transform 0.18s cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 0.18s ease,
+    color 0.18s ease;
+
+  .bm-chord-symbol {
+    font-family: var(--bm-font-display, 'Space Grotesk', system-ui, sans-serif);
+    font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    transition: color 0.16s ease;
+  }
+
+  .bm-chord-voicing {
+    font-size: clamp(0.58rem, 1.2vw, 0.68rem);
+    color: #94a3b8;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: #1c273d;
+    transform: translateY(-2px);
+
+    .bm-chord-symbol {
+      color: #e9c46a;
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &.active {
+    background: #1f2c45;
+
+    .bm-chord-symbol {
+      color: #e9c46a;
+    }
+
+    .bm-chord-voicing {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+  }
+
+  &.playing {
+    animation: chordPulse 0.4s ease-out;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e9c46a;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes chordPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+// Prompter Lyric Board
+.bm-lyric-board {
+  background: #080c14;
+  border-radius: 12px;
+  padding: clamp(20px, 3vw, 28px);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .bm-lyric-primary {
+    margin: 0;
+    font-family: var(--bm-font-display, 'Space Grotesk', system-ui, sans-serif);
+    font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    line-height: 1.18;
+  }
+
+  .bm-lyric-secondary {
+    margin: 0;
+    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    font-weight: 400;
+    color: #94a3b8;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+}
+
+.bm-monitor-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.78rem;
+
+  .bm-active-detail {
+    color: #cbd5e1;
+
+    strong {
+      color: #e9c46a;
+      font-weight: 700;
+    }
+  }
+
+  .bm-audio-hint {
+    color: #64748b;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Backstage Sign-In Console
+// -----------------------------------------------------------------------------
+
+.bm-checkin-console {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.bm-console-chassis {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+}
+
+.bm-console-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 580px;
+
+  .bm-console-headline {
+    font-family: var(--bm-font-display, 'Space Grotesk', system-ui, sans-serif);
+    font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    margin: 0;
+  }
+
+  .bm-console-copy {
+    font-size: clamp(0.92rem, 1.2vw, 1.05rem);
+    line-height: 1.55;
+    color: #cbd5e1;
+    margin: 0;
+  }
+}
+
+// Action Button Dock
+.bm-action-dock {
+  width: 100%;
+  max-width: 400px;
+}
+
+.bm-google-signin-btn {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 9999px;
+  border: none;
+  background: #ffffff;
+  color: #08090e;
+  font-family: var(--bm-font-sans, system-ui, sans-serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 24px;
+  transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 0.16s ease,
+    opacity 0.16s ease;
+
+  .bm-google-vector {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .bm-btn-text {
+    line-height: 1;
+  }
+
+  .bm-spinner {
+    animation: spin 1.8s linear infinite;
+    color: #08090e;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e9c46a;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+// Pillars Row
+.bm-pillars-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 6px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.bm-pillar-item {
+  background: #0f1420;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  @media (max-width: 640px) {
+    padding: 12px 14px;
+    gap: 2px;
+  }
+
+  .bm-pillar-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #e9c46a;
+    line-height: 1.2;
+  }
+
+  .bm-pillar-desc {
+    font-size: 0.76rem;
+    line-height: 1.4;
+    color: #94a3b8;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Footer & Legal
+// -----------------------------------------------------------------------------
+
+.bm-room-footer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.bm-footer-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  .bm-footer-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #e9c46a;
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #e9c46a;
+      outline-offset: 2px;
+    }
+  }
+
+  .bm-sep {
+    color: #475569;
+    font-size: 0.75rem;
+  }
+}
+
+.bm-footer-motto {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+// -----------------------------------------------------------------------------
+// Reduced Motion
+// -----------------------------------------------------------------------------
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .bm-pilot-jewel {
+    animation: none !important;
+  }
 }
