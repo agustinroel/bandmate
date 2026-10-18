@@ -745,4 +745,30 @@ bm-first-run-hero {
   .bm-section-sub {
     color: #94a3b8 !important;
   }
+
+  .external-search-block {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: rgba(42, 157, 143, 0.45) !important;
+
+    .bg-light,
+    .border-bottom {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      color: #f8fafc !important;
+    }
+
+    .hover-bg-light:hover {
+      background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    .text-muted {
+      color: #94a3b8 !important;
+    }
+  }
+
+  .magic-search-promo {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #f8fafc !important;
+  }
 }

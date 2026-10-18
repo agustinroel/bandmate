@@ -328,14 +328,12 @@ export class SongsStore {
     this.importApi.ingest(mbid).subscribe({
       next: (res) => {
         this._externalState.set('ready');
-        // 'res' might have songId or arrangementId.
-        // In ingest route we return arrangementId?
-        // Looking at API, it returns { success, workId, arrangementId, preview }
-        if (res.arrangementId) {
-          // In current Bandmate, arrangements are viewed in ArrangementViewPageComponent
-          // but let's see if we can just open it as a song
-          // Actually, arrangements in library have a slightly different route.
+        this.loadLibrary();
+        this.load();
+        if (res.arrangementId && res.workId) {
           this.router.navigate(['/library', res.workId, 'arrangements', res.arrangementId]);
+        } else if ((res as any).songId) {
+          this.router.navigate(['/songs', (res as any).songId]);
         }
       },
       error: (err) => {

@@ -228,6 +228,16 @@ export async function rateSongForUser(userId, id, rating) {
         throw e2;
     if (!data)
         return null;
+    // Notify song owner when another user rates their song
+    if (data.owner_id && String(data.owner_id) !== String(userId)) {
+        try {
+            const { createNotification } = await import("../notifications/notifications.repo.js");
+            await createNotification(String(data.owner_id), "rating", "Nueva calificación en tu canción", `Tu canción "${data.title || "Sin título"}" recibió una calificación de ${value} ⭐.`, { songId: id, rating: value, ratedBy: userId });
+        }
+        catch (notifErr) {
+            console.warn("[songs.repo] Rating notification warning:", notifErr);
+        }
+    }
     return mapSong(data);
 }
 function pick(obj, camel, snake) {

@@ -241,77 +241,7 @@
       </div>
     }
 
-    <!-- EXTERNAL RESULTS (MAGIC IMPORT) -->
-    @if (isSearchingExternal() && query()) {
-      <div class="external-search-block mt-4 p-4 border rounded-4 bg-white shadow animate-blur-in">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div class="d-flex align-items-center gap-2">
-            <mat-icon color="accent">auto_awesome</mat-icon>
-            <h3 class="m-0 h5 fw-bold">{{ i18n.t('songs.magic_results_title', 'Magic Global Results') }}</h3>
-          </div>
-          <button mat-icon-button (click)="isSearchingExternal.set(false)">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-
-        @if (store.externalState() === 'loading') {
-          <div class="text-center py-5">
-            <mat-progress-spinner
-              mode="indeterminate"
-              diameter="32"
-              class="mx-auto"
-              color="accent"
-            ></mat-progress-spinner>
-            <div class="mt-3 small opacity-50">{{ i18n.t('songs.searching_global', 'Searching the global database...') }}</div>
-          </div>
-        }
-
-        @if (store.externalState() === 'ingesting') {
-          <div class="text-center py-5">
-            <mat-progress-spinner
-              mode="indeterminate"
-              diameter="32"
-              class="mx-auto"
-              color="primary"
-            ></mat-progress-spinner>
-            <div class="mt-3">
-              <div class="fw-bold">{{ i18n.t('songs.generating_arrangement', 'Generating Arrangement...') }}</div>
-              <div class="small opacity-50">
-                {{ i18n.t('songs.generating_desc', 'AI is analyzing the song structure and chords. This takes about 10s.') }}
-              </div>
-            </div>
-          </div>
-        }
-
-        @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
-          <div class="text-center py-4 opacity-50">
-            {{ i18n.t('songs.no_cloud_matches', { query: query() }) }}
-          </div>
-        }
-
-        <div class="ext-results-list">
-          @for (res of store.externalResults(); track res.id) {
-            <div
-              class="ext-match-item d-flex align-items-center justify-content-between p-3 border-bottom hover-bg-light"
-            >
-              <div class="me-3 overflow-hidden">
-                <div class="fw-bold truncate">{{ res.title }}</div>
-                <div class="small opacity-75 truncate">{{ res.artist }}</div>
-              </div>
-              <button
-                mat-flat-button
-                color="primary"
-                class="rounded-pill flex-shrink-0"
-                (click)="ingest(res)"
-              >
-                <mat-icon class="me-1">auto_fix_high</mat-icon>
-                {{ i18n.t('songs.generate', 'Generate') }}
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    } @else if (!isLoading() && hasAnythingToShow()) {
+    @if (!isLoading() && hasAnythingToShow()) {
       <!-- ========================= -->
       <!-- YOUR SONGS -->
       <!-- ========================= -->
@@ -476,6 +406,85 @@
           }
         </div>
       }
+    }
+
+    <!-- EXTERNAL RESULTS (CIFRACLUB GLOBAL CATALOG) -->
+    @if (isSearchingExternal() && query().trim().length >= 2) {
+      <div class="external-search-block mt-4 p-4 border rounded-4 shadow animate-blur-in">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <mat-icon color="accent">travel_explore</mat-icon>
+            <div>
+              <h3 class="m-0 h5 fw-bold">Catálogo Global CifraClub en Vivo</h3>
+              <div class="small opacity-75">
+                Todas las canciones de CifraClub listas para importar con acordes y letra completa
+              </div>
+            </div>
+          </div>
+          <button mat-icon-button (click)="isSearchingExternal.set(false)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        @if (store.externalState() === 'loading') {
+          <div class="text-center py-4">
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="32"
+              class="mx-auto"
+              color="accent"
+            ></mat-progress-spinner>
+            <div class="mt-3 small opacity-75">Buscando "{{ query() }}" en CifraClub...</div>
+          </div>
+        }
+
+        @if (store.externalState() === 'ingesting') {
+          <div class="text-center py-4">
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="32"
+              class="mx-auto"
+              color="primary"
+            ></mat-progress-spinner>
+            <div class="mt-3">
+              <div class="fw-bold">Importando acordes y letra completa desde CifraClub...</div>
+              <div class="small opacity-75">
+                Extrayendo secciones, tonalidad y diagramas de acordes...
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (store.externalState() === 'ready' && store.externalResults().length === 0) {
+          <div class="text-center py-4 opacity-50">
+            {{ i18n.t('songs.no_cloud_matches', { query: query() }) }}
+          </div>
+        }
+
+        @if (store.externalState() !== 'ingesting') {
+          <div class="ext-results-list">
+            @for (res of store.externalResults(); track res.id) {
+              <div
+                class="ext-match-item d-flex align-items-center justify-content-between p-3 border-bottom"
+              >
+                <div class="me-3 overflow-hidden">
+                  <div class="fw-bold truncate">{{ res.title }}</div>
+                  <div class="small opacity-75 truncate">{{ res.artist }}</div>
+                </div>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  class="rounded-pill flex-shrink-0"
+                  (click)="ingest(res)"
+                >
+                  <mat-icon class="me-1">cloud_download</mat-icon>
+                  Abrir Cifra Completa
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
     }
   </div>
 </div>

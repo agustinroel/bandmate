@@ -47,7 +47,25 @@ export async function getProfileByUsername(username) {
         about: data.about || data.bio || null,
     };
 }
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function getProfileById(userId) {
+    if (!userId)
+        return null;
+    if (!UUID_REGEX.test(userId)) {
+        const cleanUsername = userId.replace(/^usr-/, "").replace(/-/g, "");
+        const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .or(`username.eq.${userId},username.eq.${cleanUsername}`)
+            .maybeSingle();
+        if (!data)
+            return null;
+        return {
+            ...data,
+            bio: data.bio || data.about || null,
+            about: data.about || data.bio || null,
+        };
+    }
     const { data, error } = await supabase
         .from("profiles")
         .select("*")

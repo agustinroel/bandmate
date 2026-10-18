@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import { parseSmartTab } from "@bandmate/shared";
 import { spotifyService } from "../services/spotify.service.js";
 import { musicBrainzService } from "../services/musicbrainz.service.js";
+import { cifraClubService } from "../services/cifraclub.service.js";
 import { createSongForUser } from "../songs/songs.repo.js";
 import { aiOrchestrator } from "../services/ai-orchestrator.service.js";
 import { createWork, createArrangementFromSong } from "../works/works.repo.js";
@@ -81,16 +82,31 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
   });
 
   /**
-   * Phase 1 Prototype: AI Ingestion
    * POST /import/ingest/:mbid
+   * Supports CifraClub IDs ("cc:artistSlug__songSlug") directly as well as MusicBrainz fallback.
    */
   app.post("/ingest/:mbid", async (req: any, reply) => {
     let { mbid } = req.params;
     const { title, artist, force } = req.query; // Fallback search + force flag
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const isForce = force === "true" || force === true;
 
     try {
+      // 1. Direct CifraClub ingestion ("cc:artistSlug__songSlug")
+      if (typeof mbid === "string" && mbid.startsWith("cc:")) {
+        const result = await cifraClubService.ingestToLibrary(mbid, userId);
+        return result;
+      }
+
+      // 2. If search by title + artist, try CifraClub first so we get real complete chords
+      if (mbid === "search" && title) {
+        const ccMatches = await cifraClubService.search(`${title} ${artist || ""}`.trim(), 3);
+        if (ccMatches.length > 0) {
+          const result = await cifraClubService.ingestToLibrary(ccMatches[0].id, userId);
+          return result;
+        }
+      }
+
       let details;
 
       if (mbid === "search" && title && artist) {
@@ -110,11 +126,18 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         return reply.status(404).send({
           message: "Recording not found",
           mbid,
-          hint: "Ensure you are using a Recording MBID, not a Release or Artist ID.",
+          hint: "Ensure you are using a Recording MBID or CifraClub ID (cc:artist__song).",
         });
       }
 
-      // 2. Create the "Work" (The canonical song)
+      // Try CifraClub for this recording's title + artist before falling back to AI
+      const ccLookup = await cifraClubService.search(`${details.title} ${details.artist}`, 3);
+      if (ccLookup.length > 0) {
+        const result = await cifraClubService.ingestToLibrary(ccLookup[0].id, userId);
+        return result;
+      }
+
+      // Create the "Work" (The canonical song)
       const work = await createWork({
         title: details.title,
         artist: details.artist,
@@ -123,11 +146,8 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         source: "musicbrainz",
       });
 
-      // 3. Generate AI Arrangement with duplicate check
       const generated = await aiOrchestrator.generateForWork(mbid);
 
-      // We'll use the service to handle storing etc but routes usually do direct logic too
-      // However, to keep it consistent with the queue improvements:
       const { getWorkArrangementsCount } =
         await import("../works/works.repo.js");
       const arrCount = await getWorkArrangementsCount(work.id);
@@ -142,7 +162,6 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         };
       }
 
-      // 4. Store Arrangement
       const arr = await createArrangementFromSong(userId, {
         work_id: work.id,
         sections: generated.sections,
@@ -151,7 +170,6 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
         duration_sec: details.duration,
       });
 
-      // 5. Create legacy song entry for user visibility in Setlists/Library
       await createSongForUser(userId, {
         title: details.title,
         artist: details.artist,
@@ -214,20 +232,26 @@ export const importRoutes: FastifyPluginAsync = async (app) => {
 
   /**
    * GET /import/search?q=...
-   * Search MusicBrainz for a recording.
+   * Searches CifraClub's full 800,000+ song catalog in real time, with MusicBrainz fallback.
    */
   app.get("/search", async (req: any, reply) => {
     const { q } = req.query;
     if (!q) return [];
 
     try {
-      // Logic: if 'q' has a dash, split artist - title, else search as title
+      // 1. Primary: Search CifraClub's global catalog
+      const ccMatches = await cifraClubService.search(String(q), 24);
+      if (ccMatches.length > 0) {
+        return ccMatches;
+      }
+
+      // 2. Fallback: MusicBrainz
       let matches;
       if (q.includes("-")) {
         const [artist, title] = q.split("-").map((s: string) => s.trim());
         matches = await musicBrainzService.searchRecording(title, artist);
       } else {
-        matches = await musicBrainzService.searchRecording(q, ""); // artist as empty string
+        matches = await musicBrainzService.searchRecording(q, "");
       }
       return matches;
     } catch (err: any) {

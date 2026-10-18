@@ -116,6 +116,24 @@ export async function addSongToBand(userId, bandId, songId) {
     });
     if (error)
         throw error;
+    // Notify band members about new song in band repertoire
+    try {
+        const [{ data: band }, { data: song }, { data: members }] = await Promise.all([
+            supabase.from("bands").select("name").eq("id", bandId).maybeSingle(),
+            supabase.from("songs").select("title, artist").eq("id", songId).maybeSingle(),
+            supabase.from("band_members").select("user_id").eq("band_id", bandId),
+        ]);
+        const bandName = band?.name || "tu banda";
+        const songTitle = song?.title || "una nueva canción";
+        for (const m of members || []) {
+            if (m.user_id && m.user_id !== userId) {
+                await createNotification(m.user_id, "band_song", "Nueva canción en la banda", `Se agregó "${songTitle}" al repertorio de ${bandName}.`, { bandId, bandName, songId, songTitle });
+            }
+        }
+    }
+    catch (notifErr) {
+        console.warn("[bands.repo] Notification warning on addSongToBand:", notifErr);
+    }
     return { success: true };
 }
 export async function removeSongFromBand(userId, bandId, songId) {
@@ -169,7 +187,7 @@ export async function joinBandByCode(userId, code) {
     // 1. Find band by code
     const { data: band, error: e1 } = await supabase
         .from("bands")
-        .select("id, name")
+        .select("id, name, owner_id")
         .eq("invite_code", code)
         .maybeSingle();
     if (e1)
@@ -186,6 +204,21 @@ export async function joinBandByCode(userId, code) {
     }, { onConflict: "band_id,user_id" });
     if (e2)
         throw e2;
+    // Notify band owner when someone joins via invite code
+    if (band.owner_id && band.owner_id !== userId) {
+        try {
+            const { data: memberProfile } = await supabase
+                .from("profiles")
+                .select("username, full_name")
+                .eq("id", userId)
+                .maybeSingle();
+            const memberName = memberProfile?.full_name || memberProfile?.username || "Un músico";
+            await createNotification(band.owner_id, "band_joined", "¡Nuevo integrante en tu banda!", `${memberName} se ha unido a ${band.name} mediante código de invitación.`, { bandId: band.id, bandName: band.name, memberId: userId });
+        }
+        catch (notifErr) {
+            console.warn("[bands.repo] Notification warning on joinBandByCode:", notifErr);
+        }
+    }
     return band;
 }
 export async function inviteUserToBand(bandId, invitedBy, userIdToInvite) {
@@ -228,8 +261,8 @@ export async function inviteUserToBand(bandId, invitedBy, userIdToInvite) {
         .select("name")
         .eq("id", bandId)
         .single();
-    const bandName = band?.name || "Unknown Band";
-    await createNotification(userIdToInvite, "band_invite", "Band Invitation", `You have been invited to join ${bandName}`, { bandId, bandName, inviteId: newInvite.id });
+    const bandName = band?.name || "una banda";
+    await createNotification(userIdToInvite, "band_invite", "Invitación a banda", `Te han invitado a unirte a la banda ${bandName}.`, { bandId, bandName, inviteId: newInvite.id });
     return { success: true };
 }
 export async function respondToInvite(inviteId, userId, accept) {

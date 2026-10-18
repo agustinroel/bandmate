@@ -47,17 +47,18 @@ export async function listWorksWithTopArrangement() {
         .from("song_works")
         .select("*")
         .order("artist", { ascending: true })
-        .order("title", { ascending: true });
+        .order("title", { ascending: true })
+        .limit(2000);
     if (e1)
         throw e1;
     const workRows = works ?? [];
-    const workIds = workRows.map((w) => w.id);
-    // 2) top arrangement per work (simple approach: fetch all, pick best in JS)
-    // Para MVP está perfecto. Si se vuelve grande, hacemos RPC o view.
+    if (workRows.length === 0)
+        return [];
+    // 2) top arrangement per work (fetch arrangements directly to avoid 414 URI Too Long on large .in() arrays)
     const { data: arrs, error: e2 } = await supabase
         .from("arrangements")
         .select("*")
-        .in("work_id", workIds.length ? workIds : ["00000000-0000-0000-0000-000000000000"]);
+        .limit(2000);
     if (e2)
         throw e2;
     const byWork = new Map();

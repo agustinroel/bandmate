@@ -373,10 +373,23 @@ export class SongsPageComponent {
       }
     });
 
-    // 3) Limpia whitespace raro en query
-    effect(() => {
+    // 3) Limpia whitespace raro en query y busca en CifraClub en tiempo real
+    effect((onCleanup) => {
       const q = this.query();
-      if (q && !q.trim()) this.query.set('');
+      if (q && !q.trim()) {
+        this.query.set('');
+        return;
+      }
+      const trimmed = q.trim();
+      if (trimmed.length >= 2) {
+        const timer = setTimeout(() => {
+          this.isSearchingExternal.set(true);
+          this.store.searchExternal(trimmed);
+        }, 350);
+        onCleanup(() => clearTimeout(timer));
+      } else {
+        this.isSearchingExternal.set(false);
+      }
     });
 
     // 4) Persist prefs

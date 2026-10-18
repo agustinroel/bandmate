@@ -182,8 +182,13 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
   content = content.replace(/\[tab\]/gi, '\n{comment: Tablature}\n');
   content = content.replace(/\[\/tab\]/gi, '\n');
 
-  // 2. Clean CifraClub HTML tags: <b class="cnt">Am</b> -> [Am], strip <pre>, <span>, etc.
-  content = content.replace(/<b[^>]*>(.*?)<\/b>/gi, '[$1]');
+  // 2. Clean CifraClub & LaCuerda HTML tags: strip <span class="tablatura"> ASCII blocks
+  content = content
+    .replace(/<span[^>]*class="[^"]*tablatura[^"]*"[^>]*>[\s\S]*?<\/span>\s*<\/span>/gi, '')
+    .replace(/<span[^>]*class="[^"]*tablatura[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+    .replace(/<\/a>\s*-\s*<a[^>]*>/gi, ' ')
+    .replace(/<\/b>\s*-\s*<b[^>]*>/gi, ' ');
+  content = content.replace(/<b[^>]*>(.*?)<\/b>/gi, '$1');
   content = content.replace(/<\/?[^>]+(>|$)/g, ''); // strip remaining HTML
 
   let title = 'Untitled Song';
@@ -233,6 +238,12 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
   while (i < lines.length) {
     const rawLine = lines[i];
     const line = rawLine.trim();
+
+    // Skip ASCII guitar tablature lines (e.g. e|---0---2---|)
+    if (/^[eBGDAE1-6]\s*\|[-0-9hpb/\\~x\s|]+/i.test(line)) {
+      i++;
+      continue;
+    }
 
     // Check for CifraClub / LaCuerda / UG metadata lines: "Tom: G", "Tono: Am", "Key: C", "Capotraste na 2ª casa"
     const keyMetaMatch = line.match(/^(?:tom|tono|key|tonalidad)\s*[:=-]\s*([A-G][#b]?m?)/i);
@@ -434,6 +445,22 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
       title = parts.slice(1).join(' - ').trim();
     } else {
       title = cleanName;
+    }
+  }
+
+  // Infer key from the first chord in sections if not explicitly declared
+  if (!key) {
+    for (const sec of sections) {
+      for (const l of sec.lines) {
+        if (l.kind === 'lyrics' && l.source) {
+          const firstChord = l.source.match(/\[([A-G][#b]?m?)/);
+          if (firstChord && firstChord[1]) {
+            key = firstChord[1];
+            break;
+          }
+        }
+      }
+      if (key) break;
     }
   }
 

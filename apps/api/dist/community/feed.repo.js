@@ -29,6 +29,34 @@ async function getStoredLikes() {
     }
     return cachedLikes;
 }
+function normalizeTagKey(raw) {
+    return (raw || '')
+        .trim()
+        .replace(/^#+/, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+function extractHashtagsFromContent(content) {
+    if (!content)
+        return [];
+    const matches = content.match(/#([a-zA-Z0-9_\u00C0-\u017F]+)/g) || [];
+    return matches.map((m) => m.replace(/^#+/, ''));
+}
+function mergePostTags(explicitTags, content) {
+    const seen = new Set();
+    const result = [];
+    const candidates = [...(explicitTags || []), ...extractHashtagsFromContent(content)];
+    for (const raw of candidates) {
+        const clean = (raw || '').trim().replace(/^#+/, '');
+        const key = normalizeTagKey(clean);
+        if (key && !seen.has(key)) {
+            seen.add(key);
+            result.push(clean);
+        }
+    }
+    return result;
+}
 async function getStoredPosts() {
     if (cachedPosts === null) {
         try {
@@ -56,7 +84,7 @@ async function getStoredPosts() {
                         mediaUrl: r.media_url,
                         mediaType: r.media_type,
                         youtubeId: r.youtube_id,
-                        tags: r.tags || [],
+                        tags: mergePostTags(r.tags, r.content),
                         likesCount: r.likes_count ?? 0,
                         repostsCount: r.reposts_count ?? 0,
                         commentsCount: r.comments_count ?? 0,
@@ -70,7 +98,11 @@ async function getStoredPosts() {
         catch {
             // Fallback
         }
-        cachedPosts = await readJson(POSTS_FILE, []);
+        const fromDisk = await readJson(POSTS_FILE, []);
+        cachedPosts = fromDisk.map((p) => ({
+            ...p,
+            tags: mergePostTags(p.tags, p.content),
+        }));
     }
     return cachedPosts;
 }
@@ -148,6 +180,7 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
     // Map likes for current user strictly
     let formatted = allPosts.map((post) => ({
         ...post,
+        tags: mergePostTags(post.tags, post.content),
         isLiked: userId ? likes.has(`${userId}:${post.id}`) : false,
     }));
     // Filter by following if requested
@@ -156,19 +189,32 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
         // Show posts from people user follows + their own posts
         formatted = formatted.filter((p) => p.authorId === userId || followedIds.includes(p.authorId));
     }
-    // Filter by search keyword
+    // Filter by search keyword (also supports #hashtag queries in the search input)
     if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        formatted = formatted.filter((p) => p.content.toLowerCase().includes(q) ||
-            p.authorName.toLowerCase().includes(q) ||
-            p.authorUsername.toLowerCase().includes(q) ||
-            (p.attachedSong && (p.attachedSong.title.toLowerCase().includes(q) || p.attachedSong.artist.toLowerCase().includes(q))));
+        const rawSearch = search.trim();
+        const q = rawSearch.toLowerCase();
+        const qNorm = normalizeTagKey(rawSearch);
+        formatted = formatted.filter((p) => {
+            if (rawSearch.startsWith('#') && qNorm) {
+                return ((p.tags || []).some((t) => normalizeTagKey(t).includes(qNorm)) ||
+                    normalizeTagKey(p.content).includes(qNorm));
+            }
+            return (p.content.toLowerCase().includes(q) ||
+                p.authorName.toLowerCase().includes(q) ||
+                p.authorUsername.toLowerCase().includes(q) ||
+                (p.tags || []).some((t) => normalizeTagKey(t).includes(qNorm)) ||
+                (p.attachedSong &&
+                    (p.attachedSong.title.toLowerCase().includes(q) ||
+                        p.attachedSong.artist.toLowerCase().includes(q))));
+        });
     }
-    // Filter by hashtag
+    // Filter by hashtag (accent- and case-insensitive)
     if (tag && tag.trim()) {
-        const clean = tag.trim().replace(/^#/, '').toLowerCase();
-        formatted = formatted.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === clean) ||
-            p.content.toLowerCase().includes('#' + clean));
+        const cleanKey = normalizeTagKey(tag);
+        formatted = formatted.filter((p) => {
+            const postTags = mergePostTags(p.tags, p.content);
+            return postTags.some((t) => normalizeTagKey(t) === cleanKey);
+        });
     }
     // X.com-style ranking algorithm for "For you" / "Para ti"
     if (filter === 'for_you') {
@@ -208,33 +254,70 @@ export async function getFeedPosts(filter = 'for_you', userId, page = 1, limit =
 export async function getTrendingHashtags() {
     const posts = await getStoredPosts();
     const counts = {};
+    const categoryMap = {
+        rockargentino: 'Comunidad · Rock Nacional',
+        buscobaterista: 'Audiciones Abiertas',
+        buscobajista: 'Audiciones Abiertas',
+        audiciones: 'Audiciones Abiertas',
+        sologuitarra: 'Riffs & Jams',
+        standbyme: 'Canciones populares',
+        wonderwall: 'Clásicos de fogón',
+        demusicaligera: 'Himnos en Vivo',
+        stagemode: 'Bandmate Live',
+        geartalk: 'Equipamiento & Pedales',
+        ensayo: 'Sala de Ensayo',
+        setlist: 'Shows & Repertorio',
+    };
+    const preferredDisplay = {
+        rockargentino: 'RockArgentino',
+        buscobaterista: 'BuscoBaterista',
+        buscobajista: 'BuscoBajista',
+        audiciones: 'Audiciones',
+        sologuitarra: 'SoloGuitarra',
+        standbyme: 'StandByMe',
+        wonderwall: 'Wonderwall',
+        demusicaligera: 'DeMusicaLigera',
+        stagemode: 'StageMode',
+        geartalk: 'GearTalk',
+        ensayo: 'Ensayo',
+        setlist: 'Setlist',
+    };
     for (const post of posts) {
-        const postTags = new Set();
-        // Tags array
-        (post.tags || []).forEach((t) => postTags.add(t.toLowerCase().replace(/^#/, '')));
-        // Extracted from content
-        const inText = post.content.match(/#([a-zA-Z0-9_\u00C0-\u017F]+)/g) || [];
-        inText.forEach((t) => postTags.add(t.slice(1).toLowerCase()));
-        for (const tag of postTags) {
-            if (tag)
-                counts[tag] = (counts[tag] || 0) + 1;
+        const postTags = mergePostTags(post.tags, post.content);
+        for (const rawTag of postTags) {
+            const key = normalizeTagKey(rawTag);
+            if (!key || key === 'vitest' || key === 'test')
+                continue;
+            if (!counts[key]) {
+                counts[key] = {
+                    display: preferredDisplay[key] || rawTag,
+                    count: 0,
+                };
+            }
+            counts[key].count += 1;
         }
     }
     // Pre-seed with vibrant music community trends if needed
     const defaultTrends = [
-        { tag: 'StandByMe', count: 84, category: 'Canciones populares' },
-        { tag: 'Wonderwall', count: 112, category: 'Clásicos de fogón' },
-        { tag: 'BuscoBaterista', count: 37, category: 'Audiciones' },
-        { tag: 'SoloGuitarra', count: 52, category: 'Riffs & Jams' },
-        { tag: 'RockArgentino', count: 96, category: 'Comunidad' },
-        { tag: 'StageMode', count: 43, category: 'Bandmate Live' },
+        { tag: 'RockArgentino', count: 14, category: 'Comunidad · Rock Nacional' },
+        { tag: 'BuscoBaterista', count: 9, category: 'Audiciones Abiertas' },
+        { tag: 'SoloGuitarra', count: 11, category: 'Riffs & Jams' },
+        { tag: 'Wonderwall', count: 8, category: 'Clásicos de fogón' },
+        { tag: 'StandByMe', count: 7, category: 'Canciones populares' },
+        { tag: 'StageMode', count: 6, category: 'Bandmate Live' },
+        { tag: 'GearTalk', count: 5, category: 'Equipamiento & Pedales' },
+        { tag: 'Ensayo', count: 5, category: 'Sala de Ensayo' },
     ];
     const sortedReal = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([tag, count]) => ({ tag, count, category: 'Tendencia en Bandmate' }));
+        .sort((a, b) => b[1].count - a[1].count)
+        .map(([key, val]) => ({
+        tag: val.display,
+        count: val.count,
+        category: categoryMap[key] || 'Tendencia en Bandmate',
+    }));
     const merged = [...sortedReal];
     for (const dt of defaultTrends) {
-        if (!merged.some((m) => m.tag.toLowerCase() === dt.tag.toLowerCase())) {
+        if (!merged.some((m) => normalizeTagKey(m.tag) === normalizeTagKey(dt.tag))) {
             merged.push(dt);
         }
     }
@@ -530,6 +613,16 @@ export async function createAuditionApplication(postId, musicianId, userProfile,
     catch (e) {
         console.warn('[feed.repo] Supabase audition application insert warning:', e);
     }
+    // Notify audition post author
+    if (post.authorId && post.authorId !== musicianId) {
+        try {
+            const { createNotification } = await import('../notifications/notifications.repo.js');
+            await createNotification(post.authorId, 'audition', 'Nueva postulación a tu audición', `${application.musicianName} (${application.instrument}) se postuló a tu convocatoria.`, { postId: post.id, applicationId: application.id, musicianId });
+        }
+        catch (notifErr) {
+            console.warn('[feed.repo] Audition application notification warning:', notifErr);
+        }
+    }
     return application;
 }
 export async function getAuditionApplications(postId) {
@@ -541,6 +634,7 @@ export async function updateAuditionApplication(applicationId, updates) {
     const app = applications.find((a) => a.id === applicationId);
     if (!app)
         throw new Error('Application not found');
+    const prevStatus = app.status;
     if (updates.status)
         app.status = updates.status;
     if (updates.privateNotes !== undefined)
@@ -564,5 +658,47 @@ export async function updateAuditionApplication(applicationId, updates) {
     catch (e) {
         console.warn('[feed.repo] Supabase audition application update warning:', e);
     }
+    // Notify applicant when status changes
+    if (updates.status && updates.status !== prevStatus && app.musicianId) {
+        try {
+            const { createNotification } = await import('../notifications/notifications.repo.js');
+            const statusLabels = {
+                shortlisted: 'preseleccionada ⭐',
+                accepted: '¡aceptada! 🎉',
+                rejected: 'actualizada',
+                pending: 'en revisión',
+            };
+            const label = statusLabels[updates.status] || updates.status;
+            await createNotification(app.musicianId, 'audition_status', 'Actualización de tu audición', `Tu postulación para ${app.instrument} fue marcada como ${label}.`, { postId: app.postId, applicationId: app.id, status: updates.status });
+        }
+        catch (notifErr) {
+            console.warn('[feed.repo] Audition status notification warning:', notifErr);
+        }
+    }
     return app;
+}
+export async function deleteFeedPost(postId) {
+    const posts = await getStoredPosts();
+    cachedPosts = posts.filter((p) => p.id !== postId);
+    await writeJson(POSTS_FILE, cachedPosts);
+    const comments = await getStoredComments();
+    cachedComments = comments.filter((c) => c.postId !== postId);
+    await writeJson(COMMENTS_FILE, cachedComments);
+    const likes = await getStoredLikes();
+    for (const key of Array.from(likes)) {
+        if (key.endsWith(`:${postId}`)) {
+            likes.delete(key);
+        }
+    }
+    await writeJson(LIKES_FILE, Array.from(likes));
+    try {
+        if (supabase) {
+            await supabase.from('community_comments').delete().eq('post_id', postId);
+            await supabase.from('community_likes').delete().eq('post_id', postId);
+            await supabase.from('community_posts').delete().eq('id', postId);
+        }
+    }
+    catch (e) {
+        console.warn('[feed.repo] Supabase post delete warning:', e);
+    }
 }
