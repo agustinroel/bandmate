@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { parseSmartTab, ParsedSmartSong } from '@bandmate/shared';
 import { SongsStore } from '../../state/songs-store';
 import { BandsService } from '../../../bands/services/bands.service';
+import { ImportApiService } from '../../data/import-api';
 import { Router } from '@angular/router';
 import { NotificationsService } from '../../../../shared/ui/notifications/notifications.service';
 import { firstValueFrom } from 'rxjs';
@@ -67,7 +68,7 @@ export interface BulkImportItem {
               @if (targetBandName() || data?.targetBandId) {
                 Importando directamente para el repertorio de <strong>{{ targetBandName() || 'la banda' }}</strong>
               } @else {
-                ChordPro, OnSong, CifraClub, Ultimate Guitar y texto plano
+                ChordPro, OnSong, CifraClub, LaCuerda, Ultimate Guitar y texto plano
               }
             </div>
           </div>
@@ -87,7 +88,7 @@ export interface BulkImportItem {
           (click)="mode.set('single')"
         >
           <mat-icon class="align-middle me-1" style="font-size: 18px; width: 18px; height: 18px;">content_paste</mat-icon>
-          Pega de Texto Individual
+          URL / Texto Individual
         </button>
         <button
           type="button"
@@ -101,10 +102,31 @@ export interface BulkImportItem {
         </button>
       </div>
 
-      <!-- MODE 1: SINGLE TEXT IMPORT -->
+      <!-- MODE 1: SINGLE URL OR TEXT IMPORT -->
       @if (mode() === 'single') {
+        <!-- URL Quick Scraper Bar -->
+        <div class="d-flex gap-2 align-items-center mb-3 p-2 rounded-3 border bg-light url-scraper-box">
+          <mat-icon class="text-primary ms-1">link</mat-icon>
+          <input
+            type="url"
+            class="form-control form-control-sm border-0 bg-transparent shadow-none"
+            [(ngModel)]="importUrl"
+            placeholder="Pega enlace de CifraClub, LaCuerda o Ultimate Guitar (https://...)"
+            (keydown.enter)="fetchFromUrl()"
+          />
+          <button
+            mat-flat-button
+            color="primary"
+            class="btn-sm rounded-pill px-3 flex-shrink-0"
+            [disabled]="!importUrl.trim() || isFetchingUrl()"
+            (click)="fetchFromUrl()"
+          >
+            {{ isFetchingUrl() ? 'Extrayendo...' : 'Extraer URL' }}
+          </button>
+        </div>
+
         <p class="text-muted small mb-2">
-          Pega tablaturas o acordes en formato <strong>Ultimate Guitar</strong>, <strong>CifraClub</strong>, <strong>ChordPro</strong> o <strong>texto plano</strong>.
+          O pega directamente tablaturas/acordes en formato <strong>Ultimate Guitar</strong>, <strong>CifraClub</strong>, <strong>LaCuerda</strong>, <strong>ChordPro</strong> o <strong>texto plano</strong>:
         </p>
 
         <div class="d-flex gap-2 mb-2">
@@ -334,7 +356,8 @@ export interface BulkImportItem {
     :host-context(.theme-dark) {
       .import-preview,
       .bulk-upload-dropzone,
-      .bulk-list {
+      .bulk-list,
+      .url-scraper-box {
         background: #0f172a !important;
         border-color: rgba(255, 255, 255, 0.14) !important;
         color: #f8fafc !important;
@@ -347,6 +370,7 @@ export class SmartImportDialogComponent implements OnInit {
   readonly data = inject<SmartImportDialogData | null>(MAT_DIALOG_DATA, { optional: true });
   private songsStore = inject(SongsStore);
   private bandsService = inject(BandsService);
+  private importApi = inject(ImportApiService, { optional: true });
   private router = inject(Router);
   private notify = inject(NotificationsService);
 
@@ -369,6 +393,8 @@ export class SmartImportDialogComponent implements OnInit {
   }
 
   // Single mode state
+  importUrl = '';
+  readonly isFetchingUrl = signal(false);
   rawText = '';
   readonly parsed = signal<ParsedSmartSong | null>(null);
   readonly isSaving = signal(false);
@@ -393,6 +419,30 @@ export class SmartImportDialogComponent implements OnInit {
     const count = items.filter((i) => i.selected).length;
     return count > 0 && count < items.length;
   });
+
+  fetchFromUrl() {
+    const url = this.importUrl.trim();
+    if (!url || !this.importApi) return;
+
+    this.isFetchingUrl.set(true);
+    this.importApi.scrapeUrl(url, false).subscribe({
+      next: (res) => {
+        this.isFetchingUrl.set(false);
+        if (res?.parsed) {
+          this.rawText = res.parsed.rawChordPro || '';
+          this.parsed.set(res.parsed);
+          this.notify.success(`Acordes extraídos: ${res.parsed.title} - ${res.parsed.artist}`);
+        }
+      },
+      error: (err) => {
+        this.isFetchingUrl.set(false);
+        this.notify.error(
+          err?.error?.message ||
+            'No se pudo extraer automáticamente desde la URL. Copia y pega el texto en el cuadro inferior.',
+        );
+      },
+    });
+  }
 
   onTextChange() {
     if (!this.rawText.trim()) {

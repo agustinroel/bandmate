@@ -66,4 +66,26 @@ describe('smart-tab-parser', () => {
     expect(parsed.artist).toBe('Eagles');
     expect(parsed.title).toBe('Hotel California');
   });
+
+  it('parses CifraClub/LaCuerda metadata, inline [Intro] chords, and solfege chords', () => {
+    const rawCifraClub = `Tom: G
+Capotraste na 2ª casa
+
+[Intro] Sol  Re  Mim  Do
+
+[Primeira Parte]
+Sol                Re
+Ella durmió al calor de las masas
+Mim                Do
+Y yo desperté queriendo soñarla`;
+
+    const parsed = parseSmartTab(rawCifraClub, 'Soda Stereo - De Musica Ligera.txt');
+    expect(parsed.key).toBe('G');
+    expect(parsed.capo).toBe(2);
+    expect(parsed.sections.length).toBe(2);
+    expect(parsed.sections[0].type).toBe('intro');
+    expect(parsed.sections[0].lines[0].source).toContain('[G]');
+    expect(parsed.sections[1].type).toBe('verse');
+    expect(parsed.sections[1].lines[0].source).toContain('[G]Ella durmió');
+  });
 });

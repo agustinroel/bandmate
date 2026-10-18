@@ -11,7 +11,29 @@ export interface ParsedSmartSong {
   rawChordPro: string;
 }
 
-const CHORD_TOKEN_REGEX = /^[A-G](?:[#b])?(?:maj|min|m|M|dim|aug|sus|add|7|9|11|13|6|maj7|min7|m7|m7b5|7b5|7#9|7b9|\+|-|ø|o)*(?:\/[A-G](?:[#b])?)?$/;
+const CHORD_TOKEN_REGEX = /^[A-G](?:[#b])?(?:maj|min|m|M|dim|aug|sus|add|2|4|5|6|7|9|11|13|maj7|min7|m7|m7b5|7b5|7#9|7b9|\+|-|ø|o|\([0-9#b+-]+\))*(?:\/[A-G](?:[#b])?)?$/;
+
+const SOLFEGE_MAP: Record<string, string> = {
+  do: 'C',
+  re: 'D',
+  mi: 'E',
+  fa: 'F',
+  sol: 'G',
+  la: 'A',
+  si: 'B',
+};
+
+export function normalizeChordToken(token: string): string {
+  const clean = token.replace(/^[(\[{]|[)\]},.:;]$/g, '').trim();
+  const solfegeMatch = clean.match(/^(do|re|mi|fa|sol|la|si)([#b]?.*)$/i);
+  if (solfegeMatch) {
+    const root = SOLFEGE_MAP[solfegeMatch[1].toLowerCase()];
+    if (root) {
+      return `${root}${solfegeMatch[2]}`;
+    }
+  }
+  return clean;
+}
 
 /**
  * Checks if a string line is composed mostly of chord tokens and spaces
@@ -20,14 +42,16 @@ export function isChordLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
 
+  // Ignore guitar tab lines like e|---0---2---|
+  if (/^[eBGDAE1-6]\|[-0-9hpb/\\~x\s|]+/.test(trimmed)) return false;
+
   // Split line by whitespace tokens
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return false;
 
   let chordMatchCount = 0;
   for (const token of tokens) {
-    // Strip common punctuation around chord tokens
-    const cleanToken = token.replace(/^[(\[{]|[)\]},.:;]$/g, '');
+    const cleanToken = normalizeChordToken(token);
     if (CHORD_TOKEN_REGEX.test(cleanToken)) {
       chordMatchCount++;
     }
@@ -44,25 +68,34 @@ export function detectSectionType(header: string): { type: SongSectionType; name
   const clean = header.replace(/^[\[{(#*\s]+|[\]})#*\s:]+$/g, '').trim();
   const lower = clean.toLowerCase();
 
-  if (lower.includes('verse') || lower.includes('verso') || lower.includes('estrofa')) {
+  if (
+    lower.includes('verse') ||
+    lower.includes('verso') ||
+    lower.includes('estrofa') ||
+    lower.includes('primeira parte') ||
+    lower.includes('segunda parte') ||
+    lower.includes('terceira parte') ||
+    lower.includes('quarta parte') ||
+    lower.includes('primera parte')
+  ) {
     return { type: 'verse', name: clean };
+  }
+  if (lower.includes('pre-chorus') || lower.includes('prechorus') || lower.includes('pre-coro') || lower.includes('pré-refrão') || lower.includes('pre-estribillo')) {
+    return { type: 'prechorus', name: clean };
   }
   if (lower.includes('chorus') || lower.includes('coro') || lower.includes('estribillo') || lower.includes('refrão')) {
     return { type: 'chorus', name: clean };
   }
-  if (lower.includes('intro') || lower.includes('introducción')) {
+  if (lower.includes('intro') || lower.includes('introducción') || lower.includes('introdução')) {
     return { type: 'intro', name: clean };
   }
-  if (lower.includes('bridge') || lower.includes('puente')) {
+  if (lower.includes('bridge') || lower.includes('puente') || lower.includes('ponte')) {
     return { type: 'bridge', name: clean };
   }
   if (lower.includes('outro') || lower.includes('final') || lower.includes('coda')) {
     return { type: 'outro', name: clean };
   }
-  if (lower.includes('pre-chorus') || lower.includes('prechorus') || lower.includes('pre-coro')) {
-    return { type: 'prechorus', name: clean };
-  }
-  if (lower.includes('solo') || lower.includes('riff') || lower.includes('instrumental')) {
+  if (lower.includes('solo') || lower.includes('riff') || lower.includes('instrumental') || lower.includes('interludio') || lower.includes('interlude')) {
     return { type: 'solo', name: clean };
   }
 
@@ -76,7 +109,7 @@ export function mergeChordAndLyricsLine(chordLine: string, lyricsLine: string): 
   if (!chordLine.trim()) return lyricsLine;
   if (!lyricsLine.trim()) {
     // Only chords: convert each chord into "[Chord]"
-    return chordLine.replace(/\S+/g, (match) => `[${match.trim()}]`);
+    return chordLine.replace(/\S+/g, (match) => `[${normalizeChordToken(match.trim())}]`);
   }
 
   // Find all chords with their character index in chordLine
@@ -85,7 +118,7 @@ export function mergeChordAndLyricsLine(chordLine: string, lyricsLine: string): 
   const placements: { pos: number; chord: string }[] = [];
 
   while ((match = regex.exec(chordLine)) !== null) {
-    const chord = match[0].replace(/^[\[{(]|[\]})]$/g, '').trim();
+    const chord = normalizeChordToken(match[0]);
     if (chord) {
       placements.push({ pos: match.index, chord });
     }
@@ -139,7 +172,7 @@ export function parseFilenameMetadata(filename: string): { title: string; artist
 }
 
 /**
- * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, and Plain Text tabs
+ * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, LaCuerda, and Plain Text tabs
  */
 export function parseSmartTab(rawInput: string, fallbackFilename?: string): ParsedSmartSong {
   let content = rawInput;
@@ -184,11 +217,14 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
   // Line 0: "Stand By Me"
   // Line 1: "Ben E. King"
   // Line 2: "" (empty)
+  const isMetaLine = (str: string) =>
+    /^(?:tom|tono|key|tonalidad|capo|capotraste|cejilla|bpm|tempo|tuning|afina[cç][aã]o)\b/i.test(str);
+
   if (lines.length > 3 && !lines[0].startsWith('{') && !lines[0].startsWith('[')) {
     const l0 = lines[0].trim();
     const l1 = lines[1].trim();
     const l2 = lines[2].trim();
-    if (l0 && l1 && !l2 && !isChordLine(l0) && !isChordLine(l1)) {
+    if (l0 && l1 && !l2 && !isChordLine(l0) && !isChordLine(l1) && !isMetaLine(l0) && !isMetaLine(l1)) {
       if (title === 'Untitled Song') title = l0;
       if (artist === 'Unknown Artist') artist = l1;
       i = 3;
@@ -197,6 +233,26 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
   while (i < lines.length) {
     const rawLine = lines[i];
     const line = rawLine.trim();
+
+    // Check for CifraClub / LaCuerda / UG metadata lines: "Tom: G", "Tono: Am", "Key: C", "Capotraste na 2ª casa"
+    const keyMetaMatch = line.match(/^(?:tom|tono|key|tonalidad)\s*[:=-]\s*([A-G][#b]?m?)/i);
+    if (keyMetaMatch) {
+      key = keyMetaMatch[1];
+      i++;
+      continue;
+    }
+    const capoMetaMatch = line.match(/^(?:capo|capotraste|cejilla).*?(\d+)/i);
+    if (capoMetaMatch) {
+      capo = parseInt(capoMetaMatch[1], 10) || undefined;
+      i++;
+      continue;
+    }
+    const bpmMetaMatch = line.match(/^(?:bpm|tempo)\s*[:=-]\s*(\d+)/i);
+    if (bpmMetaMatch) {
+      bpm = parseInt(bpmMetaMatch[1], 10) || undefined;
+      i++;
+      continue;
+    }
 
     // Check for ChordPro directives: {directive: value}
     const directiveMatch = line.match(/^\{([a-zA-Z0-9_]+)(?::\s*(.*?))?\}$/);
@@ -239,9 +295,46 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
       continue;
     }
 
-    // Check for Section headers: e.g. [Chorus], Verse 1:, ## Bridge
-    const isBracketHeader = /^\[([a-zA-Z0-9\s-_]+)\]$/.test(line) && !CHORD_TOKEN_REGEX.test(line.slice(1, -1));
-    const isColonHeader = /^(intro|verse|chorus|bridge|outro|solo|estrofa|coro|estribillo|refrão|pre-chorus|prechorus)\s*\d*[:\s-]*$/i.test(line);
+    // Check for CifraClub inline header + chords: e.g. "[Intro] G  D  Em  C"
+    const bracketWithChordsMatch = line.match(/^\[([a-zA-Z0-9\s-_ªºáéíóúãõç]+)\]\s+(.+)$/i);
+    if (
+      bracketWithChordsMatch &&
+      !CHORD_TOKEN_REGEX.test(bracketWithChordsMatch[1].trim()) &&
+      isChordLine(bracketWithChordsMatch[2])
+    ) {
+      if (currentSection.lines.length > 0) {
+        sections.push(currentSection);
+      }
+      const { type, name } = detectSectionType(bracketWithChordsMatch[1]);
+      const chordsFormatted = bracketWithChordsMatch[2].replace(/\S+/g, (match) => {
+        const c = normalizeChordToken(match);
+        return `[${c}]`;
+      });
+      currentSection = {
+        id: `sec-${Date.now()}-${sections.length + 1}`,
+        type,
+        name,
+        order: sections.length,
+        lines: [
+          {
+            id: `line-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            kind: 'lyrics',
+            source: chordsFormatted,
+          },
+        ],
+      };
+      i++;
+      continue;
+    }
+
+    // Check for Section headers: e.g. [Chorus], [Primeira Parte], Verse 1:, ## Bridge
+    const isBracketHeader =
+      /^\[([a-zA-Z0-9\s-_ªºáéíóúãõç]+)\]$/.test(line) &&
+      !CHORD_TOKEN_REGEX.test(normalizeChordToken(line.slice(1, -1)));
+    const isColonHeader =
+      /^(intro|introducción|introdução|verse|verso|estrofa|primeira parte|segunda parte|terceira parte|primera parte|chorus|coro|estribillo|refrão|pré-refrão|bridge|puente|ponte|outro|final|coda|solo|riff|interludio)\s*\d*[:\s-]*$/i.test(
+        line,
+      );
 
     if (isBracketHeader || isColonHeader) {
       if (currentSection.lines.length > 0) {
@@ -262,7 +355,13 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
     // Check if line is a 2-line Chord/Lyrics pair
     if (isChordLine(rawLine)) {
       const nextRawLine = lines[i + 1];
-      if (nextRawLine !== undefined && !isChordLine(nextRawLine) && nextRawLine.trim().length > 0 && !/^\{/.test(nextRawLine.trim())) {
+      if (
+        nextRawLine !== undefined &&
+        !isChordLine(nextRawLine) &&
+        nextRawLine.trim().length > 0 &&
+        !/^\{/.test(nextRawLine.trim()) &&
+        !/^\[([a-zA-Z0-9\s-_ªºáéíóúãõç]+)\]/.test(nextRawLine.trim())
+      ) {
         // Merge chord line and lyrics line
         const merged = mergeChordAndLyricsLine(rawLine, nextRawLine);
         currentSection.lines.push({
@@ -275,7 +374,7 @@ export function parseSmartTab(rawInput: string, fallbackFilename?: string): Pars
       } else {
         // Standalone chord line (instrumental/intro)
         const chordsFormatted = rawLine.replace(/\S+/g, (match) => {
-          const c = match.trim().replace(/^[\[{(]|[\]})]$/g, '');
+          const c = normalizeChordToken(match);
           return `[${c}]`;
         });
         currentSection.lines.push({

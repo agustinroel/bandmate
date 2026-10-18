@@ -24,4 +24,11 @@ export class ImportApiService {
   ingest(mbid: string) {
     return this.http.post<any>(`${base}/import/ingest/${mbid}`, {});
   }
+
+  scrapeUrl(url: string, autoSave = false) {
+    return this.http.post<{ success: boolean; parsed: any; song?: any }>(`${base}/import/url`, {
+      url,
+      autoSave,
+    });
+  }
 }
