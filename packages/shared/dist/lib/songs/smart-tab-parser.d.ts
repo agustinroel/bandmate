@@ -9,6 +9,7 @@ export interface ParsedSmartSong {
     sections: SongSection[];
     rawChordPro: string;
 }
+export declare function normalizeChordToken(token: string): string;
 /**
  * Checks if a string line is composed mostly of chord tokens and spaces
  */
@@ -33,7 +34,7 @@ export declare function parseFilenameMetadata(filename: string): {
     artist: string;
 };
 /**
- * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, and Plain Text tabs
+ * Universal Smart Parser for ChordPro, Ultimate Guitar, CifraClub, LaCuerda, and Plain Text tabs
  */
 export declare function parseSmartTab(rawInput: string, fallbackFilename?: string): ParsedSmartSong;
 //# sourceMappingURL=smart-tab-parser.d.ts.map
