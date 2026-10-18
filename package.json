@@ -13,7 +13,11 @@
     "test": "npm run test -w apps/api && npm run test -w apps/web",
     "build:web:dev": "npm run build -w packages/shared && npm run build -w apps/web -- -c development",
     "build:web:pre": "npm run build -w packages/shared && npm run build -w apps/web -- -c pre",
-    "build:web:prod": "npm run build -w packages/shared && npm run build -w apps/web -- -c production"
+    "build:web:prod": "npm run build -w packages/shared && npm run build -w apps/web -- -c production",
+    "mobile:build": "npm run build:web:prod",
+    "mobile:twa:build": "cd apps/web && npx @bubblewrap/cli build",
+    "mobile:cap:sync": "npm run build:web:prod && cd apps/web && npx cap sync android",
+    "mobile:cap:android": "cd apps/web && npx cap open android"
   },
   "devDependencies": {
     "@angular/compiler": "^21.0.8",
