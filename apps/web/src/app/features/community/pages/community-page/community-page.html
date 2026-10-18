@@ -440,13 +440,31 @@
 
                 <!-- Post Body Content -->
                 <div class="cm-post-content mb-3">
-                  <p class="m-0 fs-6" style="white-space: pre-line;">{{ post.content }}</p>
+                  <p class="m-0 fs-6" style="white-space: pre-line;">
+                    @for (seg of parseContentSegments(post.content); track $index) {
+                      @if (seg.isTag) {
+                        <button
+                          type="button"
+                          class="cm-inline-hashtag"
+                          [class.active]="isTagActive(seg.tag)"
+                          (click)="filterByTag(seg.tag, $event)"
+                        >{{ seg.text }}</button>
+                      } @else {
+                        <span>{{ seg.text }}</span>
+                      }
+                    }
+                  </p>
                   
                   <!-- Clickable Hashtags List -->
                   @if (post.tags && post.tags.length > 0) {
                     <div class="cm-post-tags d-flex flex-wrap gap-1 mt-2">
                       @for (t of post.tags; track t) {
-                        <button class="cm-hashtag-chip" (click)="filterByTag(t)">
+                        <button
+                          type="button"
+                          class="cm-hashtag-chip"
+                          [class.active]="isTagActive(t)"
+                          (click)="filterByTag(t, $event)"
+                        >
                           #{{ t }}
                         </button>
                       }
@@ -596,7 +614,20 @@
                                   <span class="cm-comment-author">{{ comment.authorName }}</span>
                                   <span class="cm-comment-time">{{ comment.createdAt | date:'shortTime' }}</span>
                                 </div>
-                                <div class="cm-comment-text">{{ comment.content }}</div>
+                                <div class="cm-comment-text">
+                                  @for (seg of parseContentSegments(comment.content); track $index) {
+                                    @if (seg.isTag) {
+                                      <button
+                                        type="button"
+                                        class="cm-inline-hashtag"
+                                        [class.active]="isTagActive(seg.tag)"
+                                        (click)="filterByTag(seg.tag, $event)"
+                                      >{{ seg.text }}</button>
+                                    } @else {
+                                      <span>{{ seg.text }}</span>
+                                    }
+                                  }
+                                </div>
                               </div>
                             </div>
                           }
@@ -653,9 +684,15 @@
             <div class="small text-muted fst-italic py-2">Explora los riffs y temas del momento</div>
           } @else {
             @for (trend of trends(); track trend.tag) {
-              <div class="cm-trend-item py-2 px-2 rounded-3 mb-1" (click)="filterByTag(trend.tag)" role="button" tabindex="0">
+              <div
+                class="cm-trend-item py-2 px-2 rounded-3 mb-1"
+                [class.active]="isTagActive(trend.tag)"
+                (click)="filterByTag(trend.tag, $event)"
+                role="button"
+                tabindex="0"
+              >
                 <div class="text-muted" style="font-size: 11px;">{{ trend.category }}</div>
-                <div class="fw-bold small text-primary">#{{ trend.tag }}</div>
+                <div class="fw-bold small text-primary cm-trend-tag">#{{ trend.tag }}</div>
                 <div class="text-muted" style="font-size: 11px;">{{ trend.count }} publicaciones</div>
               </div>
             }

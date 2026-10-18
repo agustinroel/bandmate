@@ -35,7 +35,8 @@ export const feedRoutes: FastifyPluginAsync = async (app) => {
    * GET /feed/trends
    */
   app.get('/feed/trends', async (_req, _reply) => {
-    return await getTrendingHashtags();
+    const trends = await getTrendingHashtags();
+    return { trends };
   });
 
   /**

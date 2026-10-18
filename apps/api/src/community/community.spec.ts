@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { toggleFollow, getFollowStatus, getFollowedUserIds, getMultipleFollowStats } from './follows.repo.js';
-import { createFeedPost, getFeedPosts, togglePostLike, createPostComment, getPostComments } from './feed.repo.js';
+import {
+  createFeedPost,
+  getFeedPosts,
+  togglePostLike,
+  createPostComment,
+  getPostComments,
+  deleteFeedPost,
+} from './feed.repo.js';
 
 describe('Community Repository Tests', { timeout: 25000 }, () => {
   const testFollower = `test-usr-${Date.now()}-1`;
@@ -38,7 +45,7 @@ describe('Community Repository Tests', { timeout: 25000 }, () => {
     expect(typeof stats[testFollowed].isFollowing).toBe('boolean');
   });
 
-  it('should create post, like it, and persist comments', async () => {
+  it('should create post, filter by hashtag, like it, persist comments, and clean up', async () => {
     // Create post
     const post = await createFeedPost(
       testFollower,
@@ -46,29 +53,38 @@ describe('Community Repository Tests', { timeout: 25000 }, () => {
       { content: 'Testing permanent community persistence #vitest' }
     );
 
-    expect(post.id).toBeDefined();
-    expect(post.content).toContain('permanent community persistence');
-    expect(post.tags).toContain('vitest');
+    try {
+      expect(post.id).toBeDefined();
+      expect(post.content).toContain('permanent community persistence');
+      expect(post.tags).toContain('vitest');
 
-    // Like post
-    const likeRes = await togglePostLike(testFollower, post.id);
-    expect(likeRes.isLiked).toBe(true);
-    expect(likeRes.likesCount).toBe(1);
+      // Filter by hashtag
+      const byTag = await getFeedPosts('for_you', testFollower, 1, 20, undefined, 'vitest');
+      expect(byTag.posts.some((p) => p.id === post.id)).toBe(true);
 
-    // Comment on post
-    const comment = await createPostComment(
-      post.id,
-      testFollowed,
-      { username: 'commenter', full_name: 'Commenter Musician' },
-      'Awesome riff!'
-    );
+      // Like post
+      const likeRes = await togglePostLike(testFollower, post.id);
+      expect(likeRes.isLiked).toBe(true);
+      expect(likeRes.likesCount).toBe(1);
 
-    expect(comment.id).toBeDefined();
-    expect(comment.content).toBe('Awesome riff!');
+      // Comment on post
+      const comment = await createPostComment(
+        post.id,
+        testFollowed,
+        { username: 'commenter', full_name: 'Commenter Musician' },
+        'Awesome riff!'
+      );
 
-    // Retrieve comments
-    const comments = await getPostComments(post.id);
-    expect(comments.length).toBeGreaterThanOrEqual(1);
-    expect(comments.some((c) => c.id === comment.id)).toBe(true);
+      expect(comment.id).toBeDefined();
+      expect(comment.content).toBe('Awesome riff!');
+
+      // Retrieve comments
+      const comments = await getPostComments(post.id);
+      expect(comments.length).toBeGreaterThanOrEqual(1);
+      expect(comments.some((c) => c.id === comment.id)).toBe(true);
+    } finally {
+      await deleteFeedPost(post.id);
+    }
   });
 });
+
