@@ -435,20 +435,60 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   }
 
   loadTrends() {
-    this.http.get<{ trends: { tag: string; count: number; category: string }[] }>(
-      `${environment.apiBaseUrl}/feed/trends`
-    ).subscribe({
-      next: (res) => {
-        if (res?.trends) {
-          this.trends.set(res.trends);
-        }
-      },
-      error: () => {},
-    });
+    this.http
+      .get<{ trends?: { tag: string; count: number; category: string }[] } | { tag: string; count: number; category: string }[]>(
+        `${environment.apiBaseUrl}/feed/trends`
+      )
+      .subscribe({
+        next: (res: any) => {
+          if (Array.isArray(res)) {
+            this.trends.set(res);
+          } else if (res?.trends && Array.isArray(res.trends)) {
+            this.trends.set(res.trends);
+          }
+        },
+        error: () => {},
+      });
   }
 
-  filterByTag(tag: string) {
-    this.activeTag.set(tag);
+  normalizeTagKey(tag: string | null | undefined): string {
+    return (tag || '')
+      .trim()
+      .replace(/^#+/, '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  isTagActive(tag: string): boolean {
+    const current = this.activeTag();
+    if (!current) return false;
+    return this.normalizeTagKey(current) === this.normalizeTagKey(tag);
+  }
+
+  parseContentSegments(content: string | null | undefined): { text: string; isTag: boolean; tag: string }[] {
+    if (!content) return [];
+    const regex = /(#[\w\u00C0-\u017F]+)/g;
+    const parts = content.split(regex);
+    return parts
+      .filter((part) => part.length > 0)
+      .map((part) => {
+        if (part.startsWith('#') && part.length > 1) {
+          return { text: part, isTag: true, tag: part.replace(/^#+/, '') };
+        }
+        return { text: part, isTag: false, tag: '' };
+      });
+  }
+
+  filterByTag(tag: string, event?: Event) {
+    event?.stopPropagation();
+    const clean = (tag || '').trim().replace(/^#+/, '');
+    if (!clean) return;
+    if (this.isTagActive(clean)) {
+      this.activeTag.set(null);
+    } else {
+      this.activeTag.set(clean);
+    }
     this.activeTab.set('feed');
     this.loadFeed(true);
   }
@@ -456,6 +496,10 @@ export class CommunityPageComponent implements AfterViewInit, OnDestroy {
   onSearchFeed(q?: string) {
     if (q !== undefined) {
       this.searchQuery.set(q);
+      const trimmed = q.trim();
+      if (trimmed.startsWith('#') && !trimmed.includes(' ') && trimmed.length > 1) {
+        this.activeTag.set(trimmed.replace(/^#+/, ''));
+      }
     }
     this.loadFeed(true);
   }
