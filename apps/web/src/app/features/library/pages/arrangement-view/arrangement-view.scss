@@ -141,9 +141,13 @@
   }
 }
 
-/* Fullscreen Overrides */
-:host:fullscreen {
-  background: #fdfdfd;
+/* Fullscreen & Stage Mode Overrides */
+:host:fullscreen,
+:host.bm-stage-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bm-bg, #fdfdfd);
   overflow-y: auto;
   padding: 0;
   display: block;
@@ -338,6 +342,7 @@
 .bm-sections {
   display: grid;
   gap: 14px;
+  padding-bottom: 55vh;
 }
 
 .bm-sections__title {

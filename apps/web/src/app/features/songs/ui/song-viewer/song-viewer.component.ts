@@ -209,6 +209,11 @@ export class SongViewerComponent implements OnDestroy {
     const container = this._getScrollContainer();
     if (!container) return;
 
+    const maxInitial = container.scrollHeight - container.clientHeight;
+    if (maxInitial > 2 && Math.ceil(container.scrollTop + container.clientHeight) >= container.scrollHeight - 2) {
+      container.scrollTop = 0;
+    }
+
     this.isScrolling.set(true);
     this._lastTs = null;
     this._scrollCarry = 0;
@@ -217,11 +222,15 @@ export class SongViewerComponent implements OnDestroy {
       const step = (ts: number) => {
         if (!this.isScrolling()) return;
 
-        if (this._lastTs === null) this._lastTs = ts;
+        if (this._lastTs === null) {
+          this._lastTs = ts;
+          this._rafId = requestAnimationFrame(step);
+          return;
+        }
         const dtMs = ts - this._lastTs;
         this._lastTs = ts;
 
-        const dt = Math.min(dtMs, 64) / 1000;
+        const dt = Math.min(Math.max(dtMs, 0), 64) / 1000;
         const dyFloat = this.scrollSpeed() * dt;
 
         this._scrollCarry += dyFloat;
@@ -230,9 +239,10 @@ export class SongViewerComponent implements OnDestroy {
           this._scrollCarry -= dy;
           const target = this._getScrollContainer();
           if (target) {
+            target.style.scrollBehavior = 'auto';
             target.scrollTop += dy;
             const maxScroll = target.scrollHeight - target.clientHeight;
-            if (maxScroll > 0 && target.scrollTop >= maxScroll - 1) {
+            if (maxScroll > 2 && Math.ceil(target.scrollTop + target.clientHeight) >= target.scrollHeight - 2) {
               this.zone.run(() => this.stopScroll());
               return;
             }
@@ -246,11 +256,23 @@ export class SongViewerComponent implements OnDestroy {
     });
   }
 
-  private _getScrollContainer(): HTMLElement | null {
+  _getScrollContainer(): HTMLElement | null {
+    const stageNow = document.querySelector('.stage-mode-active .p-now') as HTMLElement | null;
+    if (stageNow && stageNow.scrollHeight > stageNow.clientHeight + 2) {
+      return stageNow;
+    }
+    const fsEl = document.fullscreenElement as HTMLElement | null;
+    if (fsEl && fsEl.scrollHeight > fsEl.clientHeight + 2) {
+      return fsEl;
+    }
+    const main = document.querySelector('.app-main') as HTMLElement | null;
+    if (main && main.scrollHeight > main.clientHeight + 2) {
+      return main;
+    }
     return (
-      document.querySelector('.stage-mode-active .p-now') ||
-      document.querySelector('.p-now') ||
-      document.querySelector('.app-main') ||
+      stageNow ||
+      fsEl ||
+      main ||
       (document.scrollingElement as HTMLElement) ||
       document.documentElement
     );

@@ -517,6 +517,15 @@ export class PracticePageComponent {
     if (this.isScrolling()) return;
     if (!this.p.currentSong()) return;
 
+    const initialContainer = this.getScrollContainer();
+    if (initialContainer) {
+      initialContainer.style.scrollBehavior = 'auto';
+      const maxScroll = initialContainer.scrollHeight - initialContainer.clientHeight;
+      if (maxScroll > 0 && initialContainer.scrollTop >= maxScroll - 4) {
+        initialContainer.scrollTop = 0;
+      }
+    }
+
     this.isScrolling.set(true);
 
     // Bind interruption (wheel/keys, touch will NOT stop scroll)
@@ -530,11 +539,15 @@ export class PracticePageComponent {
       const step = (ts: number) => {
         if (!this.isScrolling()) return;
 
-        if (this._lastTs === null) this._lastTs = ts;
+        if (this._lastTs === null) {
+          this._lastTs = ts;
+          this._rafId = requestAnimationFrame(step);
+          return;
+        }
         const dtMs = ts - this._lastTs;
         this._lastTs = ts;
 
-        const dt = Math.min(dtMs, 64) / 1000;
+        const dt = Math.min(Math.max(dtMs, 0), 64) / 1000;
         const speed = this.autoScrollSpeed();
         const dyFloat = speed * dt;
 
@@ -544,6 +557,7 @@ export class PracticePageComponent {
           this._scrollCarry -= dy;
           const container = this.getScrollContainer();
           if (container) {
+            container.style.scrollBehavior = 'auto';
             container.scrollTop += dy;
             const maxScroll = container.scrollHeight - container.clientHeight;
 
@@ -588,15 +602,14 @@ export class PracticePageComponent {
     const doc = this.document;
 
     if (!isStage) {
+      this.isStageMode.set(true);
+      this.wakeLock.enable();
       // Enter fullscreen on the host component to include toolbar/rail
       const host = this.el.nativeElement;
       if (host.requestFullscreen) {
         host.requestFullscreen().catch((err: any) => {
           console.warn('Error attempting to enable fullscreen:', err);
-          this.isStageMode.set(true); // Fallback
         });
-      } else {
-        this.isStageMode.set(true);
       }
     } else {
       // Exit fullscreen

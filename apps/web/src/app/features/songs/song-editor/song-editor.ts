@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal, ViewChild, DestroyRef } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, ViewChild, DestroyRef, NgZone } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, finalize, map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,6 +30,7 @@ import { NotificationsService } from '../../../shared/ui/notifications/notificat
 import { ChordLineViewComponent } from '../../../shared/ui/chord-line-view/chord-line-view';
 import { TransposeBarComponent } from '../../../shared/ui/transpose-bar/transpose-bar';
 import { MetronomeService } from '../../practice/services/metronome.service';
+import { WakeLockService } from '../../practice/services/wake-lock.service';
 import { I18nService } from '../../../core/services/i18n.service';
 
 type SongMetaSnapshot = {
@@ -101,13 +102,18 @@ function metaSnapshotOf(d: SongDetail): SongMetaSnapshot {
   ],
   templateUrl: './song-editor.html',
   styleUrl: './song-editor.scss',
+  host: {
+    '[class.bm-stage-mode]': 'isPracticeMode()',
+  },
 })
 export class SongEditorPageComponent {
   @ViewChild('scrollHost', { read: ElementRef }) scrollHost?: ElementRef<HTMLElement>;
 
   private readonly el = inject(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly zone = inject(NgZone);
   readonly metronome = inject(MetronomeService);
+  readonly wakeLock = inject(WakeLockService);
 
   SongPolicy = SongPolicy;
   readonly route = inject(ActivatedRoute);
@@ -128,11 +134,33 @@ export class SongEditorPageComponent {
   enterPracticeMode() {
     const bpm = Number(this.currentDetail()?.bpm) || 120;
     this.metronome.setBpm(bpm);
+    this.wakeLock.enable();
+    this.isPracticeMode.set(true);
     const el = this.el.nativeElement;
     if (el.requestFullscreen) {
       el.requestFullscreen().catch((err: any) => {
-        console.warn('Error attempting to enable fullscreen:', err);
+        console.warn('Fullscreen fallback to CSS stage mode:', err);
       });
+    }
+  }
+
+  exitPracticeMode() {
+    this.isPracticeMode.set(false);
+    if (!this.autoScrollOn()) {
+      this.wakeLock.disable();
+    }
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch((err: any) => {
+        console.warn('Error exiting fullscreen:', err);
+      });
+    }
+  }
+
+  togglePracticeMode() {
+    if (this.isPracticeMode()) {
+      this.exitPracticeMode();
+    } else {
+      this.enterPracticeMode();
     }
   }
 
@@ -623,24 +651,53 @@ export class SongEditorPageComponent {
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
-  /** Returns the element that actually scrolls */
-  private _getScrollTarget(): HTMLElement {
-    // Check if internal card is scrolling (Desktop view)
-    const card = this.scrollHost?.nativeElement;
-    if (card && card.scrollHeight > card.clientHeight + 15) {
-      return card;
+  /** Returns the element that actually scrolls on Desktop, Fullscreen/Stage Mode, or Mobile */
+  _getScrollTarget(): HTMLElement {
+    const fsEl = document.fullscreenElement as HTMLElement | null;
+    if (fsEl && fsEl.scrollHeight > fsEl.clientHeight + 2) {
+      return fsEl;
     }
 
-    // Fallback to app-main (Mobile / No internal scroll / Fullscreen)
-    const main = document.querySelector('.app-main');
-    return (main as HTMLElement) || (document.scrollingElement as HTMLElement) || document.documentElement;
+    const hostEl = this.el.nativeElement as HTMLElement | null;
+    if (this.isPracticeMode() && hostEl && hostEl.scrollHeight > hostEl.clientHeight + 2) {
+      return hostEl;
+    }
+
+    const card = this.scrollHost?.nativeElement;
+    if (card) {
+      const style = typeof window !== 'undefined' ? window.getComputedStyle(card) : null;
+      const isScrollableCss = !style || style.overflowY === 'auto' || style.overflowY === 'scroll';
+      if (isScrollableCss && card.scrollHeight > card.clientHeight + 2) {
+        return card;
+      }
+    }
+
+    const main = document.querySelector('.app-main') as HTMLElement | null;
+    if (main && main.scrollHeight > main.clientHeight + 2) {
+      return main;
+    }
+
+    const candidates = [
+      fsEl,
+      hostEl,
+      card,
+      main,
+      document.scrollingElement as HTMLElement,
+      document.documentElement,
+    ].filter((c): c is HTMLElement => !!c);
+
+    const best = candidates.reduce((prev, curr) => {
+      const prevRange = prev.scrollHeight - prev.clientHeight;
+      const currRange = curr.scrollHeight - curr.clientHeight;
+      return currRange > prevRange ? curr : prev;
+    }, candidates[0]);
+
+    return best || document.documentElement;
   }
 
-  // No _scrollBy helper needed
-
-  private _isAtBottom(): boolean {
-    const el = this._getScrollTarget();
-    // Tolerance of 2px
+  private _isAtBottom(el: HTMLElement = this._getScrollTarget()): boolean {
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 2) return false;
     return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 2;
   }
 
@@ -650,7 +707,7 @@ export class SongEditorPageComponent {
   }
 
   setAutoScrollSpeed(pxPerSec: number) {
-    const next = Math.max(this.autoScrollSpeedMin, Math.min(this.autoScrollSpeedMax, pxPerSec));
+    const next = Math.max(this.autoScrollSpeedMin, Math.min(this.autoScrollSpeedMax, Number(pxPerSec) || 28));
     this.autoScrollSpeed.set(next);
   }
 
@@ -660,50 +717,57 @@ export class SongEditorPageComponent {
 
   startAutoScroll() {
     if (!this.canAutoScroll()) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     if (this.autoScrollOn()) return;
 
+    const initialTarget = this._getScrollTarget();
+    if (initialTarget && this._isAtBottom(initialTarget)) {
+      initialTarget.scrollTop = 0;
+    }
+
     this.autoScrollOn.set(true);
-    queueMicrotask(() => {
-      this.scrollHost?.nativeElement?.focus?.();
-    });
+    this.wakeLock.enable();
 
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = this._bindAutoScrollUserInterruption(() => this.stopAutoScroll());
     this._lastTs = null;
+    this._scrollCarry = 0;
 
-    const step = (ts: number) => {
-      if (!this.autoScrollOn()) return;
+    this.zone.runOutsideAngular(() => {
+      const step = (ts: number) => {
+        if (!this.autoScrollOn()) return;
 
-      if (this._lastTs === null) this._lastTs = ts;
-      const dtMs = ts - this._lastTs;
-      this._lastTs = ts;
-
-      const dt = Math.min(dtMs, 64) / 1000;
-      const speed = this.autoScrollSpeed();
-      const dyFloat = speed * dt;
-
-      this._scrollCarry += dyFloat;
-      const dy = Math.trunc(this._scrollCarry);
-      if (dy !== 0) this._scrollCarry -= dy;
-
-      if (dy !== 0) {
-        const targetEl = this._getScrollTarget();
-        targetEl.scrollTop += dy;
-
-        if (this._isAtBottom()) {
-          this.stopAutoScroll();
+        if (this._lastTs === null) {
+          this._lastTs = ts;
+          this._rafId = requestAnimationFrame(step);
           return;
         }
-      } else if (this._isAtBottom()) {
-        this.stopAutoScroll();
-        return;
-      }
+
+        const dtMs = ts - this._lastTs;
+        this._lastTs = ts;
+
+        const dt = Math.min(Math.max(dtMs, 0), 64) / 1000;
+        const speed = this.autoScrollSpeed();
+        const dyFloat = speed * dt;
+
+        this._scrollCarry += dyFloat;
+        const dy = Math.trunc(this._scrollCarry);
+        if (dy !== 0) {
+          this._scrollCarry -= dy;
+          const targetEl = this._getScrollTarget();
+          targetEl.style.scrollBehavior = 'auto';
+          targetEl.scrollTop += dy;
+
+          if (this._isAtBottom(targetEl)) {
+            this.zone.run(() => this.stopAutoScroll());
+            return;
+          }
+        }
+
+        this._rafId = requestAnimationFrame(step);
+      };
 
       this._rafId = requestAnimationFrame(step);
-    };
-
-    this._rafId = requestAnimationFrame(step);
+    });
   }
 
   stopAutoScroll() {
@@ -711,6 +775,9 @@ export class SongEditorPageComponent {
     if (!this.autoScrollOn()) return;
 
     this.autoScrollOn.set(false);
+    if (!this.isPracticeMode()) {
+      this.wakeLock.disable();
+    }
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
@@ -743,10 +810,6 @@ export class SongEditorPageComponent {
       onInterrupt();
     };
 
-    const onTouch = () => {
-      if (this.autoScrollOn()) onInterrupt();
-    };
-
     const onKey = (ev: KeyboardEvent) => {
       if (!this.autoScrollOn()) return;
       if (ev.key === '+' || ev.key === '=') {
@@ -759,19 +822,17 @@ export class SongEditorPageComponent {
         this.adjustAutoScrollSpeed(-this.autoScrollSpeedStep);
         return;
       }
-      onInterrupt();
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Escape'].includes(ev.key)) {
+        onInterrupt();
+      }
     };
 
     const wheelOpts: AddEventListenerOptions = { passive: false };
-    const target = this._getScrollTarget();
-
-    target.addEventListener('wheel', onWheel as any, wheelOpts);
-    target.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('wheel', onWheel as any, wheelOpts);
     window.addEventListener('keydown', onKey);
 
     return () => {
-      target.removeEventListener('wheel', onWheel as any, wheelOpts);
-      target.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('wheel', onWheel as any, wheelOpts);
       window.removeEventListener('keydown', onKey);
     };
   }

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, ElementRef } from '@angular/core';
+import { Component, computed, effect, inject, signal, ElementRef, NgZone } from '@angular/core';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe, NgClass, Location } from '@angular/common';
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 import { ChordLineViewComponent } from '../../../../shared/ui/chord-line-view/chord-line-view';
 import { TransposeBarComponent } from '../../../../shared/ui/transpose-bar/transpose-bar';
+import { WakeLockService } from '../../../practice/services/wake-lock.service';
 
 const base = environment.apiBaseUrl;
 
@@ -65,10 +66,15 @@ type WorkWithArrangementsDto = {
   ],
   templateUrl: './arrangement-view.html',
   styleUrl: './arrangement-view.scss',
+  host: {
+    '[class.bm-stage-mode]': 'isPracticeMode()',
+  },
 })
 export class ArrangementViewPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
+  private readonly zone = inject(NgZone);
+  private readonly wakeLock = inject(WakeLockService);
 
   readonly workId = signal<string>('');
   readonly arrangementId = signal<string>('');
@@ -119,36 +125,38 @@ export class ArrangementViewPageComponent {
     });
 
     // Fullscreen listener
-    // Fullscreen listener
     effect((onCleanup) => {
       const handleFs = () => {
         const isFs = !!document.fullscreenElement;
         this.isPracticeMode.set(isFs);
-        if (!isFs && this.autoScrollOn()) {
-          this.stopAutoScroll();
-        }
       };
 
       document.addEventListener('fullscreenchange', handleFs);
       onCleanup(() => {
         document.removeEventListener('fullscreenchange', handleFs);
         this.stopAutoScroll();
+        this.wakeLock.disable();
       });
     });
   }
 
   enterPracticeMode() {
+    this.isPracticeMode.set(true);
+    this.wakeLock.enable();
     const el = this.el.nativeElement;
     if (el.requestFullscreen) {
       el.requestFullscreen().catch((err: any) => {
-        console.warn('Error attempting to enable fullscreen:', err);
+        console.warn('Fullscreen fallback to stage mode:', err);
       });
     }
   }
 
   goBack() {
     if (this.isPracticeMode()) {
-      document.exitFullscreen().catch((err) => console.warn(err));
+      this.isPracticeMode.set(false);
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch((err) => console.warn(err));
+      }
     } else {
       this.router.navigate(['/library', this.workId()]);
     }
@@ -202,7 +210,6 @@ export class ArrangementViewPageComponent {
       .post<ArrangementDto>(`${base}/arrangements/${arrangementId}/rate`, { rating: value })
       .subscribe({
         next: (updated) => {
-          // update local list
           const list = this.arrangements();
           const nextList = list.map((a) => (a.id === arrangementId ? { ...a, ...updated } : a));
           this.arrangements.set(nextList);
@@ -215,7 +222,6 @@ export class ArrangementViewPageComponent {
 
   stars(avg?: number | null) {
     const a = Number(avg ?? 0);
-    // redondeo al entero más cercano para pintar estrellas llenas
     return Math.round(a);
   }
 
@@ -225,7 +231,7 @@ export class ArrangementViewPageComponent {
   }
 
   setAutoScrollSpeed(pxPerSec: number) {
-    const next = Math.max(this.autoScrollSpeedMin, Math.min(this.autoScrollSpeedMax, pxPerSec));
+    const next = Math.max(this.autoScrollSpeedMin, Math.min(this.autoScrollSpeedMax, Number(pxPerSec) || 28));
     this.autoScrollSpeed.set(next);
   }
 
@@ -235,50 +241,56 @@ export class ArrangementViewPageComponent {
 
   startAutoScroll() {
     if (!this.canAutoScroll()) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     if (this.autoScrollOn()) return;
 
+    const initialTarget = this._getScrollTarget();
+    if (initialTarget && this._isAtBottom(initialTarget)) {
+      initialTarget.scrollTop = 0;
+    }
+
     this.autoScrollOn.set(true);
+    this.wakeLock.enable();
     this._autoScrollCleanup?.();
     this._autoScrollCleanup = this._bindAutoScrollUserInterruption(() => this.stopAutoScroll());
     this._lastTs = null;
+    this._scrollCarry = 0;
 
-    const step = (ts: number) => {
-      if (!this.autoScrollOn()) return;
+    this.zone.runOutsideAngular(() => {
+      const step = (ts: number) => {
+        if (!this.autoScrollOn()) return;
 
-      if (this._lastTs === null) this._lastTs = ts;
-      const dtMs = ts - this._lastTs;
-      this._lastTs = ts;
-
-      const dt = Math.min(dtMs, 64) / 1000;
-      const speed = this.autoScrollSpeed();
-      const dyFloat = speed * dt;
-
-      this._scrollCarry += dyFloat;
-      const dy = Math.trunc(this._scrollCarry);
-      if (dy !== 0) this._scrollCarry -= dy;
-
-      if (dy !== 0) {
-        const targetEl = this._getScrollTarget();
-        const beforeTop = targetEl.scrollTop;
-
-        targetEl.scrollTop += dy;
-
-        const afterTop = targetEl.scrollTop;
-
-        if (afterTop === beforeTop || this._isAtBottom()) {
-          this.stopAutoScroll();
+        if (this._lastTs === null) {
+          this._lastTs = ts;
+          this._rafId = requestAnimationFrame(step);
           return;
         }
-      } else if (this._isAtBottom()) {
-        this.stopAutoScroll();
-        return;
-      }
+
+        const dtMs = ts - this._lastTs;
+        this._lastTs = ts;
+
+        const dt = Math.min(Math.max(dtMs, 0), 64) / 1000;
+        const speed = this.autoScrollSpeed();
+        const dyFloat = speed * dt;
+
+        this._scrollCarry += dyFloat;
+        const dy = Math.trunc(this._scrollCarry);
+        if (dy !== 0) {
+          this._scrollCarry -= dy;
+          const targetEl = this._getScrollTarget();
+          targetEl.style.scrollBehavior = 'auto';
+          targetEl.scrollTop += dy;
+
+          if (this._isAtBottom(targetEl)) {
+            this.zone.run(() => this.stopAutoScroll());
+            return;
+          }
+        }
+
+        this._rafId = requestAnimationFrame(step);
+      };
 
       this._rafId = requestAnimationFrame(step);
-    };
-
-    this._rafId = requestAnimationFrame(step);
+    });
   }
 
   stopAutoScroll() {
@@ -286,6 +298,9 @@ export class ArrangementViewPageComponent {
     if (!this.autoScrollOn()) return;
 
     this.autoScrollOn.set(false);
+    if (!this.isPracticeMode()) {
+      this.wakeLock.disable();
+    }
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
@@ -295,21 +310,39 @@ export class ArrangementViewPageComponent {
     this._autoScrollCleanup = null;
   }
 
-  private _getScrollTarget(): HTMLElement {
-    if (this.isPracticeMode()) {
-      return this.el.nativeElement;
+  _getScrollTarget(): HTMLElement {
+    const fsEl = document.fullscreenElement as HTMLElement | null;
+    if (fsEl && fsEl.scrollHeight > fsEl.clientHeight + 2) {
+      return fsEl;
     }
-    // In our layout, .app-main is the specific scroll container
-    const main = document.querySelector('.app-main');
-    return (main as HTMLElement) || document.documentElement;
+    const hostEl = this.el.nativeElement as HTMLElement | null;
+    if (this.isPracticeMode() && hostEl && hostEl.scrollHeight > hostEl.clientHeight + 2) {
+      return hostEl;
+    }
+    const main = document.querySelector('.app-main') as HTMLElement | null;
+    if (main && main.scrollHeight > main.clientHeight + 2) {
+      return main;
+    }
+    const candidates = [
+      fsEl,
+      hostEl,
+      main,
+      document.scrollingElement as HTMLElement,
+      document.documentElement,
+    ].filter((c): c is HTMLElement => !!c);
+
+    const best = candidates.reduce((prev, curr) => {
+      const prevRange = prev.scrollHeight - prev.clientHeight;
+      const currRange = curr.scrollHeight - curr.clientHeight;
+      return currRange > prevRange ? curr : prev;
+    }, candidates[0]);
+
+    return best || document.documentElement;
   }
 
-  // No _scrollBy helper needed if we just do scrollTop += dy,
-  // ensuring we always have an element.
-
-  private _isAtBottom(): boolean {
-    const el = this._getScrollTarget();
-    // Tolerance of 2px
+  private _isAtBottom(el: HTMLElement = this._getScrollTarget()): boolean {
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 2) return false;
     return Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 2;
   }
 
@@ -336,10 +369,6 @@ export class ArrangementViewPageComponent {
       onInterrupt();
     };
 
-    const onTouch = () => {
-      if (this.autoScrollOn()) onInterrupt();
-    };
-
     const onKey = (ev: KeyboardEvent) => {
       if (!this.autoScrollOn()) return;
       if (ev.key === '+' || ev.key === '=') {
@@ -352,21 +381,17 @@ export class ArrangementViewPageComponent {
         this.adjustAutoScrollSpeed(-this.autoScrollSpeedStep);
         return;
       }
-      onInterrupt();
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Escape'].includes(ev.key)) {
+        onInterrupt();
+      }
     };
 
     const wheelOpts: AddEventListenerOptions = { passive: false };
-
-    // Listen on the scroll target
-    const target = this._getScrollTarget();
-
-    target.addEventListener('wheel', onWheel as any, wheelOpts);
-    target.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('wheel', onWheel as any, wheelOpts);
     window.addEventListener('keydown', onKey);
 
     return () => {
-      target.removeEventListener('wheel', onWheel as any, wheelOpts);
-      target.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('wheel', onWheel as any, wheelOpts);
       window.removeEventListener('keydown', onKey);
     };
   }

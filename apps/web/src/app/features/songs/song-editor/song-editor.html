@@ -51,7 +51,7 @@
         }
       }
 
-      @if (isEdit() && SongPolicy.canEdit(currentDetail())) {
+      @if (isEdit()) {
         <!-- VIEW MODE ACTIONS -->
         @if (viewMode() === 'view') {
           <!-- AutoScroll -->
@@ -101,32 +101,32 @@
             <span class="bm-metro-label">{{ metronome.isPlaying() ? metronome.bpm() + ' BPM' : i18n.t('song_editor.metronome', 'Metronome') }}</span>
           </button>
 
-          <!-- 3. Publish (Tertiary) -->
-          @if (currentDetail()?.workId) {
-            <button
-              mat-icon-button
-              class="bm-action-icon"
-              (click)="publish()"
-              [matTooltip]="i18n.t('song_editor.publish_tooltip', 'Publish to community')"
-            >
-              <mat-icon>public</mat-icon>
+          @if (SongPolicy.canEdit(currentDetail())) {
+            <!-- 3. Publish (Tertiary) -->
+            @if (currentDetail()?.workId) {
+              <button
+                mat-icon-button
+                class="bm-action-icon"
+                (click)="publish()"
+                [matTooltip]="i18n.t('song_editor.publish_tooltip', 'Publish to community')"
+              >
+                <mat-icon>public</mat-icon>
+              </button>
+            }
+
+            <!-- 2. Edit (Secondary) -->
+            <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
+              <mat-icon class="bm-btn-ic">edit</mat-icon>
+              {{ i18n.t('song_editor.edit_mode', 'Edit') }}
             </button>
           }
 
-          <!-- 2. Edit (Secondary) -->
-          <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
-            <mat-icon class="bm-btn-ic">edit</mat-icon>
-            {{ i18n.t('song_editor.edit_mode', 'Edit') }}
+          <!-- 1. Practice / Stage Mode (Primary) -->
+          <button mat-flat-button class="bm-practice-btn" (click)="togglePracticeMode()">
+            <mat-icon>{{ isPracticeMode() ? 'close_fullscreen' : 'play_circle' }}</mat-icon>
+            {{ isPracticeMode() ? i18n.t('common.exit', 'Exit') : i18n.t('song_editor.practice_mode', 'Practice Mode') }}
           </button>
-
-          <!-- 1. Practice (Primary) -->
-          @if (!isPracticeMode()) {
-            <button mat-flat-button class="bm-practice-btn" (click)="enterPracticeMode()">
-              <mat-icon>play_circle</mat-icon>
-              {{ i18n.t('song_editor.practice_mode', 'Practice Mode') }}
-            </button>
-          }
-        } @else {
+        } @else if (SongPolicy.canEdit(currentDetail())) {
           <!-- EDIT MODE ACTIONS -->
           <button mat-stroked-button type="button" class="bm-edit-btn" (click)="toggleMode()">
             <mat-icon class="bm-btn-ic">visibility</mat-icon>
