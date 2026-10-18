@@ -3,6 +3,7 @@ import {
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  createNotification,
 } from "./notifications.repo.js";
 
 export async function notificationsRoutes(app: FastifyInstance) {
@@ -16,6 +17,24 @@ export async function notificationsRoutes(app: FastifyInstance) {
     } catch (e: any) {
       req.log.error(e);
       return reply.code(500).send({ message: "Error fetching notifications" });
+    }
+  });
+
+  app.post("/notifications/test", async (req, reply) => {
+    const user = (req as any).user;
+    if (!user) return reply.code(401).send({ message: "Unauthorized" });
+
+    try {
+      const notif = await createNotification(
+        user.id,
+        "info",
+        "Notificaciones Push Activas 🎸",
+        "Recibirás alertas instantáneas cuando otros músicos interactúen contigo.",
+        { test: true },
+      );
+      return notif;
+    } catch (e: any) {
+      return reply.code(500).send({ message: "Error creating test notification" });
     }
   });
 
@@ -45,3 +64,4 @@ export async function notificationsRoutes(app: FastifyInstance) {
     }
   });
 }
+

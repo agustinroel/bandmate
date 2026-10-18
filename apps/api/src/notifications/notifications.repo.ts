@@ -37,13 +37,15 @@ async function getStoredNotifications(): Promise<NotificationRow[]> {
   return cachedNotifs;
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function createNotification(
   userId: string,
   type: string,
   title: string,
   message?: string,
   data?: any,
-) {
+): Promise<NotificationRow> {
   const newNotif: NotificationRow = {
     id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     user_id: userId,
@@ -63,37 +65,57 @@ export async function createNotification(
   try {
     if (supabase) {
       await supabase.from("notifications").insert(newNotif);
+
+      // Broadcast real-time push event to connected clients
+      const ch = supabase.channel("community_live_feed");
+      await ch.send({
+        type: "broadcast",
+        event: "notif_update",
+        payload: newNotif,
+      });
     }
   } catch (err) {
-    console.warn("[notifications.repo] Supabase insert warning:", err);
+    console.warn("[notifications.repo] Supabase insert/broadcast warning:", err);
   }
+
+  return newNotif;
 }
 
-export async function listNotifications(userId: string, limit = 20) {
-  const userAliases = [userId];
+export async function resolveUserNotificationAliases(userId: string): Promise<string[]> {
+  const userAliases = new Set<string>([userId]);
   try {
     const { getProfileById } = await import("../profiles/profiles.repo.js");
     const prof = await getProfileById(userId);
     if (prof) {
-      if (prof.username && !userAliases.includes(prof.username)) userAliases.push(prof.username);
-      if (prof.id && !userAliases.includes(prof.id)) userAliases.push(prof.id);
-      if (prof.username === 'agustinroel' && !userAliases.includes('usr-agustin-roel')) {
-        userAliases.push('usr-agustin-roel');
+      if (prof.username) userAliases.add(prof.username);
+      if (prof.id) userAliases.add(prof.id);
+      if (prof.username === "agustinroel") {
+        userAliases.add("usr-agustin-roel");
       }
     }
   } catch (_) {}
+  return Array.from(userAliases);
+}
+
+export async function listNotifications(userId: string, limit = 30) {
+  const userAliases = await resolveUserNotificationAliases(userId);
+  const uuidAliases = userAliases.filter((a) => UUID_REGEX.test(a));
+
+  const mergedMap = new Map<string, NotificationRow>();
 
   try {
-    if (supabase) {
+    if (supabase && uuidAliases.length > 0) {
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
-        .in("user_id", userAliases)
+        .in("user_id", uuidAliases)
         .order("created_at", { ascending: false })
         .limit(limit);
 
-      if (!error && data && data.length > 0) {
-        return data as NotificationRow[];
+      if (!error && data) {
+        for (const row of data as NotificationRow[]) {
+          mergedMap.set(row.id, row);
+        }
       }
     }
   } catch {
@@ -101,7 +123,15 @@ export async function listNotifications(userId: string, limit = 20) {
   }
 
   const all = await getStoredNotifications();
-  return all.filter((n) => userAliases.includes(n.user_id)).slice(0, limit);
+  for (const n of all) {
+    if (userAliases.includes(n.user_id) && !mergedMap.has(n.id)) {
+      mergedMap.set(n.id, n);
+    }
+  }
+
+  return Array.from(mergedMap.values())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, limit);
 }
 
 export async function markNotificationRead(id: string, userId: string) {
@@ -125,15 +155,8 @@ export async function markNotificationRead(id: string, userId: string) {
 }
 
 export async function markAllNotificationsRead(userId: string) {
-  const userAliases = [userId];
-  try {
-    const { getProfileById } = await import("../profiles/profiles.repo.js");
-    const prof = await getProfileById(userId);
-    if (prof?.username && !userAliases.includes(prof.username)) userAliases.push(prof.username);
-    if (prof?.username === 'agustinroel' && !userAliases.includes('usr-agustin-roel')) {
-      userAliases.push('usr-agustin-roel');
-    }
-  } catch (_) {}
+  const userAliases = await resolveUserNotificationAliases(userId);
+  const uuidAliases = userAliases.filter((a) => UUID_REGEX.test(a));
 
   const all = await getStoredNotifications();
   let modified = false;
@@ -148,15 +171,16 @@ export async function markAllNotificationsRead(userId: string) {
   }
 
   try {
-    if (supabase) {
+    if (supabase && uuidAliases.length > 0) {
       await supabase
         .from("notifications")
         .update({ is_read: true })
-        .in("user_id", userAliases)
+        .in("user_id", uuidAliases)
         .eq("is_read", false);
     }
   } catch (err) {
     console.warn("[notifications.repo] Supabase mark all read warning:", err);
   }
 }
+
 

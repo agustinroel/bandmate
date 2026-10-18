@@ -108,9 +108,25 @@ import { I18nService } from '../../core/services/i18n.service';
 
               <mat-menu #notifMenu="matMenu" xPosition="before" class="bm-notif-menu-panel">
                 <div
-                  class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom overflow-hidden bg-dark text-white"
+                  class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom overflow-hidden bg-dark text-white gap-2"
                 >
-                  <span class="fw-bold small opacity-75">{{ i18n.t('nav.notifications', 'Notificaciones') }}</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold small opacity-75">{{ i18n.t('nav.notifications', 'Notificaciones') }}</span>
+                    @if (notifService.pushSupported && notifService.pushPermission() !== 'granted') {
+                      <button
+                        mat-stroked-button
+                        class="small-btn text-accent border-warning"
+                        (click)="notifService.requestPushPermission(); $event.stopPropagation()"
+                        matTooltip="Recibir alertas push en escritorio y móvil"
+                      >
+                        🔔 Activar Push
+                      </button>
+                    } @else if (notifService.pushPermission() === 'granted') {
+                      <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25" style="font-size: 10px;">
+                        Push Activo
+                      </span>
+                    }
+                  </div>
                   @if (notifService.unreadCount() > 0) {
                     <button
                       mat-button
